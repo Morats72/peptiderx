@@ -704,7 +704,9 @@ function quickLogDose(peptideId,idx){
   toast(p.name+' logged ✓');
   renderDashboard();
 }
-
+const PUSH_SERVER_URL = 'https://notifications-rq0q.onrender.com';
+   const PUSH_PUBLIC_KEY = 'BBp2xFZROQn-5tPprE_hkwEvJa_WZxMPwivxTqIE7eWZsclVirK4o2bmuaMQFJ41fW5HPrc-TyTMkZ6i01oE7Zg';
+  
 function checkMidnightRollover(){
   try{
     const raw=JSON.parse(localStorage.getItem(SK.c));
