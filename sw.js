@@ -35,10 +35,10 @@ self.addEventListener('push', e => {
   const title = data.title || 'PeptideRx';
   const options = {
     body: data.body || 'Time for your dose.',
-    icon: '/icon-192.png',
-    badge: '/icon-192.png',
+    icon: './icon-192.png',
+    badge: './icon-192.png',
     tag: data.tag || 'peptiderx-dose',
-    data: { url: data.url || '/' },
+    data: { url: data.url || './' },
     actions: [
       { action: 'log', title: '✓ Log Dose' },
       { action: 'snooze', title: '⏰ Snooze 15 min' }
@@ -83,35 +83,4 @@ self.addEventListener('message', e => {
     // since Web Push requires a server for true push
     console.log('[SW] Schedule check received');
   }
-});
-
-// ── Add this block to your existing sw.js ──
-// (Keep your existing install/fetch/cache handlers — just add these
-// two listeners if they're not already there.)
-
-self.addEventListener('push', (event) => {
-  let data = { title: 'PeptideRx', body: 'You have a dose due.', tag: 'peptiderx' };
-  try { data = event.data.json(); } catch (e) { /* fall back to default */ }
-
-  event.waitUntil(
-    self.registration.showNotification(data.title, {
-      body: data.body,
-      tag: data.tag || 'peptiderx',
-      icon: '/icon-192.png',
-      badge: '/icon-192.png',
-      renotify: true
-    })
-  );
-});
-
-self.addEventListener('notificationclick', (event) => {
-  event.notification.close();
-  event.waitUntil(
-    self.clients.matchAll({ type: 'window' }).then((clients) => {
-      for (const client of clients) {
-        if ('focus' in client) return client.focus();
-      }
-      if (self.clients.openWindow) return self.clients.openWindow('/');
-    })
-  );
 });
