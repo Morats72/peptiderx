@@ -84,3 +84,34 @@ self.addEventListener('message', e => {
     console.log('[SW] Schedule check received');
   }
 });
+
+// ── Add this block to your existing sw.js ──
+// (Keep your existing install/fetch/cache handlers — just add these
+// two listeners if they're not already there.)
+
+self.addEventListener('push', (event) => {
+  let data = { title: 'PeptideRx', body: 'You have a dose due.', tag: 'peptiderx' };
+  try { data = event.data.json(); } catch (e) { /* fall back to default */ }
+
+  event.waitUntil(
+    self.registration.showNotification(data.title, {
+      body: data.body,
+      tag: data.tag || 'peptiderx',
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
+      renotify: true
+    })
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window' }).then((clients) => {
+      for (const client of clients) {
+        if ('focus' in client) return client.focus();
+      }
+      if (self.clients.openWindow) return self.clients.openWindow('/');
+    })
+  );
+});
