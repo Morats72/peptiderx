@@ -506,6 +506,20 @@ table{border-collapse:collapse}
 
 <script>
 
+// ── Service Worker Registration ──
+// Must run before anything calls navigator.serviceWorker.ready, or that
+// promise waits forever with no error.
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js', { scope: './' })
+      .then(reg => console.log('[SW] registered', reg.scope))
+      .catch(err => {
+        console.error('[SW] registration failed', err);
+        setPushStatus && setPushStatus('Service worker failed to register: ' + err.message);
+      });
+  });
+}
+
 // ── Push Notifications ──
 // Fill these in once your Render service is live and you've run generate-vapid.js
 const PUSH_SERVER_URL = 'https://notifications-rq0q.onrender.com';
@@ -544,7 +558,10 @@ async function enablePushNotifications(){
     return false;
   }
   try{
-    const reg=await navigator.serviceWorker.ready;
+    const reg=await Promise.race([
+      navigator.serviceWorker.ready,
+      new Promise((_,reject)=>setTimeout(()=>reject(new Error('Service worker never became ready (10s timeout)')),10000))
+    ]);
     let sub=await reg.pushManager.getSubscription();
     if(!sub){
       sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlBase64ToUint8Array(PUSH_PUBLIC_KEY)});
@@ -582,7 +599,10 @@ async function sendTestPush(){
 }
 (function initPushStatus(){
   if(!('serviceWorker' in navigator)||!('PushManager' in window)){setPushStatus('Push not supported on this browser');return;}
-  navigator.serviceWorker.ready.then(reg=>reg.pushManager.getSubscription()).then(sub=>{
+  Promise.race([
+    navigator.serviceWorker.ready,
+    new Promise((_,reject)=>setTimeout(()=>reject(new Error('timeout')),5000))
+  ]).then(reg=>reg.pushManager.getSubscription()).then(sub=>{
     if(sub)setPushStatus('Notifications enabled ✓');
   }).catch(()=>{});
 })();
