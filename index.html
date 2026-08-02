@@ -312,6 +312,16 @@ table{border-collapse:collapse}
 
 <!-- LOG -->
 <div class="screen" id="screen-log">
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-body">
+      <div class="section-label" style="margin:0 0 8px">Push Notifications</div>
+      <div id="push-status" style="font-size:13px;color:var(--text-secondary,#666);margin-bottom:10px">Not enabled yet</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-primary btn-sm" onclick="enablePushNotifications()">Enable Notifications</button>
+        <button class="btn btn-sm" onclick="sendTestPush()">Send Test Push</button>
+      </div>
+    </div>
+  </div>
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
     <div class="section-label" style="margin:0">Dose History</div>
     <button class="btn btn-danger btn-sm" onclick="clearLog()">Clear Log</button>
@@ -495,6 +505,87 @@ table{border-collapse:collapse}
 <div class="toast" id="toast"></div>
 
 <script>
+
+// ── Push Notifications ──
+// Fill these in once your Render service is live and you've run generate-vapid.js
+const PUSH_SERVER_URL = 'https://YOUR-APP-NAME.onrender.com'; // <-- set your Render URL
+const PUSH_PUBLIC_KEY = 'PASTE_VAPID_PUBLIC_KEY_HERE';        // <-- set your VAPID public key
+
+function urlBase64ToUint8Array(base64String){
+  const padding='='.repeat((4-base64String.length%4)%4);
+  const base64=(base64String+padding).replace(/-/g,'+').replace(/_/g,'/');
+  const rawData=atob(base64);
+  return Uint8Array.from([...rawData].map(c=>c.charCodeAt(0)));
+}
+function getUserId(){
+  let id=localStorage.getItem('prx_userId');
+  if(!id){id='user_'+Math.random().toString(36).slice(2,10);localStorage.setItem('prx_userId',id);}
+  return id;
+}
+function setPushStatus(msg){
+  const el=document.getElementById('push-status');
+  if(el)el.textContent=msg;
+}
+async function enablePushNotifications(){
+  if(PUSH_SERVER_URL.includes('YOUR-APP-NAME')||PUSH_PUBLIC_KEY.includes('PASTE_VAPID')){
+    setPushStatus('Server URL / public key not configured yet');
+    toast('Push server not configured yet');
+    return false;
+  }
+  if(!('serviceWorker' in navigator)||!('PushManager' in window)){
+    setPushStatus('Push not supported on this browser');
+    toast('Push not supported on this browser');
+    return false;
+  }
+  const permission=await Notification.requestPermission();
+  if(permission!=='granted'){
+    setPushStatus('Notification permission denied');
+    toast('Notification permission denied');
+    return false;
+  }
+  try{
+    const reg=await navigator.serviceWorker.ready;
+    let sub=await reg.pushManager.getSubscription();
+    if(!sub){
+      sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlBase64ToUint8Array(PUSH_PUBLIC_KEY)});
+    }
+    const userId=getUserId();
+    await fetch(PUSH_SERVER_URL+'/api/subscribe',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({userId,subscription:sub,label:userId})
+    });
+    setPushStatus('Notifications enabled ✓');
+    toast('Notifications enabled');
+    return true;
+  }catch(err){
+    setPushStatus('Setup failed: '+err.message);
+    toast('Push setup failed');
+    return false;
+  }
+}
+async function sendTestPush(){
+  if(PUSH_SERVER_URL.includes('YOUR-APP-NAME')){
+    toast('Push server not configured yet');
+    return;
+  }
+  const userId=getUserId();
+  try{
+    const res=await fetch(PUSH_SERVER_URL+'/api/test-push',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({userId,title:'PeptideRx test',body:'Push is working.'})
+    });
+    const data=await res.json();
+    toast(data.ok?'Test push sent — check your phone':'Test push failed: '+(data.error||'unknown error'));
+  }catch(err){
+    toast('Could not reach push server');
+  }
+}
+(function initPushStatus(){
+  if(!('serviceWorker' in navigator)||!('PushManager' in window)){setPushStatus('Push not supported on this browser');return;}
+  navigator.serviceWorker.ready.then(reg=>reg.pushManager.getSubscription()).then(sub=>{
+    if(sub)setPushStatus('Notifications enabled ✓');
+  }).catch(()=>{});
+})();
 
 const REF_DATA = [
   {name:'5-Amino-1MQ',cats:['fat','longev','mito'],overview:'NNMT inhibitor. Enhances fat oxidation, raises BMR, improves insulin sensitivity. Cumulative metabolic reprogrammer — not a stimulant fat burner. Animal studies show ~7% body mass reduction.',doses:[['Route','Oral capsule'],['Standard','50 mg/day (Tailor Made, Jay Campbell)'],['Aggressive','100–150 mg/day'],['Max','150 mg/day'],['Cycle','20–30 days on / 1–2 weeks off (Scendere) | 8 on/8 off (Ultimate CS)'],['Timing','Morning with or without food; 30 min after NAD+ if stacking'],['Stacks with','NAD+, MOTS-C, AOD-9604, SS-31']]},
@@ -704,9 +795,7 @@ function quickLogDose(peptideId,idx){
   toast(p.name+' logged ✓');
   renderDashboard();
 }
-const PUSH_SERVER_URL = 'https://notifications-rq0q.onrender.com';
-   const PUSH_PUBLIC_KEY = 'BBp2xFZROQn-5tPprE_hkwEvJa_WZxMPwivxTqIE7eWZsclVirK4o2bmuaMQFJ41fW5HPrc-TyTMkZ6i01oE7Zg';
-  
+
 function checkMidnightRollover(){
   try{
     const raw=JSON.parse(localStorage.getItem(SK.c));
