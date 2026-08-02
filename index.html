@@ -597,6 +597,47 @@ async function sendTestPush(){
     toast('Could not reach push server');
   }
 }
+
+// ── Schedule Sync ──
+// Builds today's due dose times from the current stack (respecting
+// on/off cycles, weekly days, and titration-adjusted doses) and pushes
+// them to the server so the push cron can fire at the right times.
+// Only doses with an explicit time set are synced — "as needed" or
+// no-time-set doses are skipped since there's nothing to alert on.
+function buildTodaysSchedule(){
+  const due=peptides.filter(isDueToday);
+  const schedule=[];
+  due.forEach(p=>{
+    const dose=getCurrentDose(p);
+    const freq=p.freq||1;
+    const unitsInfo=calcUnits(p,dose);
+    const units=unitsInfo?unitsInfo.units+'u':undefined;
+    for(let i=0;i<freq;i++){
+      const time=p.times&&p.times[i];
+      if(!time)continue;
+      schedule.push({
+        peptideName:p.name,
+        doseLabel:freq>1?('Dose '+(i+1)):'Dose',
+        time,
+        units
+      });
+    }
+  });
+  return schedule;
+}
+async function syncScheduleToServer(){
+  if(PUSH_SERVER_URL.includes('YOUR-APP-NAME'))return;
+  const userId=getUserId();
+  const schedule=buildTodaysSchedule();
+  try{
+    await fetch(PUSH_SERVER_URL+'/api/schedule',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({userId,schedule})
+    });
+  }catch(err){
+    console.error('[Push] schedule sync failed',err);
+  }
+}
 (function initPushStatus(){
   if(!('serviceWorker' in navigator)||!('PushManager' in window)){setPushStatus('Push not supported on this browser');return;}
   Promise.race([
@@ -1010,8 +1051,9 @@ function savePeptide(){
   if(editId){peptides=peptides.map(x=>x.id===editId?p:x);toast('Updated');}
   else{peptides.push(p);toast('Added to stack');}
   sv('p',peptides);closeModal('add-peptide-modal');renderStack();renderDashboard();
+  syncScheduleToServer();
 }
-function delPeptide(id){if(!confirm('Remove from stack?'))return;peptides=peptides.filter(p=>p.id!==id);sv('p',peptides);renderStack();renderDashboard();toast('Removed');}
+function delPeptide(id){if(!confirm('Remove from stack?'))return;peptides=peptides.filter(p=>p.id!==id);sv('p',peptides);renderStack();renderDashboard();toast('Removed');syncScheduleToServer();}
 function updateCycleLabels(){
   const isWk=document.getElementById('cyc-weeks')&&document.getElementById('cyc-weeks').checked;
   const lbl=isWk?'Weeks':'Days';
@@ -1205,6 +1247,7 @@ function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t
 checkMidnightRollover();
 renderDashboard();
 renderReference();
+syncScheduleToServer();
 
 </script>
 </body>
