@@ -2,7 +2,7 @@
 // Handles caching for offline use + push notification scheduling
 
 const CACHE = 'peptiderx-v1';
-const ASSETS = ['/', '/index.html', '/manifest.json', '/icon-192.png', '/icon-512.png', '/icon-180.png'];
+const ASSETS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './icon-180.png'];
 
 // ── Install: cache all assets ──
 self.addEventListener('install', e => {
@@ -59,7 +59,7 @@ self.addEventListener('notificationclick', e => {
         const msg = { type: 'SNOOZE', tag: e.notification.tag, minutes: 15 };
         clients.forEach(c => c.postMessage(msg));
         if (clients.length === 0) {
-          return self.clients.openWindow('/?snooze=' + e.notification.tag);
+          return self.clients.openWindow('./?snooze=' + e.notification.tag);
         }
       })
     );
@@ -69,7 +69,7 @@ self.addEventListener('notificationclick', e => {
       self.clients.matchAll({ type: 'window' }).then(clients => {
         const existing = clients.find(c => c.url.includes(self.location.origin));
         if (existing) return existing.focus();
-        return self.clients.openWindow('/');
+        return self.clients.openWindow('./');
       })
     );
   }
