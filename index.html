@@ -320,6 +320,7 @@ table{border-collapse:collapse}
         <button class="btn btn-primary btn-sm" onclick="enablePushNotifications()">Enable Notifications</button>
         <button class="btn btn-sm" onclick="sendTestPush()">Send Test Push</button>
       </div>
+      <div id="app-version" style="font-size:11px;color:var(--text-soft,#999);margin-top:10px"></div>
     </div>
   </div>
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
@@ -519,6 +520,11 @@ if ('serviceWorker' in navigator) {
       });
   });
 }
+
+// ── App Version ──
+// Bump this string every time you deploy a change — makes it obvious
+// in the app (and in the console) whether a fix actually made it live.
+const APP_VERSION = 'v1.1.0 — 2026-08-02 (timezone fix + schedule sync)';
 
 // ── Push Notifications ──
 // Fill these in once your Render service is live and you've run generate-vapid.js
@@ -1248,6 +1254,9 @@ checkMidnightRollover();
 renderDashboard();
 renderReference();
 syncScheduleToServer();
+console.log('[PeptideRx] '+APP_VERSION);
+const versionEl=document.getElementById('app-version');
+if(versionEl)versionEl.textContent=APP_VERSION;
 
 </script>
 </body>
