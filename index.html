@@ -110,13 +110,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',sans-
 .syringe-wrap{margin:20px auto;width:100%;max-width:320px}
 .syringe-container{position:relative;height:70px;display:flex;align-items:center}
 .syringe-body{flex:1;height:28px;background:#e8eef7;border-radius:4px;border:2px solid var(--border);position:relative;overflow:hidden}
-.syringe-fill{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#2e4a8c,#4a6db5);border-radius:2px;transition:width .4s ease}
+.syringe-fill{position:absolute;right:0;top:0;bottom:0;background:linear-gradient(90deg,#2e4a8c,#4a6db5);border-radius:2px;transition:width .4s ease}
 .syringe-needle{width:40px;height:6px;background:var(--text-soft);border-radius:0 3px 3px 0}
 .syringe-plunger{width:18px;height:42px;border:2px solid var(--border);border-radius:4px;background:var(--white);display:flex;align-items:center;justify-content:center}
 .syringe-plunger-inner{width:8px;height:28px;background:var(--border);border-radius:2px}
 .syringe-marks{display:flex;justify-content:space-between;padding:0 2px;margin-top:4px}
 .syringe-marks span{font-size:9px;color:var(--text-soft)}
-.pull-indicator{position:absolute;top:0;width:2px;height:28px;background:var(--red);transition:left .4s ease}
+.pull-indicator{position:absolute;top:0;width:2px;height:28px;background:var(--red);transition:right .4s ease}
 .pull-label{position:absolute;top:-20px;transform:translateX(-50%);background:var(--red);color:white;font-size:10px;font-weight:700;padding:2px 5px;border-radius:4px;white-space:nowrap}
 .log-item{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
 .log-item:last-child{border-bottom:none}
@@ -279,7 +279,7 @@ table{border-collapse:collapse}
           </div>
           <div class="syringe-needle"></div>
         </div>
-        <div class="syringe-marks" id="syringe-marks-row"><span>0</span><span>6</span><span>12</span><span>18</span><span>24</span><span>30u</span></div>
+        <div class="syringe-marks" id="syringe-marks-row"><span>30u</span><span>24</span><span>18</span><span>12</span><span>6</span><span>0</span></div>
       </div>
     </div>
   </div>
@@ -543,7 +543,7 @@ table{border-collapse:collapse}
           </div>
           <div class="syringe-needle"></div>
         </div>
-        <div class="syringe-marks" id="syringe-marks-row2"><span>0</span><span>6</span><span>12</span><span>18</span><span>24</span><span>30u</span></div>
+        <div class="syringe-marks" id="syringe-marks-row2"><span>30u</span><span>24</span><span>18</span><span>12</span><span>6</span><span>0</span></div>
       </div>
       <div class="text-small" id="syringe-modal-sub" style="text-align:center;margin-top:14px;color:var(--text-mid)"></div>
     </div>
@@ -571,7 +571,7 @@ if ('serviceWorker' in navigator) {
 // ── App Version ──
 // Bump this string every time you deploy a change — makes it obvious
 // in the app (and in the console) whether a fix actually made it live.
-const APP_VERSION = 'v1.5.0 — 2026-08-08 (quick log label, backdated logging, syringe preview, removed mark-all-done)';
+const APP_VERSION = 'v1.6.0 — 2026-08-08 (due count subtracts logged doses, fixed syringe orientation)';
 
 // ── Push Notifications ──
 // Fill these in once your Render service is live and you've run generate-vapid.js
@@ -865,8 +865,9 @@ function renderDashboard(){
   const today=new Date();
   document.getElementById('today-date').textContent=today.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
   const due=peptides.filter(isDueToday);
-  const totalDue=due.reduce((s,p)=>s+(p.freq||1),0);
+  const totalScheduled=due.reduce((s,p)=>s+(p.freq||1),0);
   const totalDone=due.reduce((s,p)=>{const freq=p.freq||1;let c=0;for(let i=0;i<freq;i++){if(todayChecked.includes(p.id+'_'+i))c++;}return s+c;},0);
+  const totalDue=totalScheduled-totalDone;
   document.getElementById('stat-due').textContent=totalDue;
   document.getElementById('stat-done').textContent=totalDone;
   document.getElementById('stat-active').textContent=peptides.filter(p=>p.active).length;
@@ -997,7 +998,10 @@ function renderSyringeModal(size){
   const syMax=syUnitsMax(size);
   const marksRow=document.getElementById('syringe-marks-row2');
   const step=syMax/5;
-  marksRow.innerHTML=Array.from({length:6},(_,i)=>`<span>${i===5?Math.round(i*step)+'u':Math.round(i*step)}</span>`).join('');
+  marksRow.innerHTML=Array.from({length:6},(_,i)=>{
+    const val=Math.round((5-i)*step);
+    return `<span>${i===0?val+'u':val}</span>`;
+  }).join('');
   const fillEl=document.getElementById('syringe-fill2');
   const ind=document.getElementById('pull-indicator2');
   const subEl=document.getElementById('syringe-modal-sub');
@@ -1011,7 +1015,7 @@ function renderSyringeModal(size){
   const overMax=units>syMax;
   const pct=Math.min((units/syMax)*100,100);
   fillEl.style.width=pct+'%';
-  ind.style.display='block';ind.style.left=`calc(${pct}% - 1px)`;
+  ind.style.display='block';ind.style.right=`calc(${pct}% - 1px)`;
   document.getElementById('pull-label2').textContent=units+'u';
   subEl.textContent=overMax
     ? `⚠️ ${units}u exceeds this ${size}ml syringe's ${syMax}u max — ${ml.toFixed(3)} ml needed`
@@ -1248,7 +1252,10 @@ function updateSyringeMarks(max){
   const row=document.getElementById('syringe-marks-row');
   if(!row)return;
   const step=max/5;
-  row.innerHTML=Array.from({length:6},(_,i)=>`<span>${i===5?Math.round(i*step)+'u':Math.round(i*step)}</span>`).join('');
+  row.innerHTML=Array.from({length:6},(_,i)=>{
+    const val=Math.round((5-i)*step);
+    return `<span>${i===0?val+'u':val}</span>`;
+  }).join('');
 }
 
 function renderTimeInputs(){
@@ -1386,7 +1393,7 @@ function calcRecon(){
     const pct=Math.min((u/syMax)*100,100);
     document.getElementById('syringe-fill').style.width=pct+'%';
     const ind=document.getElementById('pull-indicator');
-    ind.style.display='block';ind.style.left=`calc(${pct}% - 1px)`;
+    ind.style.display='block';ind.style.right=`calc(${pct}% - 1px)`;
     document.getElementById('pull-label').textContent=u+'u';
   }else{document.getElementById('calc-units').textContent='—';document.getElementById('calc-ml').textContent='Enter desired dose';re.style.display='block';sw.style.display='none';}
 }
