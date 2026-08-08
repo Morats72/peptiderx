@@ -43,6 +43,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',sans-
 .btn:active{transform:scale(.97);opacity:.85}
 .btn-primary{background:var(--blue);color:var(--white)}
 .btn-secondary{background:var(--blue-light);color:var(--blue)}
+.syringe-size-btn.active{background:var(--navy);color:var(--white)}
 .btn-danger{background:var(--red-light);color:var(--red)}
 .btn-amber{background:var(--amber-light);color:var(--amber)}
 .btn-full{width:100%}
@@ -196,7 +197,7 @@ table{border-collapse:collapse}
     </div>
   </div>
   <div class="card">
-    <div class="card-header"><h2>Due Today</h2><button class="btn btn-secondary btn-sm" onclick="logAllDue()">Mark All Done</button></div>
+    <div class="card-header"><h2>Due Today</h2></div>
     <div class="card-body" id="due-today-list"><div class="empty-state"><div class="icon">💉</div><h3>No doses scheduled</h3><p>Add a peptide to your stack to get started.</p></div></div>
   </div>
   <div class="card">
@@ -251,6 +252,10 @@ table{border-collapse:collapse}
           <label style="flex:1;display:flex;align-items:center;gap:8px;padding:9px 12px;border:1.5px solid var(--border);border-radius:10px;cursor:pointer">
             <input type="radio" name="calc-syringe" id="calc-syr-03" value="0.3" checked onchange="calcRecon()" style="accent-color:var(--blue)">
             <span style="font-size:14px;font-weight:600">0.3 ml</span>
+          </label>
+          <label style="flex:1;display:flex;align-items:center;gap:8px;padding:9px 12px;border:1.5px solid var(--border);border-radius:10px;cursor:pointer">
+            <input type="radio" name="calc-syringe" id="calc-syr-05" value="0.5" onchange="calcRecon()" style="accent-color:var(--blue)">
+            <span style="font-size:14px;font-weight:600">0.5 ml</span>
           </label>
           <label style="flex:1;display:flex;align-items:center;gap:8px;padding:9px 12px;border:1.5px solid var(--border);border-radius:10px;cursor:pointer">
             <input type="radio" name="calc-syringe" id="calc-syr-10" value="1.0" onchange="calcRecon()" style="accent-color:var(--blue)">
@@ -392,6 +397,10 @@ table{border-collapse:collapse}
             <input type="radio" name="syringe" id="syr-03" value="0.3" checked onchange="updateCalcPreview()" style="accent-color:var(--blue)">
             <span style="font-size:14px;font-weight:600">0.3 ml <span style="font-size:11px;font-weight:400;color:var(--text-soft)">(0–30u)</span></span>
           </label>
+          <label style="flex:1;display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;cursor:pointer;transition:border-color .15s" id="syr-05-label">
+            <input type="radio" name="syringe" id="syr-05" value="0.5" onchange="updateCalcPreview()" style="accent-color:var(--blue)">
+            <span style="font-size:14px;font-weight:600">0.5 ml <span style="font-size:11px;font-weight:400;color:var(--text-soft)">(0–50u)</span></span>
+          </label>
           <label style="flex:1;display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;cursor:pointer;transition:border-color .15s" id="syr-10-label">
             <input type="radio" name="syringe" id="syr-10" value="1.0" onchange="updateCalcPreview()" style="accent-color:var(--blue)">
             <span style="font-size:14px;font-weight:600">1.0 ml <span style="font-size:11px;font-weight:400;color:var(--text-soft)">(0–100u)</span></span>
@@ -485,6 +494,7 @@ table{border-collapse:collapse}
       <input type="hidden" id="log-dose-idx">
       <div class="form-group"><label class="form-label">Peptide</label><input class="form-input" id="log-peptide-name" readonly style="background:var(--bg)"></div>
       <div class="form-group"><label class="form-label">Dose (mcg)</label><input class="form-input" type="number" id="log-dose" placeholder="500"></div>
+      <div class="form-group"><label class="form-label">Time Taken</label><input class="form-input" type="time" id="log-time"><div class="form-hint">Defaults to now — change this if you're logging a dose you already took earlier</div></div>
       <div class="form-group"><label class="form-label">Injection Site</label>
         <select class="form-select" id="log-site">
           <option value="">Select site...</option>
@@ -512,6 +522,34 @@ table{border-collapse:collapse}
   </div>
 </div>
 
+<!-- SYRINGE DETAIL MODAL -->
+<div class="modal-overlay" id="syringe-detail-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header"><h3 id="syringe-modal-title">Syringe Draw</h3><button class="modal-close" onclick="closeModal('syringe-detail-modal')">✕</button></div>
+    <div class="modal-body">
+      <div style="display:flex;gap:8px;margin-bottom:16px">
+        <button class="btn btn-secondary btn-sm syringe-size-btn" data-size="0.3" onclick="selectSyringeSize('0.3')" style="flex:1">0.3 ml</button>
+        <button class="btn btn-secondary btn-sm syringe-size-btn" data-size="0.5" onclick="selectSyringeSize('0.5')" style="flex:1">0.5 ml</button>
+        <button class="btn btn-secondary btn-sm syringe-size-btn" data-size="1.0" onclick="selectSyringeSize('1.0')" style="flex:1">1.0 ml</button>
+      </div>
+      <div class="syringe-wrap">
+        <div class="text-small" style="text-align:center;margin-bottom:8px;font-weight:600">Pull to here ↓</div>
+        <div class="syringe-container">
+          <div class="syringe-plunger"><div class="syringe-plunger-inner"></div></div>
+          <div class="syringe-body">
+            <div class="syringe-fill" id="syringe-fill2" style="width:0%"></div>
+            <div class="pull-indicator" id="pull-indicator2" style="display:none"><div class="pull-label" id="pull-label2"></div></div>
+          </div>
+          <div class="syringe-needle"></div>
+        </div>
+        <div class="syringe-marks" id="syringe-marks-row2"><span>0</span><span>6</span><span>12</span><span>18</span><span>24</span><span>30u</span></div>
+      </div>
+      <div class="text-small" id="syringe-modal-sub" style="text-align:center;margin-top:14px;color:var(--text-mid)"></div>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -533,7 +571,7 @@ if ('serviceWorker' in navigator) {
 // ── App Version ──
 // Bump this string every time you deploy a change — makes it obvious
 // in the app (and in the console) whether a fix actually made it live.
-const APP_VERSION = 'v1.4.0 — 2026-08-08 (clear stale done-state, layout gap fix)';
+const APP_VERSION = 'v1.5.0 — 2026-08-08 (quick log label, backdated logging, syringe preview, removed mark-all-done)';
 
 // ── Push Notifications ──
 // Fill these in once your Render service is live and you've run generate-vapid.js
@@ -838,7 +876,7 @@ function renderDashboard(){
     const items=[];
     due.forEach(p=>{
       const dose=getCurrentDose(p);const freq=p.freq||1;
-      const syMax=(p.syringeType==='1.0')?100:30;
+      const syMax=syUnitsMax(p.syringeType||'0.3');
       const conc=p.vial&&p.bac?(p.vial*1000)/p.bac:null;
       for(let i=0;i<freq;i++){
         const checkId=p.id+'_'+i;
@@ -848,11 +886,14 @@ function renderDashboard(){
         const doseLabel=freq>1?('Dose '+(i+1))+(timeStr?' ('+timeStr+')':''):(timeStr||p.timing||'');
         const ml=conc?dose/conc:null;
         const units=ml?Math.round(ml*100):null;
-        const unitDisp=units?(units>syMax?`<div class="dose-units" style="background:var(--red-light);color:var(--red)"><span class="unit-label">⚠️ ${syMax}u max</span>${units}u</div>`:`<div class="dose-units"><span class="unit-label">Pull to</span>${units}u</div>`):'';
+        const unitDisp=units?(units>syMax?`<div class="dose-units" onclick="openSyringeModal('${p.id}')" style="cursor:pointer;background:var(--red-light);color:var(--red)"><span class="unit-label">⚠️ ${syMax}u max</span>${units}u</div>`:`<div class="dose-units" onclick="openSyringeModal('${p.id}')" style="cursor:pointer"><span class="unit-label">Pull to</span>${units}u</div>`):'';
         const vialBadge=p.dosesLeft!=null?`<span class="badge ${p.dosesLeft<=3?'badge-red':p.dosesLeft<=7?'badge-amber':'badge-blue'}" style="font-size:10px">${p.dosesLeft} left</span>`:'';
         const html=`<div class="dose-item">
-          <div class="dose-check" onclick="quickLogDose('${p.id}','${i}')">
-            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex-shrink:0">
+            <div class="dose-check" onclick="quickLogDose('${p.id}','${i}')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <span style="font-size:8px;font-weight:700;color:var(--text-soft);white-space:nowrap;letter-spacing:.2px">QUICK LOG</span>
           </div>
           <div class="dose-info">
             <div class="dose-name" style="color:${p.color||'var(--text)'}">${p.name}${freq>1?' <span style="font-size:11px;font-weight:600;color:var(--text-soft)">Dose '+(i+1)+'</span>':''} ${vialBadge}</div>
@@ -933,6 +974,50 @@ function openStatModal(kind){
   bodyEl.innerHTML=rowsHtml;
   document.getElementById('stat-detail-modal').classList.add('open');
 }
+
+// ── Syringe Draw Modal ──
+let syringeModalPeptideId=null;
+function openSyringeModal(peptideId){
+  const p=peptides.find(x=>x.id===peptideId);if(!p)return;
+  syringeModalPeptideId=peptideId;
+  document.getElementById('syringe-modal-title').textContent=p.name+' — Syringe Draw';
+  const size=p.syringeType||'0.3';
+  document.querySelectorAll('.syringe-size-btn').forEach(b=>b.classList.toggle('active',b.dataset.size===size));
+  renderSyringeModal(size);
+  document.getElementById('syringe-detail-modal').classList.add('open');
+}
+function selectSyringeSize(size){
+  document.querySelectorAll('.syringe-size-btn').forEach(b=>b.classList.toggle('active',b.dataset.size===size));
+  renderSyringeModal(size);
+}
+function renderSyringeModal(size){
+  const p=peptides.find(x=>x.id===syringeModalPeptideId);if(!p)return;
+  const dose=getCurrentDose(p);
+  const conc=p.vial&&p.bac?(p.vial*1000)/p.bac:null;
+  const syMax=syUnitsMax(size);
+  const marksRow=document.getElementById('syringe-marks-row2');
+  const step=syMax/5;
+  marksRow.innerHTML=Array.from({length:6},(_,i)=>`<span>${i===5?Math.round(i*step)+'u':Math.round(i*step)}</span>`).join('');
+  const fillEl=document.getElementById('syringe-fill2');
+  const ind=document.getElementById('pull-indicator2');
+  const subEl=document.getElementById('syringe-modal-sub');
+  if(!conc||!dose){
+    fillEl.style.width='0%';
+    ind.style.display='none';
+    subEl.textContent='Set vial size and BAC water on this peptide to calculate a draw.';
+    return;
+  }
+  const ml=dose/conc;const units=Math.round(ml*100);
+  const overMax=units>syMax;
+  const pct=Math.min((units/syMax)*100,100);
+  fillEl.style.width=pct+'%';
+  ind.style.display='block';ind.style.left=`calc(${pct}% - 1px)`;
+  document.getElementById('pull-label2').textContent=units+'u';
+  subEl.textContent=overMax
+    ? `⚠️ ${units}u exceeds this ${size}ml syringe's ${syMax}u max — ${ml.toFixed(3)} ml needed`
+    : `${dose} mcg = ${ml.toFixed(3)} ml = ${units} units on a ${size} ml syringe`;
+}
+
 function quickLogDose(peptideId,idx){
   const p=peptides.find(x=>x.id===peptideId);if(!p)return;
   const checkId=peptideId+'_'+idx;
@@ -1149,13 +1234,14 @@ function updateCycleLabels(){
   if(offEl)offEl.textContent=lbl+' OFF';
 }
 
+function syUnitsMax(type){return type==='1.0'?100:type==='0.5'?50:30;}
 function getSyringeMax(fromCalc){
   if(fromCalc){
     const el=document.querySelector('input[name="calc-syringe"]:checked');
-    return el&&el.value==='1.0'?100:30;
+    return syUnitsMax(el?el.value:'0.3');
   }
   const el=document.querySelector('input[name="syringe"]:checked');
-  return el&&el.value==='1.0'?100:30;
+  return syUnitsMax(el?el.value:'0.3');
 }
 
 function updateSyringeMarks(max){
@@ -1223,6 +1309,8 @@ function openLogModal(id,idx){
   document.getElementById('log-dose').value=getCurrentDose(p)||'';
   document.getElementById('log-site').value='';
   document.getElementById('log-notes').value='';
+  const now=new Date();
+  document.getElementById('log-time').value=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
   document.getElementById('log-dose-modal').classList.add('open');
 }
 function confirmLogDose(){
@@ -1231,12 +1319,19 @@ function confirmLogDose(){
   const doseIdx=document.getElementById('log-dose-idx').value;
   const checkId=baseId+'_'+doseIdx;
   const p=peptides.find(x=>x.id===baseId);
-  logEntry(p,dose,document.getElementById('log-site').value,document.getElementById('log-notes').value,false);
+  const timeVal=document.getElementById('log-time').value;
+  let customTs=null;
+  if(timeVal){
+    const[hh,mm]=timeVal.split(':').map(Number);
+    const d=new Date();d.setHours(hh,mm,0,0);
+    customTs=d.toISOString();
+  }
+  logEntry(p,dose,document.getElementById('log-site').value,document.getElementById('log-notes').value,false,customTs);
   if(!todayChecked.includes(checkId)){todayChecked.push(checkId);saveTodayChecked();}
   closeModal('log-dose-modal');renderDashboard();toast('Dose logged ✓');
 }
-function logEntry(p,dose,site,notes,missed){
-  doseLog.push({id:'l_'+Date.now()+Math.random(),peptideId:p.id,name:p.name,color:p.color,dose,site,notes,missed:!!missed,ts:new Date().toISOString()});
+function logEntry(p,dose,site,notes,missed,customTs){
+  doseLog.push({id:'l_'+Date.now()+Math.random(),peptideId:p.id,name:p.name,color:p.color,dose,site,notes,missed:!!missed,ts:customTs||new Date().toISOString()});
   sv('l',doseLog);
   // decrement vial tracking
   if(p.dosesLeft!=null){
