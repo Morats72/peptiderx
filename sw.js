@@ -1,7 +1,7 @@
 // PeptideRx Service Worker
 // Handles caching for offline use + push notification scheduling
 
-const CACHE = 'peptiderx-v2';
+const CACHE = 'peptiderx-v3';
 const ASSETS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './icon-180.png'];
 
 // ── Install: cache all assets ──
@@ -22,10 +22,21 @@ self.addEventListener('activate', e => {
   self.clients.claim();
 });
 
-// ── Fetch: serve from cache, fall back to network ──
+// ── Fetch: network-first, cache as offline fallback ──
+// Cache-first was serving stale index.html/JS forever after the first
+// load — a new deploy on GitHub Pages was invisible to the installed
+// app until the cache was manually cleared. Network-first means every
+// load checks for the latest version first; the cache only kicks in
+// when there's no connection.
 self.addEventListener('fetch', e => {
   e.respondWith(
-    caches.match(e.request).then(cached => cached || fetch(e.request))
+    fetch(e.request)
+      .then(res => {
+        const resClone = res.clone();
+        caches.open(CACHE).then(cache => cache.put(e.request, resClone));
+        return res;
+      })
+      .catch(() => caches.match(e.request))
   );
 });
 
