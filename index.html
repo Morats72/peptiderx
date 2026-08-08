@@ -110,6 +110,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',sans-
 .syringe-wrap{margin:20px auto;width:100%;max-width:320px}
 .syringe-container{position:relative;height:70px;display:flex;align-items:center}
 .syringe-body{flex:1;height:28px;background:#e8eef7;border-radius:4px;border:2px solid var(--border);position:relative;overflow:hidden}
+.syringe-ticks{position:absolute;inset:0;pointer-events:none;z-index:3;mix-blend-mode:overlay}
 .syringe-fill{position:absolute;right:0;top:0;bottom:0;background:linear-gradient(90deg,#2e4a8c,#4a6db5);border-radius:2px;transition:width .4s ease}
 .syringe-needle{width:40px;height:6px;background:var(--text-soft);border-radius:0 3px 3px 0}
 .syringe-plunger{width:18px;height:42px;border:2px solid var(--border);border-radius:4px;background:var(--white);display:flex;align-items:center;justify-content:center}
@@ -275,6 +276,7 @@ table{border-collapse:collapse}
           <div class="syringe-plunger"><div class="syringe-plunger-inner"></div></div>
           <div class="syringe-body">
             <div class="syringe-fill" id="syringe-fill" style="width:0%"></div>
+            <div class="syringe-ticks" id="syringe-ticks"></div>
             <div class="pull-indicator" id="pull-indicator" style="display:none"><div class="pull-label" id="pull-label"></div></div>
           </div>
           <div class="syringe-needle"></div>
@@ -539,6 +541,7 @@ table{border-collapse:collapse}
           <div class="syringe-plunger"><div class="syringe-plunger-inner"></div></div>
           <div class="syringe-body">
             <div class="syringe-fill" id="syringe-fill2" style="width:0%"></div>
+            <div class="syringe-ticks" id="syringe-ticks2"></div>
             <div class="pull-indicator" id="pull-indicator2" style="display:none"><div class="pull-label" id="pull-label2"></div></div>
           </div>
           <div class="syringe-needle"></div>
@@ -571,7 +574,7 @@ if ('serviceWorker' in navigator) {
 // ── App Version ──
 // Bump this string every time you deploy a change — makes it obvious
 // in the app (and in the console) whether a fix actually made it live.
-const APP_VERSION = 'v1.6.0 — 2026-08-08 (due count subtracts logged doses, fixed syringe orientation)';
+const APP_VERSION = 'v1.7.1 — 2026-08-08 (black graduation marks)';
 
 // ── Push Notifications ──
 // Fill these in once your Render service is live and you've run generate-vapid.js
@@ -930,7 +933,7 @@ function renderDashboard(){
   const logEl=document.getElementById('recent-log-preview');
   const recent=[...doseLog].reverse().slice(0,5);
   if(!recent.length){logEl.innerHTML=`<div class="empty-state"><div class="icon">📋</div><h3>No entries yet</h3></div>`;}
-  else{logEl.innerHTML=recent.map(e=>`<div class="log-item"><div class="log-dot" style="background:${e.color||'var(--blue)'}"></div><div class="log-info"><div class="log-name">${e.name}</div><div class="log-meta">${e.dose} mcg${e.site?' · '+e.site:''}</div></div><div class="log-time">${fmtTime(e.ts)}</div></div>`).join('');}
+  else{logEl.innerHTML=recent.map(e=>`<div class="log-item"><div class="log-dot" style="background:${e.color||'var(--blue)'}"></div><div class="log-info"><div class="log-name">${e.name}</div><div class="log-meta">${e.dose} mcg${e.site?' · '+e.site:''}</div></div><div class="log-time">${fmtTime(e.ts)}</div><button class="btn btn-sm" onclick="unlogDose('${e.id}')" style="background:var(--red-light);color:var(--red);margin-left:8px" title="Unlog">✕</button></div>`).join('');}
 }
 function openStatModal(kind){
   const titleEl=document.getElementById('stat-detail-title');
@@ -1002,6 +1005,8 @@ function renderSyringeModal(size){
     const val=Math.round((5-i)*step);
     return `<span>${i===0?val+'u':val}</span>`;
   }).join('');
+  const ticks2=document.getElementById('syringe-ticks2');
+  if(ticks2)ticks2.style.backgroundImage=tickBackground(syMax);
   const fillEl=document.getElementById('syringe-fill2');
   const ind=document.getElementById('pull-indicator2');
   const subEl=document.getElementById('syringe-modal-sub');
@@ -1027,7 +1032,7 @@ function quickLogDose(peptideId,idx){
   const checkId=peptideId+'_'+idx;
   todayChecked.push(checkId);
   saveTodayChecked();
-  logEntry(p,getCurrentDose(p),'','');
+  logEntry(p,getCurrentDose(p),'','',false,null,checkId);
   toast(p.name+' logged ✓');
   renderDashboard();
 }
@@ -1049,7 +1054,7 @@ function checkMidnightRollover(){
           if(!prevChecked.includes(p.id+'_'+i)){
             doseLog.push({id:'l_'+Date.now()+Math.random()+i,peptideId:p.id,name:p.name,
               color:p.color,dose:getCurrentDose(p),site:'',notes:'',missed:true,
-              ts:raw.date+'T23:59:00.000Z'});
+              ts:raw.date+'T23:59:00.000Z',checkId:p.id+'_'+i});
             missedCount++;
           }
         }
@@ -1239,6 +1244,12 @@ function updateCycleLabels(){
 }
 
 function syUnitsMax(type){return type==='1.0'?100:type==='0.5'?50:30;}
+function tickBackground(max){
+  const minorStep=100/max;
+  const majorStep=100/(max/5);
+  return `repeating-linear-gradient(to left, rgba(0,0,0,.65) 0, rgba(0,0,0,.65) 1.5px, transparent 1.5px, transparent ${majorStep}%),`+
+         `repeating-linear-gradient(to left, rgba(0,0,0,.3) 0, rgba(0,0,0,.3) 1px, transparent 1px, transparent ${minorStep}%)`;
+}
 function getSyringeMax(fromCalc){
   if(fromCalc){
     const el=document.querySelector('input[name="calc-syringe"]:checked');
@@ -1256,6 +1267,8 @@ function updateSyringeMarks(max){
     const val=Math.round((5-i)*step);
     return `<span>${i===0?val+'u':val}</span>`;
   }).join('');
+  const ticks=document.getElementById('syringe-ticks');
+  if(ticks)ticks.style.backgroundImage=tickBackground(max);
 }
 
 function renderTimeInputs(){
@@ -1333,12 +1346,12 @@ function confirmLogDose(){
     const d=new Date();d.setHours(hh,mm,0,0);
     customTs=d.toISOString();
   }
-  logEntry(p,dose,document.getElementById('log-site').value,document.getElementById('log-notes').value,false,customTs);
+  logEntry(p,dose,document.getElementById('log-site').value,document.getElementById('log-notes').value,false,customTs,checkId);
   if(!todayChecked.includes(checkId)){todayChecked.push(checkId);saveTodayChecked();}
   closeModal('log-dose-modal');renderDashboard();toast('Dose logged ✓');
 }
-function logEntry(p,dose,site,notes,missed,customTs){
-  doseLog.push({id:'l_'+Date.now()+Math.random(),peptideId:p.id,name:p.name,color:p.color,dose,site,notes,missed:!!missed,ts:customTs||new Date().toISOString()});
+function logEntry(p,dose,site,notes,missed,customTs,checkId){
+  doseLog.push({id:'l_'+Date.now()+Math.random(),peptideId:p.id,name:p.name,color:p.color,dose,site,notes,missed:!!missed,ts:customTs||new Date().toISOString(),checkId:checkId||null});
   sv('l',doseLog);
   // decrement vial tracking
   if(p.dosesLeft!=null){
@@ -1359,6 +1372,29 @@ function logEntry(p,dose,site,notes,missed,customTs){
   }
 }
 
+function unlogDose(entryId){
+  const entry=doseLog.find(e=>e.id===entryId);if(!entry)return;
+  if(!confirm(`Remove this log entry for ${entry.name}?`))return;
+  doseLog=doseLog.filter(e=>e.id!==entryId);
+  sv('l',doseLog);
+  // If this was checked off today, undo the checkmark so it goes back to Due
+  if(entry.checkId&&todayChecked.includes(entry.checkId)){
+    todayChecked=todayChecked.filter(id=>id!==entry.checkId);
+    saveTodayChecked();
+  }
+  // Restore vial count if it was decremented (missed-dose entries never decremented one)
+  if(!entry.missed){
+    const p=peptides.find(x=>x.id===entry.peptideId);
+    if(p&&p.dosesLeft!=null){
+      p.dosesLeft=p.dosesLeft+1;
+      peptides=peptides.map(x=>x.id===p.id?p:x);
+      sv('p',peptides);
+    }
+  }
+  renderLog();renderDashboard();
+  toast('Log entry removed');
+}
+
 function renderLog(){
   const el=document.getElementById('full-log-list');
   if(!doseLog.length){el.innerHTML=`<div class="empty-state"><div class="icon">📋</div><h3>No doses logged yet</h3><p>Mark doses as done from the Dashboard.</p></div>`;return;}
@@ -1367,7 +1403,7 @@ function renderLog(){
     const d=new Date(e.ts);const ds=d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
     if(ds!==lastDate){if(lastDate)html+='</div>';html+=`<div class="section-label" style="margin-top:14px">${ds}</div><div>`;lastDate=ds;}
     const missedBadge=e.missed?'<span class="badge badge-red" style="margin-left:6px">missed</span>':'';
-    html+=`<div class="log-item"><div class="log-dot" style="background:${e.missed?'var(--red)':e.color||'var(--blue)'}"></div><div class="log-info"><div class="log-name">${e.name}${missedBadge}</div><div class="log-meta">${e.dose} mcg${e.site?' · '+e.site:''}${e.notes?' · '+e.notes:''}</div></div><div class="log-time">${d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}</div></div>`;
+    html+=`<div class="log-item"><div class="log-dot" style="background:${e.missed?'var(--red)':e.color||'var(--blue)'}"></div><div class="log-info"><div class="log-name">${e.name}${missedBadge}</div><div class="log-meta">${e.dose} mcg${e.site?' · '+e.site:''}${e.notes?' · '+e.notes:''}</div></div><div class="log-time">${d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}</div><button class="btn btn-sm" onclick="unlogDose('${e.id}')" style="background:var(--red-light);color:var(--red);margin-left:8px" title="Unlog">✕</button></div>`;
   });
   if(lastDate)html+='</div>';el.innerHTML=html;
 }
