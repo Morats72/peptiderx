@@ -19,8 +19,9 @@
   --green:#1e7a6e;--green-light:#d0ede9;
   --tab-h:68px;--safe-bottom:env(safe-area-inset-bottom,0px);--safe-top:env(safe-area-inset-top,0px);
 }
+html{height:100%;background:var(--white)}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',sans-serif;background:var(--bg);color:var(--text);height:100dvh;overflow:hidden;display:flex;flex-direction:column}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',sans-serif;background:var(--bg);color:var(--text);height:100vh;height:-webkit-fill-available;height:100dvh;overflow:hidden;display:flex;flex-direction:column}
 .app-header{background:var(--navy);padding:calc(var(--safe-top) + 14px) 18px 14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;z-index:10}
 .app-header h1{font-size:20px;font-weight:700;color:var(--white);letter-spacing:-.3px}
 .app-header .subtitle{font-size:11px;color:#8aafd4;letter-spacing:.5px;text-transform:uppercase}
@@ -532,7 +533,7 @@ if ('serviceWorker' in navigator) {
 // ── App Version ──
 // Bump this string every time you deploy a change — makes it obvious
 // in the app (and in the console) whether a fix actually made it live.
-const APP_VERSION = 'v1.3.0 — 2026-08-08 (fixed evening rollover bug, AM/PM grouping, tappable stats)';
+const APP_VERSION = 'v1.4.0 — 2026-08-08 (clear stale done-state, layout gap fix)';
 
 // ── Push Notifications ──
 // Fill these in once your Render service is live and you've run generate-vapid.js
@@ -735,6 +736,14 @@ let peptides=ld('p'),doseLog=ld('l');
 function todayStr(){
   const d=new Date();
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+// One-time cleanup: the pre-v1.3 rollover bug could have saved a
+// "done today" list stamped with a false date that happens to equal
+// a real date later on, silently hiding doses that were never
+// actually logged. Force a clean slate once, regardless of device.
+if(!localStorage.getItem('prx_migrated_v13')){
+  localStorage.removeItem(SK.c);
+  localStorage.setItem('prx_migrated_v13','1');
 }
 let todayChecked=(()=>{try{const r=JSON.parse(localStorage.getItem(SK.c));if(r&&r.date===todayStr())return r.ids}catch{}return[]})();
 function saveTodayChecked(){localStorage.setItem(SK.c,JSON.stringify({date:todayStr(),ids:todayChecked}))}
