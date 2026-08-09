@@ -584,7 +584,7 @@ if ('serviceWorker' in navigator) {
 // ── App Version ──
 // Bump this string every time you deploy a change — makes it obvious
 // in the app (and in the console) whether a fix actually made it live.
-const APP_VERSION = 'v1.8.0 — 2026-08-08 (skip dose option, future-start-date bug fixed, mcg/mg toggle)';
+const APP_VERSION = 'v1.9.0 — 2026-08-09 (Due/Done/Active lists now show full peptide detail card)';
 
 // ── Push Notifications ──
 // Fill these in once your Render service is live and you've run generate-vapid.js
@@ -715,7 +715,7 @@ async function syncScheduleToServer(){
 })();
 
 const REF_DATA = [
-  {name:'5-Amino-1MQ',cats:['fat','longev','mito'],overview:'NNMT inhibitor. Enhances fat oxidation, raises BMR, improves insulin sensitivity. Cumulative metabolic reprogrammer — not a stimulant fat burner. Animal studies show ~7% body mass reduction.',doses:[['Route','Oral capsule'],['Standard','50 mg/day (Tailor Made, Jay Campbell)'],['Aggressive','100–150 mg/day'],['Max','150 mg/day'],['Cycle','20–30 days on / 1–2 weeks off (Scendere) | 8 on/8 off (Ultimate CS)'],['Timing','Morning with or without food; 30 min after NAD+ if stacking'],['Stacks with','NAD+, MOTS-C, AOD-9604, SS-31']]},
+  {name:'5-Amino-1MQ',cats:['fat','longev','mito'],overview:'NNMT inhibitor. Enhances fat oxidation, raises BMR, improves insulin sensitivity. Cumulative metabolic reprogrammer — not a stimulant fat burner. Animal studies show ~7% body mass reduction. ⚠️ ROUTE CORRECTION (Aug 9, 2026): oral and SubQ/injectable doses are NOT interchangeable — oral runs 50–150 mg/day, injectable runs roughly 300 mcg–2 mg/day (100–500x lower by weight, since injection bypasses first-pass liver metabolism). Confirm which route your source is meant for before dosing — a 100x+ error is possible if these are conflated.',doses:[['Oral — Standard','50 mg/day, titrate to 100 mg/day after 5–7 days if tolerated'],['Oral — Aggressive','100–150 mg/day, 16+ week cycle'],['Oral — Max','150 mg/day'],['SubQ — Standard','300 mcg/day (Protide: 10 mg vial, 2 mL BAC → 5 mg/mL, 6 units)'],['SubQ — Alt','1–2 mg dose (10–20 units), AM, 5 days on/2 off, 8 weeks on/8 off (JCS)'],['Cycle','20–30 days on/1–2 weeks off (Scendere) | 16+ weeks (Protide, oral) | 8 on/8 off (Ultimate CS)'],['Timing','Morning; 30 min after NAD+ if stacking'],['Stacks with','NAD+, MOTS-C, AOD-9604, SS-31']]},
   {name:'AOD-9604',cats:['fat'],overview:'Modified GH fragment 176-191. Fat-burning only — no IGF-1 or glucose effects. Non-hormonal. Targets visceral and stubborn fat. Pro tip: inject near stubborn fat deposits for localized effect.',doses:[['Route','SubQ injection (fasted AM)'],['Dose','250–500 mcg/day (Tailor Made, Jay Campbell)'],['Alt','300 mcg fasted AM (Scendere, Protide)'],['Alt 2','250 mcg twice daily AM + bedtime (Dr. Seeds)'],['Max','1000 mcg/day; diminishing returns above ~600 mcg'],['Cycle','20 on/10 off up to 6 months (Scendere) | 8 weeks (Protide)'],['Timing','Fasted AM; 30 min pre-cardio optimal'],['Stacks with','Tesamorelin, Ipamorelin, MOTS-C, 5-Amino-1MQ']]},
   {name:'ARA-290',cats:['heal','immune'],overview:'EPO-derived peptide for nerve repair and neuropathic pain without red blood cell stimulation. Useful for chronic pain and neuropathy.',doses:[['Route','SubQ injection'],['Dose','1–5 mg daily (Scendere) | 1.5 mg 5 on/2 off (Veller)'],['Cycle','4–12 weeks'],['Note','Solution may appear cloudy with BAC water — normal for ARA-290'],['Stacks with','BPC-157, TB-500']]},
   {name:'BPC-157',cats:['heal','gut','immune'],overview:'Body Protection Compound. 15-aa gastric peptide. Accelerates tendon, ligament, muscle, and gut healing via angiogenesis (VEGF). Tendon-to-bone interface healing particularly strong — highly relevant for distal bicep tears. All data currently from animal models; anecdotal human evidence compelling.',doses:[['Route (injury)','SubQ near injury site — preferred for musculoskeletal'],['Route (gut)','Oral capsule or systemic SubQ'],['Dose','250–500 mcg/day (LVLUP, Veller, Protide)'],['Alt','200–300 mcg twice daily at injury site'],['Max','1000 mcg/day'],['Oral dose','500 mcg capsules twice daily (GI use only)'],['BAC water','2 ml per 10 mg vial → 5 mg/ml → 10 units = 500 mcg'],['Cycle','8 weeks on/8 off'],['Stacks with','TB-500 (gold standard combo), GHK-Cu, KPV, LL-37'],['Caution','SSRIs — monitor mood; discontinue if depression/anxiety']]},
@@ -952,44 +952,35 @@ function renderDashboard(){
 function openStatModal(kind){
   const titleEl=document.getElementById('stat-detail-title');
   const bodyEl=document.getElementById('stat-detail-body');
-  let rowsHtml='';
+  let html='';
   if(kind==='due'){
     titleEl.textContent='Due Today';
-    const due=peptides.filter(isDueToday);
-    const rows=[];
-    due.forEach(p=>{
-      const freq=p.freq||1;const dose=getCurrentDose(p);
+    const due=peptides.filter(p=>{
+      if(!isDueToday(p))return false;
+      const freq=p.freq||1;
       for(let i=0;i<freq;i++){
-        if(todayChecked.includes(p.id+'_'+i)||todaySkipped.includes(p.id+'_'+i))continue;
-        const timeStr=p.times&&p.times[i]?fmtTimeTo12(p.times[i]):'';
-        rows.push(`<div class="log-item"><div class="log-dot" style="background:${p.color||'var(--blue)'}"></div><div class="log-info"><div class="log-name">${p.name}${freq>1?' — Dose '+(i+1):''}</div><div class="log-meta">${dose} mcg${timeStr?' · '+timeStr:''}</div></div></div>`);
+        if(!todayChecked.includes(p.id+'_'+i)&&!todaySkipped.includes(p.id+'_'+i))return true;
       }
+      return false;
     });
-    rowsHtml=rows.length?rows.join(''):`<div class="empty-state"><div class="icon">✅</div><h3>Nothing outstanding</h3></div>`;
+    html=due.length?due.map(p=>peptideCardHTML(p,'modal-')).join(''):`<div class="empty-state"><div class="icon">✅</div><h3>Nothing outstanding</h3></div>`;
   }else if(kind==='done'){
     titleEl.textContent='Done Today';
-    const due=peptides.filter(isDueToday);
-    const rows=[];
-    due.forEach(p=>{
-      const freq=p.freq||1;const dose=getCurrentDose(p);
+    const done=peptides.filter(p=>{
+      if(!isDueToday(p))return false;
+      const freq=p.freq||1;
       for(let i=0;i<freq;i++){
-        if(!todayChecked.includes(p.id+'_'+i))continue;
-        const timeStr=p.times&&p.times[i]?fmtTimeTo12(p.times[i]):'';
-        rows.push(`<div class="log-item"><div class="log-dot" style="background:${p.color||'var(--blue)'}"></div><div class="log-info"><div class="log-name">${p.name}${freq>1?' — Dose '+(i+1):''}</div><div class="log-meta">${dose} mcg${timeStr?' · scheduled '+timeStr:''}</div></div></div>`);
+        if(todayChecked.includes(p.id+'_'+i))return true;
       }
+      return false;
     });
-    rowsHtml=rows.length?rows.join(''):`<div class="empty-state"><div class="icon">📋</div><h3>Nothing logged yet</h3></div>`;
+    html=done.length?done.map(p=>peptideCardHTML(p,'modal-')).join(''):`<div class="empty-state"><div class="icon">📋</div><h3>Nothing logged yet</h3></div>`;
   }else if(kind==='active'){
     titleEl.textContent='Active Peptides';
     const active=peptides.filter(p=>p.active);
-    const rows=active.map(p=>{
-      const freq=p.freq||1;const dose=getCurrentDose(p);
-      const schedLabel=p.schedType==='cycle'?'On/off cycle':p.schedType==='weekly'?'Specific days':p.schedType==='asneeded'?'As needed':'Daily';
-      return `<div class="log-item"><div class="log-dot" style="background:${p.color||'var(--blue)'}"></div><div class="log-info"><div class="log-name">${p.name}</div><div class="log-meta">${dose} mcg · ${schedLabel}${freq>1?' · '+freq+'x/day':''}</div></div></div>`;
-    });
-    rowsHtml=rows.length?rows.join(''):`<div class="empty-state"><div class="icon">💤</div><h3>No active peptides</h3></div>`;
+    html=active.length?active.map(p=>peptideCardHTML(p,'modal-')).join(''):`<div class="empty-state"><div class="icon">💤</div><h3>No active peptides</h3></div>`;
   }
-  bodyEl.innerHTML=rowsHtml;
+  bodyEl.innerHTML=html;
   document.getElementById('stat-detail-modal').classList.add('open');
 }
 
@@ -1090,54 +1081,57 @@ function logAllDue(){
   saveTodayChecked();renderDashboard();toast('All doses marked done');
 }
 
+function peptideCardHTML(p,idPrefix){
+  idPrefix=idPrefix||'';
+  const dose=getCurrentDose(p);const calc=calcUnits(p,dose);const cd=getCycleDay(p);
+  let sd='';
+  if(p.schedType==='daily')sd='Every day';
+  else if(p.schedType==='weekly')sd=(p.schedDays||[]).map(d=>['Su','Mo','Tu','We','Th','Fr','Sa'][d]).join(', ');
+  else if(p.schedType==='cycle')sd=`${p.cycleOn||5} on / ${p.cycleOff||2} off`;
+  else sd='As needed';
+  const cycBar=cd?`<div class="cycle-bar-wrap">
+    <div class="cycle-bar-label"><span>Day ${cd.pos+1} of ${cd.cycle} (${cd.isOn?'ON':'OFF'})</span><span>${cd.displayOn} ${cd.unit} on / ${cd.displayOff} ${cd.unit} off</span></div>
+    <div class="cycle-bar"><div class="cycle-bar-fill ${cd.isOn?'':'off-phase'}" style="width:${(cd.pos/cd.cycle*100).toFixed(1)}%"></div></div>
+  </div>`:'';
+  const titHTML=p.titration&&p.titration.length?`<div class="detail-cell full"><div class="lbl">Titration</div><div class="val">${p.titration.map((s,i)=>`Step ${i+1}: ${s.dose} mcg × ${s.days} days`).join(' → ')}</div></div>`:'';
+  const detId=idPrefix+'det-'+p.id;
+  return`<div class="peptide-card">
+    <div class="peptide-card-header" onclick="toggleDet('${detId}')">
+      <div class="peptide-color-bar" style="background:${p.color||'#2e4a8c'}"></div>
+      <div class="peptide-card-info">
+        <div class="peptide-card-name">${p.name}</div>
+        <div class="peptide-card-sub">${dose} mcg · ${sd}${calc?' · '+calc.units+' units':''}</div>
+      </div>
+      <div class="peptide-card-actions">
+        <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();closeModal('stat-detail-modal');openEditModal('${p.id}')">Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();closeModal('stat-detail-modal');delPeptide('${p.id}')">Del</button>
+      </div>
+    </div>
+    <div class="peptide-detail-panel" id="${detId}">
+      <div class="detail-grid">
+        <div class="detail-cell"><div class="lbl">Current Dose</div><div class="val">${dose} mcg</div></div>
+        ${calc?`<div class="detail-cell"><div class="lbl">Syringe Units</div><div class="val" style="color:var(--blue)">${calc.units} units (${calc.ml} ml)</div></div>`:''}
+        <div class="detail-cell"><div class="lbl">Vial / BAC</div><div class="val">${p.vial||'—'} mg / ${p.bac||'—'} ml</div></div>
+        <div class="detail-cell"><div class="lbl">Frequency</div><div class="val">${p.freq||1}x / day</div></div>
+        ${p.dosesPerVial?`<div class="detail-cell"><div class="lbl">Vial Doses Left</div><div class="val" style="color:${p.dosesLeft<=3?'var(--red)':p.dosesLeft<=7?'var(--amber)':'var(--green)'}">${p.dosesLeft!=null?p.dosesLeft:'?'} / ${p.dosesPerVial}</div></div>`:''}
+        <div class="detail-cell"><div class="lbl">Schedule</div><div class="val">${sd}</div></div>
+        ${(p.times&&p.times.some(t=>t))?`<div class="detail-cell full"><div class="lbl">Dose Times</div><div class="val">${Array.from({length:p.freq||1},(_,i)=>p.times&&p.times[i]?(p.freq>1?'Dose '+(i+1)+': ': '')+fmtTimeTo12(p.times[i]):'').filter(Boolean).join(' · ')}</div></div>`:''}
+        ${p.timing?`<div class="detail-cell"><div class="lbl">Timing Note</div><div class="val">${p.timing}</div></div>`:''}
+        ${p.startDate?`<div class="detail-cell"><div class="lbl">Start Date</div><div class="val">${p.startDate}</div></div>`:''}
+        ${titHTML}
+        ${p.notes?`<div class="detail-cell full"><div class="lbl">Notes</div><div class="val">${p.notes}</div></div>`:''}
+      </div>
+      ${cycBar}
+      <div style="margin-top:12px"><button class="btn btn-primary btn-sm" onclick="closeModal('stat-detail-modal');openLogModal('${p.id}')">Log a Dose</button></div>
+    </div>
+  </div>`;
+}
 function renderStack(){
   const el=document.getElementById('stack-list');
   if(!peptides.length){el.innerHTML=`<div class="empty-state"><div class="icon">🧪</div><h3>Your stack is empty</h3><p>Tap <strong>Add</strong> in the top right to add your first peptide.</p></div>`;return;}
-  el.innerHTML=peptides.map(p=>{
-    const dose=getCurrentDose(p);const calc=calcUnits(p,dose);const cd=getCycleDay(p);
-    let sd='';
-    if(p.schedType==='daily')sd='Every day';
-    else if(p.schedType==='weekly')sd=(p.schedDays||[]).map(d=>['Su','Mo','Tu','We','Th','Fr','Sa'][d]).join(', ');
-    else if(p.schedType==='cycle')sd=`${p.cycleOn||5} on / ${p.cycleOff||2} off`;
-    else sd='As needed';
-    const cycBar=cd?`<div class="cycle-bar-wrap">
-      <div class="cycle-bar-label"><span>Day ${cd.pos+1} of ${cd.cycle} (${cd.isOn?'ON':'OFF'})</span><span>${cd.displayOn} ${cd.unit} on / ${cd.displayOff} ${cd.unit} off</span></div>
-      <div class="cycle-bar"><div class="cycle-bar-fill ${cd.isOn?'':'off-phase'}" style="width:${(cd.pos/cd.cycle*100).toFixed(1)}%"></div></div>
-    </div>`:'';
-    const titHTML=p.titration&&p.titration.length?`<div class="detail-cell full"><div class="lbl">Titration</div><div class="val">${p.titration.map((s,i)=>`Step ${i+1}: ${s.dose} mcg × ${s.days} days`).join(' → ')}</div></div>`:'';
-    return`<div class="peptide-card">
-      <div class="peptide-card-header" onclick="toggleDet('${p.id}')">
-        <div class="peptide-color-bar" style="background:${p.color||'#2e4a8c'}"></div>
-        <div class="peptide-card-info">
-          <div class="peptide-card-name">${p.name}</div>
-          <div class="peptide-card-sub">${dose} mcg · ${sd}${calc?' · '+calc.units+' units':''}</div>
-        </div>
-        <div class="peptide-card-actions">
-          <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();openEditModal('${p.id}')">Edit</button>
-          <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();delPeptide('${p.id}')">Del</button>
-        </div>
-      </div>
-      <div class="peptide-detail-panel" id="det-${p.id}">
-        <div class="detail-grid">
-          <div class="detail-cell"><div class="lbl">Current Dose</div><div class="val">${dose} mcg</div></div>
-          ${calc?`<div class="detail-cell"><div class="lbl">Syringe Units</div><div class="val" style="color:var(--blue)">${calc.units} units (${calc.ml} ml)</div></div>`:''}
-          <div class="detail-cell"><div class="lbl">Vial / BAC</div><div class="val">${p.vial||'—'} mg / ${p.bac||'—'} ml</div></div>
-          <div class="detail-cell"><div class="lbl">Frequency</div><div class="val">${p.freq||1}x / day</div></div>
-          ${p.dosesPerVial?`<div class="detail-cell"><div class="lbl">Vial Doses Left</div><div class="val" style="color:${p.dosesLeft<=3?'var(--red)':p.dosesLeft<=7?'var(--amber)':'var(--green)'}">${p.dosesLeft!=null?p.dosesLeft:'?'} / ${p.dosesPerVial}</div></div>`:''}
-          <div class="detail-cell"><div class="lbl">Schedule</div><div class="val">${sd}</div></div>
-          ${(p.times&&p.times.some(t=>t))?`<div class="detail-cell full"><div class="lbl">Dose Times</div><div class="val">${Array.from({length:p.freq||1},(_,i)=>p.times&&p.times[i]?(p.freq>1?'Dose '+(i+1)+': ': '')+fmtTimeTo12(p.times[i]):'').filter(Boolean).join(' · ')}</div></div>`:''}
-          ${p.timing?`<div class="detail-cell"><div class="lbl">Timing Note</div><div class="val">${p.timing}</div></div>`:''}
-          ${p.startDate?`<div class="detail-cell"><div class="lbl">Start Date</div><div class="val">${p.startDate}</div></div>`:''}
-          ${titHTML}
-          ${p.notes?`<div class="detail-cell full"><div class="lbl">Notes</div><div class="val">${p.notes}</div></div>`:''}
-        </div>
-        ${cycBar}
-        <div style="margin-top:12px"><button class="btn btn-primary btn-sm" onclick="openLogModal('${p.id}')">Log a Dose</button></div>
-      </div>
-    </div>`;
-  }).join('');
+  el.innerHTML=peptides.map(p=>peptideCardHTML(p,'')).join('');
 }
-function toggleDet(id){const p=document.getElementById('det-'+id);if(p)p.classList.toggle('open');}
+function toggleDet(fullId){const p=document.getElementById(fullId);if(p)p.classList.toggle('open');}
 
 let selColor='#2e4a8c',titSteps=[],selDays=[],curSchedType='daily';
 let currentDoseUnit='mcg';
