@@ -390,7 +390,17 @@ table{border-collapse:collapse}
         <div class="form-group"><label class="form-label">Vial Size (mg)</label><input class="form-input" type="number" id="p-vial" placeholder="10" oninput="updateCalcPreview()"></div>
         <div class="form-group"><label class="form-label">BAC Water (ml)</label><input class="form-input" type="number" id="p-bac" placeholder="2" step="0.5" oninput="updateCalcPreview()"></div>
       </div>
-      <div class="form-group"><label class="form-label">Dose (mcg) *</label><input class="form-input" type="number" id="p-dose" placeholder="500" oninput="updateCalcPreview()"><div class="form-hint" id="unit-preview"></div></div>
+      <div class="form-group">
+        <label class="form-label">Dose *</label>
+        <div style="display:flex;gap:8px">
+          <input class="form-input" type="number" id="p-dose" placeholder="500" oninput="updateCalcPreview()" style="flex:1">
+          <div style="display:flex;border:1.5px solid var(--border);border-radius:10px;overflow:hidden;flex-shrink:0">
+            <button type="button" id="dose-unit-mcg" class="dose-unit-btn active" onclick="setDoseUnit('mcg')" style="padding:0 14px;font-size:13px;font-weight:600;border:none;background:var(--navy);color:var(--white);cursor:pointer">mcg</button>
+            <button type="button" id="dose-unit-mg" class="dose-unit-btn" onclick="setDoseUnit('mg')" style="padding:0 14px;font-size:13px;font-weight:600;border:none;background:var(--bg);color:var(--text-mid);cursor:pointer">mg</button>
+          </div>
+        </div>
+        <div class="form-hint" id="unit-preview"></div>
+      </div>
       <div class="form-group">
         <label class="form-label">Syringe Size</label>
         <div style="display:flex;gap:8px">
@@ -510,6 +520,7 @@ table{border-collapse:collapse}
       </div>
       <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="log-notes" placeholder="Reactions, observations..."></textarea></div>
       <button class="btn btn-primary btn-full" onclick="confirmLogDose()">Log Dose</button>
+      <button class="btn btn-secondary btn-full" style="margin-top:8px" onclick="skipDose()">Skip This Dose</button>
     </div>
   </div>
 </div>
@@ -573,7 +584,7 @@ if ('serviceWorker' in navigator) {
 // ── App Version ──
 // Bump this string every time you deploy a change — makes it obvious
 // in the app (and in the console) whether a fix actually made it live.
-const APP_VERSION = 'v1.7.2 — 2026-08-08 (reverted bad layout fix, restored working bottom spacing)';
+const APP_VERSION = 'v1.8.0 — 2026-08-08 (skip dose option, future-start-date bug fixed, mcg/mg toggle)';
 
 // ── Push Notifications ──
 // Fill these in once your Render service is live and you've run generate-vapid.js
@@ -769,7 +780,7 @@ const REF_DATA = [
 ];
 
 
-const SK={p:'prx_p',l:'prx_l',c:'prx_c'};
+const SK={p:'prx_p',l:'prx_l',c:'prx_c',s:'prx_s'};
 function ld(k){try{return JSON.parse(localStorage.getItem(SK[k]))||[]}catch{return[]}}
 function sv(k,d){try{localStorage.setItem(SK[k],JSON.stringify(d))}catch(e){toast('Storage error')}}
 let peptides=ld('p'),doseLog=ld('l');
@@ -787,6 +798,8 @@ if(!localStorage.getItem('prx_migrated_v13')){
 }
 let todayChecked=(()=>{try{const r=JSON.parse(localStorage.getItem(SK.c));if(r&&r.date===todayStr())return r.ids}catch{}return[]})();
 function saveTodayChecked(){localStorage.setItem(SK.c,JSON.stringify({date:todayStr(),ids:todayChecked}))}
+let todaySkipped=(()=>{try{const r=JSON.parse(localStorage.getItem(SK.s));if(r&&r.date===todayStr())return r.ids}catch{}return[]})();
+function saveTodaySkipped(){localStorage.setItem(SK.s,JSON.stringify({date:todayStr(),ids:todaySkipped}))}
 
 function switchTab(name,el){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
@@ -808,6 +821,7 @@ function cycleDaysOn(p){
 }
 function isDueToday(p){
   if(!p.active)return false;
+  if(p.startDate&&p.startDate>todayStr())return false; // hasn't started yet
   const type=p.schedType||'daily';
   if(type==='asneeded')return false;
   const today=new Date();const dow=today.getDay();
@@ -869,7 +883,8 @@ function renderDashboard(){
   const due=peptides.filter(isDueToday);
   const totalScheduled=due.reduce((s,p)=>s+(p.freq||1),0);
   const totalDone=due.reduce((s,p)=>{const freq=p.freq||1;let c=0;for(let i=0;i<freq;i++){if(todayChecked.includes(p.id+'_'+i))c++;}return s+c;},0);
-  const totalDue=totalScheduled-totalDone;
+  const totalSkipped=due.reduce((s,p)=>{const freq=p.freq||1;let c=0;for(let i=0;i<freq;i++){if(todaySkipped.includes(p.id+'_'+i))c++;}return s+c;},0);
+  const totalDue=totalScheduled-totalDone-totalSkipped;
   document.getElementById('stat-due').textContent=totalDue;
   document.getElementById('stat-done').textContent=totalDone;
   document.getElementById('stat-active').textContent=peptides.filter(p=>p.active).length;
@@ -883,7 +898,7 @@ function renderDashboard(){
       const conc=p.vial&&p.bac?(p.vial*1000)/p.bac:null;
       for(let i=0;i<freq;i++){
         const checkId=p.id+'_'+i;
-        if(todayChecked.includes(checkId))continue; // hide logged doses
+        if(todayChecked.includes(checkId)||todaySkipped.includes(checkId))continue; // hide logged/skipped doses
         const rawTime=p.times&&p.times[i]?p.times[i]:null; // "HH:MM" 24h or null
         const timeStr=rawTime?fmtTimeTo12(rawTime):'';
         const doseLabel=freq>1?('Dose '+(i+1))+(timeStr?' ('+timeStr+')':''):(timeStr||p.timing||'');
@@ -945,7 +960,7 @@ function openStatModal(kind){
     due.forEach(p=>{
       const freq=p.freq||1;const dose=getCurrentDose(p);
       for(let i=0;i<freq;i++){
-        if(todayChecked.includes(p.id+'_'+i))continue;
+        if(todayChecked.includes(p.id+'_'+i)||todaySkipped.includes(p.id+'_'+i))continue;
         const timeStr=p.times&&p.times[i]?fmtTimeTo12(p.times[i]):'';
         rows.push(`<div class="log-item"><div class="log-dot" style="background:${p.color||'var(--blue)'}"></div><div class="log-info"><div class="log-name">${p.name}${freq>1?' — Dose '+(i+1):''}</div><div class="log-meta">${dose} mcg${timeStr?' · '+timeStr:''}</div></div></div>`);
       }
@@ -1125,6 +1140,27 @@ function renderStack(){
 function toggleDet(id){const p=document.getElementById('det-'+id);if(p)p.classList.toggle('open');}
 
 let selColor='#2e4a8c',titSteps=[],selDays=[],curSchedType='daily';
+let currentDoseUnit='mcg';
+function setDoseUnit(unit){
+  if(unit===currentDoseUnit)return;
+  const input=document.getElementById('p-dose');
+  const val=parseFloat(input.value);
+  if(!isNaN(val)&&val>0){
+    input.value=unit==='mg'?+(val/1000).toFixed(4):+(val*1000).toFixed(2);
+  }
+  currentDoseUnit=unit;
+  const mcgBtn=document.getElementById('dose-unit-mcg'),mgBtn=document.getElementById('dose-unit-mg');
+  mcgBtn.style.background=unit==='mcg'?'var(--navy)':'var(--bg)';
+  mcgBtn.style.color=unit==='mcg'?'var(--white)':'var(--text-mid)';
+  mgBtn.style.background=unit==='mg'?'var(--navy)':'var(--bg)';
+  mgBtn.style.color=unit==='mg'?'var(--white)':'var(--text-mid)';
+  updateCalcPreview();
+}
+function getDoseInputMcg(){
+  const v=parseFloat(document.getElementById('p-dose').value);
+  if(isNaN(v))return NaN;
+  return currentDoseUnit==='mg'?v*1000:v;
+}
 function openAddModal(){
   resetForm();
   document.getElementById('modal-title').textContent='Add Peptide';
@@ -1150,6 +1186,12 @@ function resetForm(){
   const cd=document.getElementById('cyc-days');if(cd)cd.checked=true;
   updateCycleLabels();
   const dpvEl=document.getElementById('p-doses-per-vial');if(dpvEl)dpvEl.value='';
+  currentDoseUnit='mcg';
+  const mcgBtn=document.getElementById('dose-unit-mcg'),mgBtn=document.getElementById('dose-unit-mg');
+  if(mcgBtn&&mgBtn){
+    mcgBtn.style.background='var(--navy)';mcgBtn.style.color='var(--white)';
+    mgBtn.style.background='var(--bg)';mgBtn.style.color='var(--text-mid)';
+  }
   renderTimeInputs();
 }
 function openEditModal(id){
@@ -1202,7 +1244,7 @@ function renderTitRows(){document.getElementById('titration-rows').innerHTML=tit
 function rmTitRow(i){titSteps.splice(i,1);renderTitRows();}
 function savePeptide(){
   const name=document.getElementById('p-name').value.trim();if(!name){toast('Name required');return;}
-  const dose=parseFloat(document.getElementById('p-dose').value)||0;if(!dose){toast('Dose required');return;}
+  const dose=getDoseInputMcg()||0;if(!dose){toast('Dose required');return;}
   const useTit=document.getElementById('titration-toggle').checked;
   const editId=document.getElementById('edit-peptide-id').value;
   const freq=parseInt(document.getElementById('p-freq').value)||1;
@@ -1295,7 +1337,7 @@ function getTimeValues(){
 function updateCalcPreview(){
   const v=parseFloat(document.getElementById('p-vial').value);
   const b=parseFloat(document.getElementById('p-bac').value);
-  const d=parseFloat(document.getElementById('p-dose').value);
+  const d=getDoseInputMcg();
   const h=document.getElementById('unit-preview');
   const dpvEl=document.getElementById('p-doses-per-vial');
   const syMax=getSyringeMax(false);
@@ -1349,6 +1391,26 @@ function confirmLogDose(){
   if(!todayChecked.includes(checkId)){todayChecked.push(checkId);saveTodayChecked();}
   closeModal('log-dose-modal');renderDashboard();toast('Dose logged ✓');
 }
+function skipDose(){
+  const baseId=document.getElementById('log-base-id').value;
+  const doseIdx=document.getElementById('log-dose-idx').value;
+  const checkId=baseId+'_'+doseIdx;
+  const p=peptides.find(x=>x.id===baseId);if(!p)return;
+  const timeVal=document.getElementById('log-time').value;
+  let customTs=null;
+  if(timeVal){
+    const[hh,mm]=timeVal.split(':').map(Number);
+    const d=new Date();d.setHours(hh,mm,0,0);
+    customTs=d.toISOString();
+  }
+  doseLog.push({id:'l_'+Date.now()+Math.random(),peptideId:p.id,name:p.name,color:p.color,
+    dose:parseFloat(document.getElementById('log-dose').value)||getCurrentDose(p),
+    site:'',notes:document.getElementById('log-notes').value||'',
+    missed:false,skipped:true,ts:customTs||new Date().toISOString(),checkId});
+  sv('l',doseLog);
+  if(!todaySkipped.includes(checkId)){todaySkipped.push(checkId);saveTodaySkipped();}
+  closeModal('log-dose-modal');renderDashboard();toast('Dose skipped');
+}
 function logEntry(p,dose,site,notes,missed,customTs,checkId){
   doseLog.push({id:'l_'+Date.now()+Math.random(),peptideId:p.id,name:p.name,color:p.color,dose,site,notes,missed:!!missed,ts:customTs||new Date().toISOString(),checkId:checkId||null});
   sv('l',doseLog);
@@ -1376,13 +1438,19 @@ function unlogDose(entryId){
   if(!confirm(`Remove this log entry for ${entry.name}?`))return;
   doseLog=doseLog.filter(e=>e.id!==entryId);
   sv('l',doseLog);
-  // If this was checked off today, undo the checkmark so it goes back to Due
-  if(entry.checkId&&todayChecked.includes(entry.checkId)){
-    todayChecked=todayChecked.filter(id=>id!==entry.checkId);
-    saveTodayChecked();
+  // Undo whichever mark this entry created — checked or skipped —
+  // so the peptide goes back to Due either way.
+  if(entry.checkId){
+    if(entry.skipped&&todaySkipped.includes(entry.checkId)){
+      todaySkipped=todaySkipped.filter(id=>id!==entry.checkId);
+      saveTodaySkipped();
+    }else if(!entry.skipped&&todayChecked.includes(entry.checkId)){
+      todayChecked=todayChecked.filter(id=>id!==entry.checkId);
+      saveTodayChecked();
+    }
   }
-  // Restore vial count if it was decremented (missed-dose entries never decremented one)
-  if(!entry.missed){
+  // Restore vial count if it was decremented (missed/skipped entries never decremented one)
+  if(!entry.missed&&!entry.skipped){
     const p=peptides.find(x=>x.id===entry.peptideId);
     if(p&&p.dosesLeft!=null){
       p.dosesLeft=p.dosesLeft+1;
@@ -1402,7 +1470,8 @@ function renderLog(){
     const d=new Date(e.ts);const ds=d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
     if(ds!==lastDate){if(lastDate)html+='</div>';html+=`<div class="section-label" style="margin-top:14px">${ds}</div><div>`;lastDate=ds;}
     const missedBadge=e.missed?'<span class="badge badge-red" style="margin-left:6px">missed</span>':'';
-    html+=`<div class="log-item"><div class="log-dot" style="background:${e.missed?'var(--red)':e.color||'var(--blue)'}"></div><div class="log-info"><div class="log-name">${e.name}${missedBadge}</div><div class="log-meta">${e.dose} mcg${e.site?' · '+e.site:''}${e.notes?' · '+e.notes:''}</div></div><div class="log-time">${d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}</div><button class="btn btn-sm" onclick="unlogDose('${e.id}')" style="background:var(--red-light);color:var(--red);margin-left:8px" title="Unlog">✕</button></div>`;
+    const skippedBadge=e.skipped?'<span class="badge badge-amber" style="margin-left:6px">skipped</span>':'';
+    html+=`<div class="log-item"><div class="log-dot" style="background:${e.missed?'var(--red)':e.skipped?'var(--amber,#d97706)':e.color||'var(--blue)'}"></div><div class="log-info"><div class="log-name">${e.name}${missedBadge}${skippedBadge}</div><div class="log-meta">${e.dose} mcg${e.site?' · '+e.site:''}${e.notes?' · '+e.notes:''}</div></div><div class="log-time">${d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}</div><button class="btn btn-sm" onclick="unlogDose('${e.id}')" style="background:var(--red-light);color:var(--red);margin-left:8px" title="Unlog">✕</button></div>`;
   });
   if(lastDate)html+='</div>';el.innerHTML=html;
 }
