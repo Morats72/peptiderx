@@ -178,9 +178,14 @@ table{border-collapse:collapse}
   aria-hidden="true">
 <div class="app-header">
   <div><h1>PeptideRx</h1><div class="subtitle">Personal Manager</div></div>
-  <button class="btn btn-secondary btn-sm" onclick="openAddModal()">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add
-  </button>
+  <div style="display:flex;gap:8px;align-items:center">
+    <button class="btn btn-secondary btn-sm" onclick="openAddModal()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add
+    </button>
+    <button class="btn btn-secondary btn-sm" onclick="openSettingsModal()" aria-label="Settings" style="padding:0 10px">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </button>
+  </div>
 </div>
 
 <div class="screens">
@@ -318,25 +323,6 @@ table{border-collapse:collapse}
 
 <!-- LOG -->
 <div class="screen" id="screen-log">
-  <div class="card" style="margin-bottom:14px">
-    <div class="card-body">
-      <div class="section-label" style="margin:0 0 8px">Push Notifications</div>
-      <div id="push-status" style="font-size:13px;color:var(--text-secondary,#666);margin-bottom:10px">Not enabled yet</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn btn-primary btn-sm" onclick="enablePushNotifications()">Enable Notifications</button>
-        <button class="btn btn-sm" onclick="sendTestPush()">Send Test Push</button>
-      </div>
-      <div id="app-version" style="font-size:11px;color:var(--text-soft,#999);margin-top:10px"></div>
-    </div>
-  </div>
-  <div class="card" style="margin-bottom:14px">
-    <div class="card-body">
-      <div class="section-label" style="margin:0 0 8px">Keep Screen Awake</div>
-      <div id="wakelock-status" style="font-size:13px;color:var(--text-secondary,#666);margin-bottom:10px">Off — screen will sleep normally</div>
-      <button class="btn btn-primary btn-sm" id="wakelock-btn" onclick="toggleWakeLock()">Keep Screen On</button>
-      <div class="form-hint" style="margin-top:8px">Only stays on while this app is the active tab on screen — turns off automatically if you switch apps or lock your phone. Turn it off when you're done so you're not burning battery for no reason.</div>
-    </div>
-  </div>
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
     <div class="section-label" style="margin:0">Dose History</div>
     <button class="btn btn-danger btn-sm" onclick="clearLog()">Clear Log</button>
@@ -571,6 +557,27 @@ table{border-collapse:collapse}
   </div>
 </div>
 
+<!-- SETTINGS MODAL -->
+<div class="modal-overlay" id="settings-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header"><h3>Settings</h3><button class="modal-close" onclick="closeModal('settings-modal')">✕</button></div>
+    <div class="modal-body">
+      <div class="section-label" style="margin:0 0 8px">Push Notifications</div>
+      <div id="push-status" style="font-size:13px;color:var(--text-secondary,#666);margin-bottom:10px">Not enabled yet</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px">
+        <button class="btn btn-primary btn-sm" onclick="enablePushNotifications()">Enable Notifications</button>
+        <button class="btn btn-sm" onclick="sendTestPush()">Send Test Push</button>
+      </div>
+      <div class="section-label" style="margin:0 0 8px">Keep Screen Awake</div>
+      <div id="wakelock-status" style="font-size:13px;color:var(--text-secondary,#666);margin-bottom:10px">Off — screen will sleep normally</div>
+      <button class="btn btn-primary btn-sm" id="wakelock-btn" onclick="toggleWakeLock()">Keep Screen On</button>
+      <div class="form-hint" style="margin-top:8px">Only stays on while this app is the active tab on screen — turns off automatically if you switch apps or lock your phone. Turn it off when you're done so you're not burning battery for no reason.</div>
+      <div id="app-version" style="font-size:11px;color:var(--text-soft,#999);margin-top:20px;padding-top:16px;border-top:1px solid var(--border)"></div>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -592,7 +599,7 @@ if ('serviceWorker' in navigator) {
 // ── App Version ──
 // Bump this string every time you deploy a change — makes it obvious
 // in the app (and in the console) whether a fix actually made it live.
-const APP_VERSION = 'v2.0.0 — 2026-08-09 (keep-screen-awake, fixed early-log still notifying bug, pause/complete stack)';
+const APP_VERSION = 'v2.1.0 — 2026-08-09 (moved notifications/wake-lock into a Settings modal)';
 
 // ── Screen Wake Lock ──
 let wakeLock=null;
@@ -1242,6 +1249,7 @@ function openAddModal(){
   renderTimeInputs();
 }
 function closeModal(id){document.getElementById(id).classList.remove('open')}
+function openSettingsModal(){document.getElementById('settings-modal').classList.add('open');}
 function resetForm(){
   ['edit-peptide-id','p-name','p-vial','p-bac','p-dose','p-timing','p-notes'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('p-start-date').value=todayStr();
