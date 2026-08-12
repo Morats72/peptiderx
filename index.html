@@ -329,6 +329,14 @@ table{border-collapse:collapse}
       <div id="app-version" style="font-size:11px;color:var(--text-soft,#999);margin-top:10px"></div>
     </div>
   </div>
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-body">
+      <div class="section-label" style="margin:0 0 8px">Keep Screen Awake</div>
+      <div id="wakelock-status" style="font-size:13px;color:var(--text-secondary,#666);margin-bottom:10px">Off — screen will sleep normally</div>
+      <button class="btn btn-primary btn-sm" id="wakelock-btn" onclick="toggleWakeLock()">Keep Screen On</button>
+      <div class="form-hint" style="margin-top:8px">Only stays on while this app is the active tab on screen — turns off automatically if you switch apps or lock your phone. Turn it off when you're done so you're not burning battery for no reason.</div>
+    </div>
+  </div>
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
     <div class="section-label" style="margin:0">Dose History</div>
     <button class="btn btn-danger btn-sm" onclick="clearLog()">Clear Log</button>
@@ -584,7 +592,62 @@ if ('serviceWorker' in navigator) {
 // ── App Version ──
 // Bump this string every time you deploy a change — makes it obvious
 // in the app (and in the console) whether a fix actually made it live.
-const APP_VERSION = 'v1.9.0 — 2026-08-09 (Due/Done/Active lists now show full peptide detail card)';
+const APP_VERSION = 'v2.0.0 — 2026-08-09 (keep-screen-awake, fixed early-log still notifying bug, pause/complete stack)';
+
+// ── Screen Wake Lock ──
+let wakeLock=null;
+let wakeLockWanted=false; // tracks user intent, since the browser auto-releases on backgrounding
+function setWakeLockStatus(msg){
+  const el=document.getElementById('wakelock-status');
+  if(el)el.textContent=msg;
+  const btn=document.getElementById('wakelock-btn');
+  if(btn)btn.textContent=wakeLockWanted?'Turn Off':'Keep Screen On';
+}
+async function toggleWakeLock(){
+  if(!('wakeLock' in navigator)){
+    setWakeLockStatus('Not supported on this browser/iOS version');
+    toast('Screen Wake Lock not supported here');
+    return;
+  }
+  if(wakeLockWanted){
+    wakeLockWanted=false;
+    if(wakeLock){try{await wakeLock.release();}catch(e){}wakeLock=null;}
+    setWakeLockStatus('Off — screen will sleep normally');
+    return;
+  }
+  try{
+    wakeLock=await navigator.wakeLock.request('screen');
+    wakeLockWanted=true;
+    setWakeLockStatus('On — screen will stay awake while app is open');
+    wakeLock.addEventListener('release',()=>{
+      wakeLock=null;
+      // Only show "off" if the user didn't just background the app —
+      // visibilitychange handler re-acquires automatically when they return.
+      if(wakeLockWanted&&document.visibilityState==='visible'){
+        wakeLockWanted=false;
+        setWakeLockStatus('Off — screen will sleep normally');
+      }
+    });
+  }catch(err){
+    setWakeLockStatus('Could not enable: '+err.message);
+    toast('Could not keep screen awake');
+  }
+}
+document.addEventListener('visibilitychange',async()=>{
+  if(document.visibilityState==='visible'&&wakeLockWanted&&!wakeLock){
+    try{
+      wakeLock=await navigator.wakeLock.request('screen');
+      setWakeLockStatus('On — screen will stay awake while app is open');
+      wakeLock.addEventListener('release',()=>{
+        wakeLock=null;
+        if(wakeLockWanted&&document.visibilityState==='visible'){
+          wakeLockWanted=false;
+          setWakeLockStatus('Off — screen will sleep normally');
+        }
+      });
+    }catch(e){/* silently fail — user can just tap the button again */}
+  }
+});
 
 // ── Push Notifications ──
 // Fill these in once your Render service is live and you've run generate-vapid.js
@@ -679,6 +742,8 @@ function buildTodaysSchedule(){
     const unitsInfo=calcUnits(p,dose);
     const units=unitsInfo?unitsInfo.units+'u':undefined;
     for(let i=0;i<freq;i++){
+      const checkId=p.id+'_'+i;
+      if(todayChecked.includes(checkId)||todaySkipped.includes(checkId))continue; // already handled — don't remind
       const time=p.times&&p.times[i];
       if(!time)continue;
       schedule.push({
@@ -1040,6 +1105,7 @@ function quickLogDose(peptideId,idx){
   logEntry(p,getCurrentDose(p),'','',false,null,checkId);
   toast(p.name+' logged ✓');
   renderDashboard();
+  syncScheduleToServer();
 }
 
 function checkMidnightRollover(){
@@ -1095,11 +1161,21 @@ function peptideCardHTML(p,idPrefix){
   </div>`:'';
   const titHTML=p.titration&&p.titration.length?`<div class="detail-cell full"><div class="lbl">Titration</div><div class="val">${p.titration.map((s,i)=>`Step ${i+1}: ${s.dose} mcg × ${s.days} days`).join(' → ')}</div></div>`:'';
   const detId=idPrefix+'det-'+p.id;
+  const status=p.status||'active';
+  const statusBadge=status==='paused'?'<span class="badge badge-amber" style="margin-left:6px">PAUSED</span>'
+    :status==='completed'?'<span class="badge" style="margin-left:6px;background:var(--bg-soft,#e5e7eb);color:var(--text-mid,#6b7280)">COMPLETED</span>':'';
+  const statusActionBtn=status==='active'
+    ?`<button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();pausePeptide('${p.id}')">Pause</button>
+      <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();completePeptide('${p.id}')">Complete</button>`
+    :status==='paused'
+    ?`<button class="btn btn-primary btn-sm" onclick="event.stopPropagation();resumePeptide('${p.id}')">Resume</button>
+      <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();completePeptide('${p.id}')">Complete</button>`
+    :'';
   return`<div class="peptide-card">
     <div class="peptide-card-header" onclick="toggleDet('${detId}')">
       <div class="peptide-color-bar" style="background:${p.color||'#2e4a8c'}"></div>
       <div class="peptide-card-info">
-        <div class="peptide-card-name">${p.name}</div>
+        <div class="peptide-card-name">${p.name}${statusBadge}</div>
         <div class="peptide-card-sub">${dose} mcg · ${sd}${calc?' · '+calc.units+' units':''}</div>
       </div>
       <div class="peptide-card-actions">
@@ -1122,7 +1198,10 @@ function peptideCardHTML(p,idPrefix){
         ${p.notes?`<div class="detail-cell full"><div class="lbl">Notes</div><div class="val">${p.notes}</div></div>`:''}
       </div>
       ${cycBar}
-      <div style="margin-top:12px"><button class="btn btn-primary btn-sm" onclick="closeModal('stat-detail-modal');openLogModal('${p.id}')">Log a Dose</button></div>
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-primary btn-sm" onclick="closeModal('stat-detail-modal');openLogModal('${p.id}')">Log a Dose</button>
+        ${statusActionBtn}
+      </div>
     </div>
   </div>`;
 }
@@ -1262,13 +1341,28 @@ function savePeptide(){
     cycleOff:parseInt(document.getElementById('p-cycle-off').value)||2,
     cycleUnit,
     startDate:document.getElementById('p-start-date').value||todayStr(),
-    titration:useTit?titSteps.filter(s=>s.dose&&s.days):[],active:true};
+    titration:useTit?titSteps.filter(s=>s.dose&&s.days):[],
+    active:existing?existing.active:true,
+    status:existing?(existing.status||'active'):'active'};
   if(editId){peptides=peptides.map(x=>x.id===editId?p:x);toast('Updated');}
   else{peptides.push(p);toast('Added to stack');}
   sv('p',peptides);closeModal('add-peptide-modal');renderStack();renderDashboard();
   syncScheduleToServer();
 }
 function delPeptide(id){if(!confirm('Remove from stack?'))return;peptides=peptides.filter(p=>p.id!==id);sv('p',peptides);renderStack();renderDashboard();toast('Removed');syncScheduleToServer();}
+function pausePeptide(id){
+  peptides=peptides.map(p=>p.id===id?{...p,active:false,status:'paused'}:p);
+  sv('p',peptides);renderStack();renderDashboard();syncScheduleToServer();toast('Paused — resume anytime');
+}
+function resumePeptide(id){
+  peptides=peptides.map(p=>p.id===id?{...p,active:true,status:'active'}:p);
+  sv('p',peptides);renderStack();renderDashboard();syncScheduleToServer();toast('Resumed');
+}
+function completePeptide(id){
+  if(!confirm('Mark this stack as complete? It stops showing as due today, but stays in My Stack and your log history.'))return;
+  peptides=peptides.map(p=>p.id===id?{...p,active:false,status:'completed'}:p);
+  sv('p',peptides);renderStack();renderDashboard();syncScheduleToServer();toast('Marked complete');
+}
 function updateCycleLabels(){
   const isWk=document.getElementById('cyc-weeks')&&document.getElementById('cyc-weeks').checked;
   const lbl=isWk?'Weeks':'Days';
@@ -1384,6 +1478,7 @@ function confirmLogDose(){
   logEntry(p,dose,document.getElementById('log-site').value,document.getElementById('log-notes').value,false,customTs,checkId);
   if(!todayChecked.includes(checkId)){todayChecked.push(checkId);saveTodayChecked();}
   closeModal('log-dose-modal');renderDashboard();toast('Dose logged ✓');
+  syncScheduleToServer();
 }
 function skipDose(){
   const baseId=document.getElementById('log-base-id').value;
@@ -1404,6 +1499,7 @@ function skipDose(){
   sv('l',doseLog);
   if(!todaySkipped.includes(checkId)){todaySkipped.push(checkId);saveTodaySkipped();}
   closeModal('log-dose-modal');renderDashboard();toast('Dose skipped');
+  syncScheduleToServer();
 }
 function logEntry(p,dose,site,notes,missed,customTs,checkId){
   doseLog.push({id:'l_'+Date.now()+Math.random(),peptideId:p.id,name:p.name,color:p.color,dose,site,notes,missed:!!missed,ts:customTs||new Date().toISOString(),checkId:checkId||null});
@@ -1453,6 +1549,7 @@ function unlogDose(entryId){
     }
   }
   renderLog();renderDashboard();
+  syncScheduleToServer();
   toast('Log entry removed');
 }
 
@@ -1513,7 +1610,7 @@ function renderReference(){
   if(!filtered.length){list.innerHTML=`<div class="empty-state"><div class="icon">🔍</div><h3>No matches</h3></div>`;return;}
   list.innerHTML=filtered.map((p,i)=>`<div class="ref-item">
     <div class="ref-item-header" onclick="toggleRef('rb${i}')">
-      <div style="flex:1"><div class="ref-name">${p.name}</div><div class="ref-cat">${p.cats.join(' · ')}</div></div>
+      <div style="flex:1"><div class="ref-name">${p.name} <a href="javascript:void(0)" onclick="event.stopPropagation();scrollToRefTop()" style="font-size:11px;font-weight:600;color:var(--blue);margin-left:6px;text-decoration:none;white-space:nowrap">↑ Index</a></div><div class="ref-cat">${p.cats.join(' · ')}</div></div>
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text-soft);flex-shrink:0"><polyline points="6 9 12 15 18 9"/></svg>
     </div>
     <div class="ref-item-body" id="rb${i}">
@@ -1522,6 +1619,10 @@ function renderReference(){
       <div style="margin-top:10px"><button class="btn btn-secondary btn-sm" onclick="quickAdd('${p.name}')">+ Add to Stack</button></div>
     </div>
   </div>`).join('');
+}
+function scrollToRefTop(){
+  const el=document.getElementById('screen-reference');
+  if(el)el.scrollTo({top:0,behavior:'smooth'});
 }
 function toggleRef(id){const e=document.getElementById(id);if(e)e.classList.toggle('open');}
 function filterCat(cat,el){curCat=cat;document.querySelectorAll('.cat-pill').forEach(p=>p.classList.remove('active'));el.classList.add('active');renderReference();}
