@@ -599,7 +599,7 @@ if ('serviceWorker' in navigator) {
 // ── App Version ──
 // Bump this string every time you deploy a change — makes it obvious
 // in the app (and in the console) whether a fix actually made it live.
-const APP_VERSION = 'v2.1.0 — 2026-08-09 (moved notifications/wake-lock into a Settings modal)';
+const APP_VERSION = 'v2.2.1 — 2026-08-14 (new vial restores peptide to active schedule)';
 
 // ── Screen Wake Lock ──
 let wakeLock=null;
@@ -1537,12 +1537,14 @@ function logEntry(p,dose,site,notes,missed,customTs,checkId){
 function newVial(id){
   const p=peptides.find(x=>x.id===id);if(!p)return;
   if(!p.dosesPerVial){toast('Set doses per vial first (edit peptide)');return;}
-  p.dosesLeft=p.dosesPerVial;
-  peptides=peptides.map(x=>x.id===id?p:x);
+  // Reset vial counter AND restore active status/schedule so it shows in Due Today
+  peptides=peptides.map(x=>x.id===id
+    ?{...x,dosesLeft:x.dosesPerVial,active:true,status:'active'}
+    :x);
   sv('p',peptides);
   renderStack();
   renderDashboard();
-  toast(p.name+' — new vial started 🧪');
+  toast(p.name+' — new vial started, back on schedule 🧪');
 }
 
 function unlogDose(entryId){
