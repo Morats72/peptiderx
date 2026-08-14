@@ -193,8 +193,18 @@ table{border-collapse:collapse}
 <!-- DASHBOARD -->
 <div class="screen active" id="screen-dashboard">
   <div class="today-header">
-    <div class="date" id="today-date"></div>
-    <div class="greeting">Today's Doses</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div>
+        <div class="date" id="today-date"></div>
+        <div class="greeting" style="margin-bottom:0">Today\'s Doses</div>
+      </div>
+      <button id="dash-wakelock-btn" onclick="toggleWakeLock()"
+        style="background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.3);
+               color:white;border-radius:10px;padding:7px 12px;font-size:12px;
+               font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0">
+        💡 Screen On
+      </button>
+    </div>
     <div class="today-stats">
       <div class="stat-box" onclick="openStatModal('due')" style="cursor:pointer"><div class="num" id="stat-due">0</div><div class="lbl">Due</div></div>
       <div class="stat-box" onclick="openStatModal('done')" style="cursor:pointer"><div class="num" id="stat-done">0</div><div class="lbl">Done</div></div>
@@ -599,7 +609,7 @@ if ('serviceWorker' in navigator) {
 // ── App Version ──
 // Bump this string every time you deploy a change — makes it obvious
 // in the app (and in the console) whether a fix actually made it live.
-const APP_VERSION = 'v2.2.1 — 2026-08-14 (new vial restores peptide to active schedule)';
+const APP_VERSION = 'v2.2.2 — 2026-08-14 (screen on button on dashboard; wake lock error clarified)';
 
 // ── Screen Wake Lock ──
 let wakeLock=null;
@@ -607,8 +617,16 @@ let wakeLockWanted=false; // tracks user intent, since the browser auto-releases
 function setWakeLockStatus(msg){
   const el=document.getElementById('wakelock-status');
   if(el)el.textContent=msg;
+  // Settings button
   const btn=document.getElementById('wakelock-btn');
   if(btn)btn.textContent=wakeLockWanted?'Turn Off':'Keep Screen On';
+  // Dashboard button — reflects active state visually
+  const dbtn=document.getElementById('dash-wakelock-btn');
+  if(dbtn){
+    dbtn.textContent=wakeLockWanted?'💡 On':'💡 Screen On';
+    dbtn.style.background=wakeLockWanted?'rgba(255,255,255,0.30)':'rgba(255,255,255,0.15)';
+    dbtn.style.borderColor=wakeLockWanted?'rgba(255,255,255,0.7)':'rgba(255,255,255,0.3)';
+  }
 }
 async function toggleWakeLock(){
   if(!('wakeLock' in navigator)){
