@@ -173,6 +173,32 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',sans-
 .upcoming-color-bar{width:4px;height:34px;border-radius:2px;flex-shrink:0}
 .upcoming-dose-info{flex:1;min-width:0}
 .upcoming-dose-name{font-size:14px;font-weight:600;color:var(--text)}
+.log-view-btn{display:inline-flex;align-items:center;gap:5px;padding:7px 12px;
+  border-radius:8px;font-size:12px;font-weight:600;border:1.5px solid var(--border);
+  cursor:pointer;background:var(--bg);color:var(--text-mid);transition:all .15s}
+.log-view-btn.active{background:var(--blue);color:var(--white);border-color:var(--blue)}
+.cal-day{min-height:48px;border-radius:8px;padding:4px;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+  transition:background .15s;position:relative}
+.cal-day:active{background:var(--blue-light)}
+.cal-day.today .cal-day-num{background:var(--blue);color:white;border-radius:50%;
+  width:24px;height:24px;display:flex;align-items:center;justify-content:center}
+.cal-day.other-month .cal-day-num{color:var(--border)}
+.cal-day-num{font-size:12px;font-weight:600;color:var(--text);line-height:24px;
+  width:24px;text-align:center}
+.cal-badge{font-size:10px;font-weight:700;background:var(--green);color:white;
+  border-radius:10px;padding:1px 5px;margin-top:2px;line-height:14px}
+.cal-badge.has-missed{background:var(--amber)}
+.week-day-row{display:grid;grid-template-columns:60px 1fr;gap:8px;
+  padding:8px 0;border-bottom:1px solid var(--border);align-items:center}
+.week-day-row:last-child{border-bottom:none}
+.week-day-label{font-size:11px;font-weight:700;color:var(--text-mid);text-align:center}
+.week-day-label .wday-num{font-size:18px;font-weight:700;color:var(--navy);display:block}
+.week-day-label.today .wday-num{color:var(--blue)}
+.week-doses{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.week-dose-chip{font-size:11px;font-weight:600;padding:3px 8px;border-radius:12px;
+  background:var(--blue-light);color:var(--blue)}
+.week-dose-chip.missed{background:var(--red-light);color:var(--red)}
 .upcoming-dose-detail{font-size:12px;color:var(--text-mid);margin-top:2px}
 .upcoming-time-badge{font-size:12px;font-weight:700;color:var(--blue);
   background:var(--blue-light);padding:5px 9px;border-radius:8px;white-space:nowrap}
@@ -209,7 +235,7 @@ table{border-collapse:collapse}
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
       <div>
         <div class="date" id="today-date"></div>
-        <div class="greeting" style="margin-bottom:0">Today\'s Doses</div>
+        <div class="greeting" style="margin-bottom:0">Today's Doses</div>
       </div>
       <button id="dash-wakelock-btn" onclick="toggleWakeLock()"
         style="background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.3);
@@ -383,11 +409,80 @@ table{border-collapse:collapse}
 
 <!-- LOG -->
 <div class="screen" id="screen-log">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-    <div class="section-label" style="margin:0">Dose History</div>
-    <button class="btn btn-danger btn-sm" onclick="clearLog()">Clear Log</button>
+
+  <!-- View toggle -->
+  <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">
+    <div style="display:flex;gap:6px;flex:1">
+      <button class="log-view-btn active" id="lvb-month" onclick="setLogView('month',this)">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg>
+        Month
+      </button>
+      <button class="log-view-btn" id="lvb-week" onclick="setLogView('week',this)">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="15" x2="8" y2="15"/><line x1="12" y1="15" x2="12" y2="15"/><line x1="16" y1="15" x2="16" y2="15"/></svg>
+        Week
+      </button>
+      <button class="log-view-btn" id="lvb-list" onclick="setLogView('list',this)">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        List
+      </button>
+    </div>
+    <button class="btn btn-danger btn-sm" onclick="clearLog()">Clear</button>
   </div>
-  <div class="card"><div class="card-body" id="full-log-list"><div class="empty-state"><div class="icon">📋</div><h3>No doses logged yet</h3></div></div></div>
+
+  <!-- MONTH VIEW -->
+  <div id="log-month-view">
+    <div class="card">
+      <div class="card-body" style="padding:12px">
+        <!-- Month nav -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <button onclick="shiftMonth(-1)" style="background:none;border:none;cursor:pointer;padding:6px;color:var(--blue);font-size:20px;font-weight:700">&#8249;</button>
+          <div style="font-size:15px;font-weight:700;color:var(--navy)" id="cal-month-label"></div>
+          <button onclick="shiftMonth(1)" style="background:none;border:none;cursor:pointer;padding:6px;color:var(--blue);font-size:20px;font-weight:700">&#8250;</button>
+        </div>
+        <!-- Day headers -->
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);text-align:center;margin-bottom:4px">
+          <div style="font-size:10px;font-weight:700;color:var(--text-soft)">Su</div>
+          <div style="font-size:10px;font-weight:700;color:var(--text-soft)">Mo</div>
+          <div style="font-size:10px;font-weight:700;color:var(--text-soft)">Tu</div>
+          <div style="font-size:10px;font-weight:700;color:var(--text-soft)">We</div>
+          <div style="font-size:10px;font-weight:700;color:var(--text-soft)">Th</div>
+          <div style="font-size:10px;font-weight:700;color:var(--text-soft)">Fr</div>
+          <div style="font-size:10px;font-weight:700;color:var(--text-soft)">Sa</div>
+        </div>
+        <!-- Calendar grid -->
+        <div id="cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WEEK VIEW -->
+  <div id="log-week-view" style="display:none">
+    <div class="card">
+      <div class="card-body" style="padding:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <button onclick="shiftWeek(-1)" style="background:none;border:none;cursor:pointer;padding:6px;color:var(--blue);font-size:20px;font-weight:700">&#8249;</button>
+          <div style="font-size:15px;font-weight:700;color:var(--navy)" id="week-label"></div>
+          <button onclick="shiftWeek(1)" style="background:none;border:none;cursor:pointer;padding:6px;color:var(--blue);font-size:20px;font-weight:700">&#8250;</button>
+        </div>
+        <div id="week-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LIST VIEW -->
+  <div id="log-list-view" style="display:none">
+    <div class="card"><div class="card-body" id="full-log-list"><div class="empty-state"><div class="icon">📋</div><h3>No doses logged yet</h3></div></div></div>
+  </div>
+
+  <!-- DAY DETAIL VIEW -->
+  <div id="log-day-detail" style="display:none">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <button onclick="closeDayDetail()" style="background:var(--blue-light);border:none;color:var(--blue);border-radius:8px;padding:8px 12px;font-size:13px;font-weight:700;cursor:pointer">&#8592; Back</button>
+      <div style="font-size:15px;font-weight:700;color:var(--navy)" id="day-detail-label"></div>
+    </div>
+    <div class="card"><div class="card-body" id="day-detail-list"></div></div>
+  </div>
+
 </div>
 
 </div>
@@ -663,7 +758,7 @@ if ('serviceWorker' in navigator) {
 // ── App Version ──
 // Bump this string every time you deploy a change — makes it obvious
 // in the app (and in the console) whether a fix actually made it live.
-const APP_VERSION = 'v2.3.0 — 2026-08-16 (Upcoming tab — tomorrow/multi-day dose schedule by time of day)';
+const APP_VERSION = 'v2.4.0 — 2026-08-16 (Log: month calendar, week view, day detail; Upcoming tab)';
 
 // ── Screen Wake Lock ──
 let wakeLock=null;
@@ -956,7 +1051,12 @@ function switchTab(name,el){
   if(name==='upcoming')renderUpcoming();
   if(name==='stack')renderStack();
   if(name==='reference')renderReference();
-  if(name==='log')renderLog();
+  if(name==='log'){
+    // Default to month view on first open
+    renderLog();
+    if(logView==='month') renderCalMonth();
+    else if(logView==='week') renderCalWeek();
+  }
 }
 
 function cycleDaysOn(p){
@@ -1650,18 +1750,208 @@ function unlogDose(entryId){
   toast('Log entry removed');
 }
 
-function renderLog(){
-  const el=document.getElementById('full-log-list');
-  if(!doseLog.length){el.innerHTML=`<div class="empty-state"><div class="icon">📋</div><h3>No doses logged yet</h3><p>Mark doses as done from the Dashboard.</p></div>`;return;}
-  const sorted=[...doseLog].reverse();let lastDate='',html='';
-  sorted.forEach(e=>{
-    const d=new Date(e.ts);const ds=d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
-    if(ds!==lastDate){if(lastDate)html+='</div>';html+=`<div class="section-label" style="margin-top:14px">${ds}</div><div>`;lastDate=ds;}
-    const missedBadge=e.missed?'<span class="badge badge-red" style="margin-left:6px">missed</span>':'';
-    const skippedBadge=e.skipped?'<span class="badge badge-amber" style="margin-left:6px">skipped</span>':'';
-    html+=`<div class="log-item"><div class="log-dot" style="background:${e.missed?'var(--red)':e.skipped?'var(--amber,#d97706)':e.color||'var(--blue)'}"></div><div class="log-info"><div class="log-name">${e.name}${missedBadge}${skippedBadge}</div><div class="log-meta">${e.dose} mcg${e.site?' · '+e.site:''}${e.notes?' · '+e.notes:''}</div></div><div class="log-time">${d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}</div><button class="btn btn-sm" onclick="unlogDose('${e.id}')" style="background:var(--red-light);color:var(--red);margin-left:8px" title="Unlog">✕</button></div>`;
+// ── Log view state ──
+let logView = 'month';
+let calViewDate = new Date(); // month/week being viewed
+let prevLogView = 'month';   // what to return to from day detail
+
+function setLogView(view, el) {
+  logView = view;
+  document.querySelectorAll('.log-view-btn').forEach(b => b.classList.remove('active'));
+  if (el) el.classList.add('active');
+  document.getElementById('log-month-view').style.display  = view === 'month'  ? 'block' : 'none';
+  document.getElementById('log-week-view').style.display   = view === 'week'   ? 'block' : 'none';
+  document.getElementById('log-list-view').style.display   = view === 'list'   ? 'block' : 'none';
+  document.getElementById('log-day-detail').style.display  = 'none';
+  if (view === 'month') renderCalMonth();
+  if (view === 'week')  renderCalWeek();
+  if (view === 'list')  renderLogList();
+}
+
+// ── Build a date-keyed index of log entries ──
+function buildLogIndex() {
+  const idx = {};
+  doseLog.forEach(e => {
+    const d = new Date(e.ts);
+    const key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    if (!idx[key]) idx[key] = [];
+    idx[key].push(e);
   });
-  if(lastDate)html+='</div>';el.innerHTML=html;
+  return idx;
+}
+
+// ── Month navigation ──
+function shiftMonth(dir) {
+  calViewDate = new Date(calViewDate.getFullYear(), calViewDate.getMonth() + dir, 1);
+  renderCalMonth();
+}
+
+function renderCalMonth() {
+  const idx = buildLogIndex();
+  const today = new Date();
+  const yr = calViewDate.getFullYear();
+  const mo = calViewDate.getMonth();
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('cal-month-label').textContent = monthNames[mo] + ' ' + yr;
+
+  const firstDay = new Date(yr, mo, 1).getDay(); // 0=Sun
+  const daysInMonth = new Date(yr, mo + 1, 0).getDate();
+  const daysInPrev  = new Date(yr, mo, 0).getDate();
+
+  let cells = '';
+  // Leading blanks from prev month
+  for (let i = firstDay - 1; i >= 0; i--) {
+    const d = daysInPrev - i;
+    cells += `<div class="cal-day other-month"><div class="cal-day-num">${d}</div></div>`;
+  }
+  // This month
+  for (let d = 1; d <= daysInMonth; d++) {
+    const key = yr + '-' + String(mo+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+    const entries = idx[key] || [];
+    const total   = entries.length;
+    const missed  = entries.filter(e => e.missed).length;
+    const isToday = today.getFullYear()===yr && today.getMonth()===mo && today.getDate()===d;
+    const badge   = total ? `<div class="cal-badge ${missed>0?'has-missed':''}">${total}</div>` : '';
+    cells += `<div class="cal-day${isToday?' today':''}" onclick="openDayDetail('${key}')">
+      <div class="cal-day-num">${d}</div>${badge}
+    </div>`;
+  }
+  // Trailing blanks
+  const totalCells = firstDay + daysInMonth;
+  const trailing = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+  for (let d = 1; d <= trailing; d++) {
+    cells += `<div class="cal-day other-month"><div class="cal-day-num">${d}</div></div>`;
+  }
+  document.getElementById('cal-grid').innerHTML = cells;
+}
+
+// ── Week navigation ──
+function shiftWeek(dir) {
+  calViewDate = new Date(calViewDate.getTime() + dir * 7 * 86400000);
+  renderCalWeek();
+}
+
+function renderCalWeek() {
+  const idx = buildLogIndex();
+  const today = new Date();
+  // Find Sunday of the week containing calViewDate
+  const dow = calViewDate.getDay();
+  const sunday = new Date(calViewDate);
+  sunday.setDate(calViewDate.getDate() - dow);
+
+  const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const saturday = new Date(sunday); saturday.setDate(sunday.getDate() + 6);
+  document.getElementById('week-label').textContent =
+    monthNames[sunday.getMonth()] + ' ' + sunday.getDate() + ' – ' +
+    monthNames[saturday.getMonth()] + ' ' + saturday.getDate() + ', ' + saturday.getFullYear();
+
+  const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  let rows = '';
+  for (let i = 0; i < 7; i++) {
+    const day = new Date(sunday); day.setDate(sunday.getDate() + i);
+    const key = day.getFullYear() + '-' + String(day.getMonth()+1).padStart(2,'0') + '-' + String(day.getDate()).padStart(2,'0');
+    const entries = idx[key] || [];
+    const isToday = today.toDateString() === day.toDateString();
+    const chips = entries.length
+      ? entries.map(e => `<div class="week-dose-chip${e.missed?' missed':''}">${e.name}${e.missed?' ✕':''}</div>`).join('')
+      : '<div style="font-size:12px;color:var(--text-soft)">—</div>';
+    rows += `<div class="week-day-row" onclick="${entries.length?`openDayDetail('${key}')`:''}" style="${entries.length?'cursor:pointer':''}">
+      <div class="week-day-label${isToday?' today':''}">
+        <span style="font-size:10px;font-weight:700;color:var(--text-soft)">${dayNames[i]}</span>
+        <span class="wday-num">${day.getDate()}</span>
+      </div>
+      <div class="week-doses">${chips}</div>
+    </div>`;
+  }
+  document.getElementById('week-grid').innerHTML = rows;
+}
+
+// ── Day detail ──
+function openDayDetail(key) {
+  prevLogView = logView;
+  const idx = buildLogIndex();
+  const entries = idx[key] || [];
+  // Parse date for label
+  const [yr, mo, d] = key.split('-').map(Number);
+  const dayNames   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const dayDate = new Date(yr, mo-1, d);
+  document.getElementById('day-detail-label').textContent =
+    dayNames[dayDate.getDay()] + ', ' + monthNames[mo-1] + ' ' + d + ', ' + yr;
+
+  let inner = '';
+  if (!entries.length) {
+    inner = '<div class="empty-state"><div class="icon">💤</div><h3>Nothing logged</h3><p>No doses recorded on this day.</p></div>';
+  } else {
+    // Sort by time
+    const sorted = [...entries].sort((a,b) => new Date(a.ts) - new Date(b.ts));
+    sorted.forEach(e => {
+      const t = new Date(e.ts);
+      const missedBadge  = e.missed  ? '<span class="badge badge-red"  style="margin-left:6px">missed</span>'  : '';
+      const skippedBadge = e.skipped ? '<span class="badge badge-amber" style="margin-left:6px">skipped</span>' : '';
+      inner += `<div class="log-item">
+        <div class="log-dot" style="background:${e.missed?'var(--red)':e.skipped?'var(--amber,#d97706)':e.color||'var(--blue)'}"></div>
+        <div class="log-info">
+          <div class="log-name">${e.name}${missedBadge}${skippedBadge}</div>
+          <div class="log-meta">${e.dose} mcg${e.site?' · '+e.site:''}${e.notes?' · '+e.notes:''}</div>
+        </div>
+        <div class="log-time">${t.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}</div>
+        <button class="btn btn-sm" onclick="unlogDose('${e.id}')" style="background:var(--red-light);color:var(--red);margin-left:8px" title="Unlog">✕</button>
+      </div>`;
+    });
+  }
+  document.getElementById('day-detail-list').innerHTML = inner;
+
+  // Hide all views, show detail
+  document.getElementById('log-month-view').style.display = 'none';
+  document.getElementById('log-week-view').style.display  = 'none';
+  document.getElementById('log-list-view').style.display  = 'none';
+  document.getElementById('log-day-detail').style.display = 'block';
+}
+
+function closeDayDetail() {
+  document.getElementById('log-day-detail').style.display = 'none';
+  setLogView(prevLogView, document.getElementById('lvb-' + prevLogView));
+}
+
+// ── List view (original) ──
+function renderLogList() {
+  const el = document.getElementById('full-log-list');
+  if (!doseLog.length) {
+    el.innerHTML = `<div class="empty-state"><div class="icon">📋</div><h3>No doses logged yet</h3><p>Mark doses as done from the Dashboard.</p></div>`;
+    return;
+  }
+  const sorted = [...doseLog].reverse();
+  let lastDate = '', out = '';
+  sorted.forEach(e => {
+    const d  = new Date(e.ts);
+    const ds = d.toLocaleDateString('en-US', {weekday:'long', month:'long', day:'numeric'});
+    if (ds !== lastDate) {
+      if (lastDate) out += '</div>';
+      out += `<div class="section-label" style="margin-top:14px">${ds}</div><div>`;
+      lastDate = ds;
+    }
+    const missedBadge  = e.missed  ? '<span class="badge badge-red"  style="margin-left:6px">missed</span>'  : '';
+    const skippedBadge = e.skipped ? '<span class="badge badge-amber" style="margin-left:6px">skipped</span>' : '';
+    out += `<div class="log-item">
+      <div class="log-dot" style="background:${e.missed?'var(--red)':e.skipped?'var(--amber,#d97706)':e.color||'var(--blue)'}"></div>
+      <div class="log-info">
+        <div class="log-name">${e.name}${missedBadge}${skippedBadge}</div>
+        <div class="log-meta">${e.dose} mcg${e.site?' · '+e.site:''}${e.notes?' · '+e.notes:''}</div>
+      </div>
+      <div class="log-time">${d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}</div>
+      <button class="btn btn-sm" onclick="unlogDose('${e.id}')" style="background:var(--red-light);color:var(--red);margin-left:8px" title="Unlog">✕</button>
+    </div>`;
+  });
+  if (lastDate) out += '</div>';
+  el.innerHTML = out;
+}
+
+// Keep renderLog as alias (called from other places)
+function renderLog() {
+  if (logView === 'month') renderCalMonth();
+  else if (logView === 'week') renderCalWeek();
+  else renderLogList();
 }
 function clearLog(){if(!confirm('Clear entire log?'))return;doseLog=[];sv('l',doseLog);renderLog();renderDashboard();toast('Log cleared');}
 
