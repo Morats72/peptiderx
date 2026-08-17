@@ -163,6 +163,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',sans-
 .ref-dose-row .val{color:var(--text);text-align:right;max-width:60%}
 .cat-pill{display:inline-block;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;background:var(--bg);color:var(--text-mid);border:1.5px solid var(--border);transition:all .15s;margin:3px}
 .cat-pill.active{background:var(--blue);color:var(--white);border-color:var(--blue)}
+.upcoming-day-pill{padding:7px 14px;border-radius:20px;font-size:12px;font-weight:600;
+  cursor:pointer;background:var(--bg);color:var(--text-mid);border:1.5px solid var(--border);
+  white-space:nowrap;transition:all .15s}
+.upcoming-day-pill.active{background:var(--blue);color:var(--white);border-color:var(--blue)}
+.upcoming-dose-row{display:flex;align-items:center;gap:12px;padding:11px 0;
+  border-bottom:1px solid var(--border)}
+.upcoming-dose-row:last-child{border-bottom:none}
+.upcoming-color-bar{width:4px;height:34px;border-radius:2px;flex-shrink:0}
+.upcoming-dose-info{flex:1;min-width:0}
+.upcoming-dose-name{font-size:14px;font-weight:600;color:var(--text)}
+.upcoming-dose-detail{font-size:12px;color:var(--text-mid);margin-top:2px}
+.upcoming-time-badge{font-size:12px;font-weight:700;color:var(--blue);
+  background:var(--blue-light);padding:5px 9px;border-radius:8px;white-space:nowrap}
 .flex-between{display:flex;align-items:center;justify-content:space-between}
 .divider{height:1px;background:var(--border);margin:12px 0}
 .text-small{font-size:12px;color:var(--text-mid)}
@@ -218,6 +231,43 @@ table{border-collapse:collapse}
   <div class="card">
     <div class="card-header"><h2>Recent Log</h2></div>
     <div class="card-body" id="recent-log-preview"><div class="empty-state"><div class="icon">📋</div><h3>No entries yet</h3></div></div>
+  </div>
+</div>
+
+
+<!-- UPCOMING -->
+<div class="screen" id="screen-upcoming">
+  <div class="today-header" id="upcoming-header">
+    <div class="date" id="upcoming-date-label"></div>
+    <div class="greeting" style="margin-bottom:0">Upcoming Doses</div>
+  </div>
+
+  <!-- Day selector pills -->
+  <div style="display:flex;gap:8px;margin:12px 0;overflow-x:auto;padding-bottom:4px">
+    <div class="upcoming-day-pill active" id="upday-1" onclick="setUpcomingDay(1,this)">Tomorrow</div>
+    <div class="upcoming-day-pill" id="upday-2" onclick="setUpcomingDay(2,this)">+2 Days</div>
+    <div class="upcoming-day-pill" id="upday-3" onclick="setUpcomingDay(3,this)">+3 Days</div>
+    <div class="upcoming-day-pill" id="upday-7" onclick="setUpcomingDay(7,this)">Next Week</div>
+  </div>
+
+  <!-- Morning bucket -->
+  <div class="section-label" style="margin-top:4px">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:middle;margin-right:4px"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg>
+    Morning · Before Noon
+  </div>
+  <div class="card"><div class="card-body" id="upcoming-morning"></div></div>
+
+  <!-- Afternoon/Evening bucket -->
+  <div class="section-label">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:middle;margin-right:4px"><path d="M17 18a5 5 0 0 0-10 0"/><line x1="12" y1="2" x2="12" y2="9"/><line x1="4.22" y1="10.22" x2="5.64" y2="11.64"/><line x1="1" y1="18" x2="3" y2="18"/><line x1="21" y1="18" x2="23" y2="18"/><line x1="18.36" y1="11.64" x2="19.78" y2="10.22"/></svg>
+    Afternoon &amp; Evening
+  </div>
+  <div class="card"><div class="card-body" id="upcoming-afternoon"></div></div>
+
+  <!-- No time set bucket -->
+  <div class="section-label" id="upcoming-anytime-label" style="display:none">Anytime / No Time Set</div>
+  <div class="card" id="upcoming-anytime-card" style="display:none">
+    <div class="card-body" id="upcoming-anytime"></div>
   </div>
 </div>
 
@@ -347,6 +397,10 @@ table{border-collapse:collapse}
   <div class="tab active" onclick="switchTab('dashboard',this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
     <span>Dashboard</span>
+  </div>
+  <div class="tab" onclick="switchTab('upcoming',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="14" x2="8" y2="14"/><line x1="12" y1="14" x2="12" y2="14"/><line x1="16" y1="14" x2="16" y2="14"/></svg>
+    <span>Upcoming</span>
   </div>
   <div class="tab" onclick="switchTab('stack',this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
@@ -609,7 +663,7 @@ if ('serviceWorker' in navigator) {
 // ── App Version ──
 // Bump this string every time you deploy a change — makes it obvious
 // in the app (and in the console) whether a fix actually made it live.
-const APP_VERSION = 'v2.2.2 — 2026-08-14 (screen on button on dashboard; wake lock error clarified)';
+const APP_VERSION = 'v2.3.0 — 2026-08-16 (Upcoming tab — tomorrow/multi-day dose schedule by time of day)';
 
 // ── Screen Wake Lock ──
 let wakeLock=null;
@@ -899,6 +953,7 @@ function switchTab(name,el){
   document.getElementById('screen-'+name).classList.add('active');
   el.classList.add('active');
   if(name==='dashboard')renderDashboard();
+  if(name==='upcoming')renderUpcoming();
   if(name==='stack')renderStack();
   if(name==='reference')renderReference();
   if(name==='log')renderLog();
@@ -1673,6 +1728,107 @@ function quickAdd(name){openAddModal();document.getElementById('p-name').value=n
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
 
 // ── Init ──
+// ── Upcoming Schedule ──
+let upcomingDaysAhead = 1;
+
+function isDueOnDate(p, targetDate) {
+  if (!p.active) return false;
+  if (p.startDate && p.startDate > targetDate.toISOString().split('T')[0]) return false;
+  const type = p.schedType || 'daily';
+  if (type === 'asneeded') return false;
+  const dow = targetDate.getDay();
+  if (type === 'daily') return true;
+  if (type === 'weekly') return (p.schedDays || []).includes(dow);
+  if (type === 'cycle') {
+    const start = p.startDate ? new Date(p.startDate + 'T00:00:00') : new Date();
+    const diff = Math.floor((targetDate - start) / 86400000);
+    const { on, cycle } = cycleDaysOn(p);
+    const pos = ((diff % cycle) + cycle) % cycle;
+    return pos < on;
+  }
+  return false;
+}
+
+function setUpcomingDay(days, el) {
+  upcomingDaysAhead = days;
+  document.querySelectorAll('.upcoming-day-pill').forEach(p => p.classList.remove('active'));
+  if (el) el.classList.add('active');
+  renderUpcoming();
+}
+
+function renderUpcoming() {
+  const target = new Date();
+  target.setDate(target.getDate() + upcomingDaysAhead);
+  target.setHours(0, 0, 0, 0);
+
+  const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const label = upcomingDaysAhead === 1
+    ? 'Tomorrow — ' + dayNames[target.getDay()] + ' ' + monthNames[target.getMonth()] + ' ' + target.getDate()
+    : dayNames[target.getDay()] + ', ' + monthNames[target.getMonth()] + ' ' + target.getDate()
+      + ' (+' + upcomingDaysAhead + ' days)';
+
+  const dateEl = document.getElementById('upcoming-date-label');
+  if (dateEl) dateEl.textContent = label.toUpperCase();
+
+  const due = peptides.filter(p => isDueOnDate(p, target));
+
+  const morning = [];   // time set, before 12:00
+  const afternoon = []; // time set, 12:00+
+  const anytime = [];   // no time set on any dose
+
+  due.forEach(p => {
+    const freq = p.freq || 1;
+    const dose = getCurrentDose(p);
+    const syMax = (p.syringeType === '1.0') ? 100 : 30;
+    const conc = p.vial && p.bac ? (p.vial * 1000) / p.bac : null;
+
+    for (let i = 0; i < freq; i++) {
+      const timeStr = p.times && p.times[i];
+      const ml = conc ? dose / conc : null;
+      const units = ml ? Math.round(ml * 100) : null;
+      const unitDisp = units
+        ? `<div class="upcoming-time-badge">${units}u</div>`
+        : '';
+      const doseLabel = freq > 1 ? `Dose ${i + 1}` : '';
+
+      const row = `<div class="upcoming-dose-row">
+        <div class="upcoming-color-bar" style="background:${p.color || 'var(--blue)'}"></div>
+        <div class="upcoming-dose-info">
+          <div class="upcoming-dose-name">${p.name}${doseLabel ? ' <span style="font-size:11px;color:var(--text-soft);font-weight:600">' + doseLabel + '</span>' : ''}</div>
+          <div class="upcoming-dose-detail">${dose} mcg${p.timing ? ' · ' + p.timing : ''}${timeStr ? ' · ' + fmtTimeTo12(timeStr) : ''}</div>
+        </div>
+        ${unitDisp}
+      </div>`;
+
+      if (!timeStr) {
+        anytime.push(row);
+      } else {
+        const hour = parseInt(timeStr.split(':')[0]);
+        if (hour < 12) morning.push(row);
+        else afternoon.push(row);
+      }
+    }
+  });
+
+  const emptyMsg = '<div class="empty-state"><div class="icon">✅</div><h3>Nothing scheduled</h3><p>No active peptides due on this day.</p></div>';
+
+  document.getElementById('upcoming-morning').innerHTML = morning.length ? morning.join('') : emptyMsg;
+  document.getElementById('upcoming-afternoon').innerHTML = afternoon.length ? afternoon.join('') : '<div style="padding:12px 0;font-size:13px;color:var(--text-soft);text-align:center">None scheduled</div>';
+
+  const anytimeCard = document.getElementById('upcoming-anytime-card');
+  const anytimeLabel = document.getElementById('upcoming-anytime-label');
+  const anytimeEl = document.getElementById('upcoming-anytime');
+  if (anytime.length) {
+    anytimeLabel.style.display = 'block';
+    anytimeCard.style.display = 'block';
+    anytimeEl.innerHTML = anytime.join('');
+  } else {
+    anytimeLabel.style.display = 'none';
+    anytimeCard.style.display = 'none';
+  }
+}
+
 checkMidnightRollover();
 renderDashboard();
 renderReference();
