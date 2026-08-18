@@ -114,8 +114,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',sans-
 .syringe-needle{width:40px;height:6px;background:var(--text-soft);border-radius:0 3px 3px 0}
 .syringe-plunger{width:18px;height:42px;border:2px solid var(--border);border-radius:4px;background:var(--white);display:flex;align-items:center;justify-content:center}
 .syringe-plunger-inner{width:8px;height:28px;background:var(--border);border-radius:2px}
-.syringe-marks{display:flex;justify-content:space-between;padding:0 2px;margin-top:4px}
-.syringe-marks span{font-size:9px;color:var(--text-soft)}
+.syringe-marks{display:grid;grid-template-columns:repeat(var(--mark-cols,7),1fr);margin-top:4px;margin-left:18px;margin-right:40px}
+.syringe-marks span{font-size:9px;color:var(--text-soft);text-align:center}
+.syringe-inline-labels{position:absolute;inset:0;pointer-events:none;z-index:4}
+.syringe-inline-labels span{position:absolute;top:50%;font-size:9px;font-weight:700;color:rgba(0,0,0,.85);mix-blend-mode:overlay;transform:translate(50%,-50%)}
 .pull-indicator{position:absolute;top:0;width:2px;height:28px;background:var(--red);transition:right .4s ease}
 .pull-label{position:absolute;top:-20px;transform:translateX(-50%);background:var(--red);color:white;font-size:10px;font-weight:700;padding:2px 5px;border-radius:4px;white-space:nowrap}
 .log-item{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
@@ -205,7 +207,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',sans-
 .flex-between{display:flex;align-items:center;justify-content:space-between}
 .divider{height:1px;background:var(--border);margin:12px 0}
 .text-small{font-size:12px;color:var(--text-mid)}
-table{border-collapse:collapse}
+table{border-collapse:collapse}#print-log-container{display:none}
+#print-log-container h1{font-size:18px;margin-bottom:4px;color:#1a2744}
+#print-log-container .print-meta{font-size:11px;color:#666;margin-bottom:14px}
+#print-log-container table{width:100%;border-collapse:collapse;font-size:11px}
+#print-log-container th,#print-log-container td{border:1px solid #ccc;padding:5px 7px;text-align:left}
+#print-log-container th{background:#f0f2f6}
+@media print{
+  body *{visibility:hidden}
+  #print-log-container,#print-log-container *{visibility:visible}
+  #print-log-container{display:block;position:absolute;left:0;top:0;width:100%}
+}
 </style>
 </head>
 <body>
@@ -367,11 +379,11 @@ table{border-collapse:collapse}
           <div class="syringe-body">
             <div class="syringe-fill" id="syringe-fill" style="width:0%"></div>
             <div class="syringe-ticks" id="syringe-ticks"></div>
+            <div class="syringe-inline-labels" id="syringe-labels"></div>
             <div class="pull-indicator" id="pull-indicator" style="display:none"><div class="pull-label" id="pull-label"></div></div>
           </div>
           <div class="syringe-needle"></div>
         </div>
-        <div class="syringe-marks" id="syringe-marks-row"><span>30u</span><span>24</span><span>18</span><span>12</span><span>6</span><span>0</span></div>
       </div>
     </div>
   </div>
@@ -394,13 +406,20 @@ table{border-collapse:collapse}
     <div class="card-body">
       <div style="overflow-x:auto">
       <table style="width:100%;font-size:12px">
-        <tr style="background:var(--navy);color:white"><th style="padding:8px 6px;text-align:left">Vial</th><th style="padding:8px 6px;text-align:left">BAC Water</th><th style="padding:8px 6px;text-align:left">Conc.</th><th style="padding:8px 6px;text-align:left">10 units =</th></tr>
-        <tr style="background:var(--bg)"><td style="padding:7px 6px">5 mg</td><td>1 ml</td><td>5 mg/ml</td><td><b>500 mcg</b></td></tr>
-        <tr><td style="padding:7px 6px">10 mg</td><td>2 ml</td><td>5 mg/ml</td><td><b>500 mcg</b></td></tr>
-        <tr style="background:var(--bg)"><td style="padding:7px 6px">10 mg</td><td>1 ml</td><td>10 mg/ml</td><td><b>1000 mcg</b></td></tr>
-        <tr><td style="padding:7px 6px">10 mg</td><td>4 ml</td><td>2.5 mg/ml</td><td><b>250 mcg</b></td></tr>
-        <tr style="background:var(--bg)"><td style="padding:7px 6px">20 mg</td><td>2 ml</td><td>10 mg/ml</td><td><b>1000 mcg</b></td></tr>
-        <tr><td style="padding:7px 6px">500 mg</td><td>5 ml</td><td>100 mg/ml</td><td><b>10 mg (NAD+)</b></td></tr>
+        <tr style="background:var(--navy);color:white">
+          <th style="padding:8px 6px;text-align:left">Vial</th>
+          <th style="padding:8px 6px;text-align:left">BAC</th>
+          <th style="padding:8px 6px;text-align:left">Conc.</th>
+          <th style="padding:8px 6px;text-align:left">10u (0.1ml)</th>
+          <th style="padding:8px 6px;text-align:left">30u (0.3ml)</th>
+        </tr>
+        <tr style="background:var(--bg)"><td style="padding:7px 6px">10 mg</td><td>1 ml</td><td>10.00 mg/ml</td><td><b>1.0 mg</b> <span style="color:var(--text-soft);font-size:10px">(= 1000 mcg/ml)</span></td><td><b>3.0 mg</b></td></tr>
+        <tr><td style="padding:7px 6px">10 mg</td><td>2 ml</td><td>5.00 mg/ml</td><td><b>500 mcg</b> <span style="color:var(--text-soft);font-size:10px">(= 500 mcg/ml)</span></td><td><b>1.5 mg</b></td></tr>
+        <tr style="background:var(--bg)"><td style="padding:7px 6px">10 mg</td><td>3 ml</td><td>3.33 mg/ml</td><td><b>333 mcg</b> <span style="color:var(--text-soft);font-size:10px">(= 333 mcg/ml)</span></td><td><b>1.0 mg</b></td></tr>
+        <tr><td style="padding:7px 6px">10 mg</td><td>4 ml</td><td>2.50 mg/ml</td><td><b>250 mcg</b> <span style="color:var(--text-soft);font-size:10px">(= 250 mcg/ml)</span></td><td><b>750 mcg</b></td></tr>
+        <tr style="background:var(--bg)"><td style="padding:7px 6px">10 mg</td><td>5 ml</td><td>2.00 mg/ml</td><td><b>200 mcg</b> <span style="color:var(--text-soft);font-size:10px">(= 200 mcg/ml)</span></td><td><b>600 mcg</b></td></tr>
+        <tr><td style="padding:7px 6px">5 mg</td><td>1 ml</td><td>5.00 mg/ml</td><td><b>500 mcg</b></td><td><b>1,500 mcg</b></td></tr>
+        <tr style="background:var(--bg)"><td style="padding:7px 6px">500 mg</td><td>5 ml</td><td>100.00 mg/ml</td><td><b>10 mg</b> <span style="color:var(--text-soft);font-size:10px">(NAD+)</span></td><td><b>30 mg</b></td></tr>
       </table>
       </div>
     </div>
@@ -426,7 +445,6 @@ table{border-collapse:collapse}
         List
       </button>
     </div>
-    <button class="btn btn-danger btn-sm" onclick="clearLog()">Clear</button>
   </div>
 
   <!-- MONTH VIEW -->
@@ -705,11 +723,11 @@ table{border-collapse:collapse}
           <div class="syringe-body">
             <div class="syringe-fill" id="syringe-fill2" style="width:0%"></div>
             <div class="syringe-ticks" id="syringe-ticks2"></div>
+            <div class="syringe-inline-labels" id="syringe-labels2"></div>
             <div class="pull-indicator" id="pull-indicator2" style="display:none"><div class="pull-label" id="pull-label2"></div></div>
           </div>
           <div class="syringe-needle"></div>
         </div>
-        <div class="syringe-marks" id="syringe-marks-row2"><span>30u</span><span>24</span><span>18</span><span>12</span><span>6</span><span>0</span></div>
       </div>
       <div class="text-small" id="syringe-modal-sub" style="text-align:center;margin-top:14px;color:var(--text-mid)"></div>
     </div>
@@ -732,10 +750,25 @@ table{border-collapse:collapse}
       <div id="wakelock-status" style="font-size:13px;color:var(--text-secondary,#666);margin-bottom:10px">Off — screen will sleep normally</div>
       <button class="btn btn-primary btn-sm" id="wakelock-btn" onclick="toggleWakeLock()">Keep Screen On</button>
       <div class="form-hint" style="margin-top:8px">Only stays on while this app is the active tab on screen — turns off automatically if you switch apps or lock your phone. Turn it off when you're done so you're not burning battery for no reason.</div>
+
+      <div class="section-label" style="margin:20px 0 8px">Export Dose Log</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+        <button class="btn btn-secondary btn-sm" onclick="exportLogCSV(false)">Download CSV</button>
+        <button class="btn btn-secondary btn-sm" onclick="exportLogCSV(true)">Share / Email CSV</button>
+        <button class="btn btn-secondary btn-sm" onclick="exportLogPDF()">Export as PDF</button>
+      </div>
+      <div class="form-hint">CSV opens in Excel, Numbers, or Sheets. PDF opens your device's print dialog — choose "Save to Files" or the Share icon from there to save it or send it by email.</div>
+
+      <div class="section-label" style="margin:20px 0 8px;color:var(--red)">Danger Zone</div>
+      <button class="btn btn-danger btn-sm" onclick="clearLog()">Clear Entire Dose Log</button>
+      <div class="form-hint" style="margin-top:8px">Permanently deletes every logged dose. This cannot be undone — export a copy first if you want to keep a record.</div>
+
       <div id="app-version" style="font-size:11px;color:var(--text-soft,#999);margin-top:20px;padding-top:16px;border-top:1px solid var(--border)"></div>
     </div>
   </div>
 </div>
+
+<div id="print-log-container"></div>
 
 <div class="toast" id="toast"></div>
 
@@ -758,7 +791,7 @@ if ('serviceWorker' in navigator) {
 // ── App Version ──
 // Bump this string every time you deploy a change — makes it obvious
 // in the app (and in the console) whether a fix actually made it live.
-const APP_VERSION = 'v2.4.0 — 2026-08-16 (Log: month calendar, week view, day detail; Upcoming tab)';
+const APP_VERSION = 'v2.5.0 — 2026-08-18 (export log to CSV/PDF, share/email, clear log moved to Settings)';
 
 // ── Screen Wake Lock ──
 let wakeLock=null;
@@ -1251,12 +1284,17 @@ function renderSyringeModal(size){
   const dose=getCurrentDose(p);
   const conc=p.vial&&p.bac?(p.vial*1000)/p.bac:null;
   const syMax=syUnitsMax(size);
-  const marksRow=document.getElementById('syringe-marks-row2');
-  const step=syMax/5;
-  marksRow.innerHTML=Array.from({length:6},(_,i)=>{
-    const val=Math.round((5-i)*step);
-    return `<span>${i===0?val+'u':val}</span>`;
-  }).join('');
+  const labels2=document.getElementById('syringe-labels2');
+  const step=markStep(syMax);
+  const totalTicks=syMax/step;
+  const items=[];
+  for(let i=1;i<=totalTicks;i++){
+    const val=i*step;
+    const percent=(val/syMax)*100;
+    const isEdge=i===totalTicks;
+    items.push(`<span style="right:${percent}%${isEdge?';transform:translate(0%,-50%)':''}">${val}</span>`);
+  }
+  if(labels2)labels2.innerHTML=items.join('');
   const ticks2=document.getElementById('syringe-ticks2');
   if(ticks2)ticks2.style.backgroundImage=tickBackground(syMax);
   const fillEl=document.getElementById('syringe-fill2');
@@ -1557,11 +1595,15 @@ function updateCycleLabels(){
 }
 
 function syUnitsMax(type){return type==='1.0'?100:type==='0.5'?50:30;}
+function markStep(max){return max<=30?5:10;} // 30u syringe: 5s. 50u/100u syringes: 10s.
 function tickBackground(max){
+  // Major ticks match the labeled step size, minor at every 1 unit
+  // Ticks run right→left to match fill direction (fill anchored right)
+  const step=markStep(max);
+  const majorStep=100/(max/step);
   const minorStep=100/max;
-  const majorStep=100/(max/5);
-  return `repeating-linear-gradient(to left, rgba(0,0,0,.65) 0, rgba(0,0,0,.65) 1.5px, transparent 1.5px, transparent ${majorStep}%),`+
-         `repeating-linear-gradient(to left, rgba(0,0,0,.3) 0, rgba(0,0,0,.3) 1px, transparent 1px, transparent ${minorStep}%)`;
+  return `repeating-linear-gradient(to left, rgba(0,0,0,.7) 0, rgba(0,0,0,.7) 2px, transparent 2px, transparent ${majorStep}%),`+
+         `repeating-linear-gradient(to left, rgba(0,0,0,.2) 0, rgba(0,0,0,.2) 1px, transparent 1px, transparent ${minorStep}%)`;
 }
 function getSyringeMax(fromCalc){
   if(fromCalc){
@@ -1573,13 +1615,18 @@ function getSyringeMax(fromCalc){
 }
 
 function updateSyringeMarks(max){
-  const row=document.getElementById('syringe-marks-row');
-  if(!row)return;
-  const step=max/5;
-  row.innerHTML=Array.from({length:6},(_,i)=>{
-    const val=Math.round((5-i)*step);
-    return `<span>${i===0?val+'u':val}</span>`;
-  }).join('');
+  const labels=document.getElementById('syringe-labels');
+  if(!labels)return;
+  const step=markStep(max);
+  const totalTicks=max/step;
+  const items=[];
+  for(let i=1;i<=totalTicks;i++){
+    const val=i*step;
+    const percent=(val/max)*100; // distance from right edge (needle/0 side)
+    const isEdge=i===totalTicks; // outermost label sits at the plunger edge — don't let it clip
+    items.push(`<span style="right:${percent}%${isEdge?';transform:translate(0%,-50%)':''}">${val}</span>`);
+  }
+  labels.innerHTML=items.join('');
   const ticks=document.getElementById('syringe-ticks');
   if(ticks)ticks.style.backgroundImage=tickBackground(max);
 }
@@ -1955,6 +2002,73 @@ function renderLog() {
 }
 function clearLog(){if(!confirm('Clear entire log?'))return;doseLog=[];sv('l',doseLog);renderLog();renderDashboard();toast('Log cleared');}
 
+// ── Export Log ──
+function csvEscape(val){
+  if(val==null)return '';
+  const s=String(val);
+  if(s.includes(',')||s.includes('"')||s.includes('\n')){
+    return '"'+s.replace(/"/g,'""')+'"';
+  }
+  return s;
+}
+function buildLogCSV(){
+  const rows=[['Date','Time','Peptide','Dose (mcg)','Site','Status','Notes']];
+  const sorted=[...doseLog].sort((a,b)=>new Date(a.ts)-new Date(b.ts));
+  sorted.forEach(e=>{
+    const d=new Date(e.ts);
+    const dateStr=d.toLocaleDateString('en-US');
+    const timeStr=d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+    const status=e.missed?'Missed':e.skipped?'Skipped':'Logged';
+    rows.push([dateStr,timeStr,e.name,e.dose,e.site||'',status,e.notes||'']);
+  });
+  return rows.map(r=>r.map(csvEscape).join(',')).join('\r\n');
+}
+function downloadBlob(blob,filename){
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=filename;
+  document.body.appendChild(a);a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+async function exportLogCSV(share){
+  if(!doseLog.length){toast('No log entries to export');return;}
+  const csv=buildLogCSV();
+  const filename=`peptiderx-log-${todayStr()}.csv`;
+  const blob=new Blob([csv],{type:'text/csv'});
+  if(share&&navigator.share){
+    try{
+      const file=new File([blob],filename,{type:'text/csv'});
+      if(navigator.canShare&&navigator.canShare({files:[file]})){
+        await navigator.share({files:[file],title:'PeptideRx Dose Log'});
+        return;
+      }
+    }catch(err){
+      if(err.name==='AbortError')return; // user backed out of the share sheet — not an error
+      // fall through to plain download below
+    }
+  }
+  downloadBlob(blob,filename);
+  if(share)toast('Sharing not available on this device — downloaded instead. Attach it to your email manually.');
+}
+function exportLogPDF(){
+  if(!doseLog.length){toast('No log entries to export');return;}
+  const sorted=[...doseLog].sort((a,b)=>new Date(a.ts)-new Date(b.ts));
+  const rows=sorted.map(e=>{
+    const d=new Date(e.ts);
+    const status=e.missed?'Missed':e.skipped?'Skipped':'Logged';
+    return `<tr><td>${d.toLocaleDateString('en-US')}</td><td>${d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}</td><td>${e.name}</td><td>${e.dose} mcg</td><td>${e.site||'—'}</td><td>${status}</td><td>${(e.notes||'').replace(/</g,'&lt;')}</td></tr>`;
+  }).join('');
+  const container=document.getElementById('print-log-container');
+  container.innerHTML=`<h1>PeptideRx Dose Log</h1>
+    <div class="print-meta">Exported ${new Date().toLocaleString('en-US')} — ${sorted.length} entries</div>
+    <table>
+      <thead><tr><th>Date</th><th>Time</th><th>Peptide</th><th>Dose</th><th>Site</th><th>Status</th><th>Notes</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+  window.print();
+}
+
 function calcRecon(){
   const v=parseFloat(document.getElementById('calc-vial').value),b=parseFloat(document.getElementById('calc-bac').value),d=parseFloat(document.getElementById('calc-dose').value);
   const re=document.getElementById('calc-result'),sw=document.getElementById('syringe-wrap');
@@ -1975,7 +2089,10 @@ function calcRecon(){
     const pct=Math.min((u/syMax)*100,100);
     document.getElementById('syringe-fill').style.width=pct+'%';
     const ind=document.getElementById('pull-indicator');
-    ind.style.display='block';ind.style.right=`calc(${pct}% - 1px)`;
+    // Fill anchored right, grows left. Indicator at left edge of fill.
+    ind.style.display='block';
+    ind.style.left='auto';
+    ind.style.right=`calc(${pct}% - 1px)`;
     document.getElementById('pull-label').textContent=u+'u';
   }else{document.getElementById('calc-units').textContent='—';document.getElementById('calc-ml').textContent='Enter desired dose';re.style.display='block';sw.style.display='none';}
 }
