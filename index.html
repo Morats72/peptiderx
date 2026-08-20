@@ -610,6 +610,7 @@ table{border-collapse:collapse}#print-log-container{display:none}
       <div class="sched-tabs">
         <div class="sched-tab active" data-type="daily" onclick="setSchedType('daily',this)">Every Day</div>
         <div class="sched-tab" data-type="weekly" onclick="setSchedType('weekly',this)">Days of Week</div>
+        <div class="sched-tab" data-type="interval" onclick="setSchedType('interval',this)">Every N Days</div>
         <div class="sched-tab" data-type="cycle" onclick="setSchedType('cycle',this)">On/Off Cycle</div>
         <div class="sched-tab" data-type="asneeded" onclick="setSchedType('asneeded',this)">As Needed</div>
       </div>
@@ -624,6 +625,16 @@ table{border-collapse:collapse}#print-log-container{display:none}
           <div class="day-pill" data-day="4" onclick="toggleDay(this)">Th</div>
           <div class="day-pill" data-day="5" onclick="toggleDay(this)">Fr</div>
           <div class="day-pill" data-day="6" onclick="toggleDay(this)">Sa</div>
+        </div>
+      </div>
+      <div id="interval-picker" style="display:none">
+        <div class="form-group">
+          <label class="form-label">Dose Every</label>
+          <div style="display:flex;align-items:center;gap:8px">
+            <input class="form-input" type="number" id="p-interval-days" placeholder="6" min="2" style="max-width:100px">
+            <span style="font-size:14px;font-weight:600;color:var(--text-mid)">days</span>
+          </div>
+          <div class="form-hint" style="margin-top:6px">Doses on the start date, then again every N days after — day 1, day 7, day 13, etc. for "every 6 days."</div>
         </div>
       </div>
       <div id="cycle-picker" style="display:none">
@@ -791,7 +802,7 @@ if ('serviceWorker' in navigator) {
 // ── App Version ──
 // Bump this string every time you deploy a change — makes it obvious
 // in the app (and in the console) whether a fix actually made it live.
-const APP_VERSION = 'v2.5.0 — 2026-08-18 (export log to CSV/PDF, share/email, clear log moved to Settings)';
+const APP_VERSION = 'v2.6.0 — 2026-08-19 (new Every N Days schedule option, e.g. every 6 days)';
 
 // ── Screen Wake Lock ──
 let wakeLock=null;
@@ -1107,6 +1118,12 @@ function isDueToday(p){
   const today=new Date();const dow=today.getDay();
   if(type==='daily')return true;
   if(type==='weekly')return(p.schedDays||[]).includes(dow);
+  if(type==='interval'){
+    const start=p.startDate?new Date(p.startDate+'T00:00:00'):new Date();
+    const diff=Math.floor((today-start)/86400000);
+    const n=p.intervalDays||6;
+    return diff>=0&&diff%n===0;
+  }
   if(type==='cycle'){
     const start=p.startDate?new Date(p.startDate+'T00:00:00'):new Date();
     const diff=Math.floor((today-start)/86400000);
@@ -1127,6 +1144,15 @@ function getCycleDay(p){
   const raw=p.cycleOn||5,rawOff=p.cycleOff||2;
   return{pos,cycleOn:on,cycleOff:off,cycle,isOn,
     displayOn:raw,displayOff:rawOff,unit};
+}
+function getIntervalDay(p){
+  if(p.schedType!=='interval')return null;
+  const today=new Date();
+  const start=p.startDate?new Date(p.startDate+'T00:00:00'):new Date();
+  const diff=Math.floor((today-start)/86400000);
+  const n=p.intervalDays||6;
+  const pos=((diff%n)+n)%n;
+  return{pos,n,isDueToday:pos===0};
 }
 function getCurrentDose(p){
   if(!p.titration||!p.titration.length)return p.dose;
@@ -1369,15 +1395,20 @@ function logAllDue(){
 
 function peptideCardHTML(p,idPrefix){
   idPrefix=idPrefix||'';
-  const dose=getCurrentDose(p);const calc=calcUnits(p,dose);const cd=getCycleDay(p);
+  const dose=getCurrentDose(p);const calc=calcUnits(p,dose);const cd=getCycleDay(p);const id=getIntervalDay(p);
   let sd='';
   if(p.schedType==='daily')sd='Every day';
   else if(p.schedType==='weekly')sd=(p.schedDays||[]).map(d=>['Su','Mo','Tu','We','Th','Fr','Sa'][d]).join(', ');
+  else if(p.schedType==='interval')sd=`Every ${p.intervalDays||6} days`;
   else if(p.schedType==='cycle')sd=`${p.cycleOn||5} on / ${p.cycleOff||2} off`;
   else sd='As needed';
   const cycBar=cd?`<div class="cycle-bar-wrap">
     <div class="cycle-bar-label"><span>Day ${cd.pos+1} of ${cd.cycle} (${cd.isOn?'ON':'OFF'})</span><span>${cd.displayOn} ${cd.unit} on / ${cd.displayOff} ${cd.unit} off</span></div>
     <div class="cycle-bar"><div class="cycle-bar-fill ${cd.isOn?'':'off-phase'}" style="width:${(cd.pos/cd.cycle*100).toFixed(1)}%"></div></div>
+  </div>`:'';
+  const intervalBar=id?`<div class="cycle-bar-wrap">
+    <div class="cycle-bar-label"><span>${id.isDueToday?'Due today':'Day '+(id.pos+1)+' of '+id.n+' — '+(id.n-id.pos)+' day'+(id.n-id.pos===1?'':'s')+' to go'}</span><span>Every ${id.n} days</span></div>
+    <div class="cycle-bar"><div class="cycle-bar-fill ${id.isDueToday?'':'off-phase'}" style="width:${(id.pos/id.n*100).toFixed(1)}%"></div></div>
   </div>`:'';
   const titHTML=p.titration&&p.titration.length?`<div class="detail-cell full"><div class="lbl">Titration</div><div class="val">${p.titration.map((s,i)=>`Step ${i+1}: ${s.dose} mcg × ${s.days} days`).join(' → ')}</div></div>`:'';
   const detId=idPrefix+'det-'+p.id;
@@ -1418,6 +1449,7 @@ function peptideCardHTML(p,idPrefix){
         ${p.notes?`<div class="detail-cell full"><div class="lbl">Notes</div><div class="val">${p.notes}</div></div>`:''}
       </div>
       ${cycBar}
+      ${intervalBar}
       <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn btn-primary btn-sm" onclick="closeModal('stat-detail-modal');openLogModal('${p.id}')">Log a Dose</button>
           ${p.dosesPerVial?`<button class="btn btn-amber btn-sm" onclick="closeModal('stat-detail-modal');newVial('${p.id}')">🧪 New Vial</button>`:''}
@@ -1507,6 +1539,7 @@ function openEditModal(id){
   const stEl=document.querySelector(`.sched-tab[data-type="${st}"]`)||document.querySelector('.sched-tab');
   setSchedType(st,stEl);
   if(p.schedType==='weekly'&&p.schedDays){selDays=[...p.schedDays];document.querySelectorAll('#weekly-picker .day-pill').forEach(d=>d.classList.toggle('active',selDays.includes(parseInt(d.dataset.day))));}
+  if(p.schedType==='interval'){document.getElementById('p-interval-days').value=p.intervalDays||'';}
   if(p.schedType==='cycle'){document.getElementById('p-cycle-on').value=p.cycleOn||'';document.getElementById('p-cycle-off').value=p.cycleOff||'';}
   document.getElementById('p-freq').value=p.freq||1;
   // syringe
@@ -1529,6 +1562,7 @@ function setSchedType(type,el){
   curSchedType=type;document.getElementById('p-sched-type').value=type;
   document.querySelectorAll('.sched-tab').forEach(t=>t.classList.remove('active'));if(el)el.classList.add('active');
   document.getElementById('weekly-picker').style.display=type==='weekly'?'block':'none';
+  document.getElementById('interval-picker').style.display=type==='interval'?'block':'none';
   document.getElementById('cycle-picker').style.display=type==='cycle'?'block':'none';
   document.getElementById('start-date-group').style.display=type==='asneeded'?'none':'block';
 }
@@ -1542,6 +1576,10 @@ function savePeptide(){
   const dose=getDoseInputMcg()||0;if(!dose){toast('Dose required');return;}
   const useTit=document.getElementById('titration-toggle').checked;
   const editId=document.getElementById('edit-peptide-id').value;
+  if(curSchedType==='interval'){
+    const iv=parseInt(document.getElementById('p-interval-days').value);
+    if(!iv||iv<1){toast('Enter how many days between doses');return;}
+  }
   const freq=parseInt(document.getElementById('p-freq').value)||1;
   const times=getTimeValues();
   const syEl=document.querySelector('input[name="syringe"]:checked');
@@ -1559,6 +1597,7 @@ function savePeptide(){
     timing:document.getElementById('p-timing').value.trim(),
     notes:document.getElementById('p-notes').value.trim(),
     schedType:curSchedType,schedDays:curSchedType==='weekly'?[...selDays]:[],
+    intervalDays:parseInt(document.getElementById('p-interval-days').value)||6,
     cycleOn:parseInt(document.getElementById('p-cycle-on').value)||5,
     cycleOff:parseInt(document.getElementById('p-cycle-off').value)||2,
     cycleUnit,
@@ -2140,12 +2179,19 @@ let upcomingDaysAhead = 1;
 
 function isDueOnDate(p, targetDate) {
   if (!p.active) return false;
-  if (p.startDate && p.startDate > targetDate.toISOString().split('T')[0]) return false;
+  const targetLocalStr = targetDate.getFullYear()+'-'+String(targetDate.getMonth()+1).padStart(2,'0')+'-'+String(targetDate.getDate()).padStart(2,'0');
+  if (p.startDate && p.startDate > targetLocalStr) return false;
   const type = p.schedType || 'daily';
   if (type === 'asneeded') return false;
   const dow = targetDate.getDay();
   if (type === 'daily') return true;
   if (type === 'weekly') return (p.schedDays || []).includes(dow);
+  if (type === 'interval') {
+    const start = p.startDate ? new Date(p.startDate + 'T00:00:00') : new Date();
+    const diff = Math.floor((targetDate - start) / 86400000);
+    const n = p.intervalDays || 6;
+    return diff >= 0 && diff % n === 0;
+  }
   if (type === 'cycle') {
     const start = p.startDate ? new Date(p.startDate + 'T00:00:00') : new Date();
     const diff = Math.floor((targetDate - start) / 86400000);
