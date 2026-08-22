@@ -232,6 +232,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',sans-
   border-radius:8px;font-size:12px;font-weight:600;border:1.5px solid var(--border);
   cursor:pointer;background:var(--bg);color:var(--text-mid);transition:all .15s}
 .log-view-btn.active{background:var(--blue);color:var(--white);border-color:var(--blue)}
+/* Log filter pills — scope the calendar to doses, nutrition, or both, so the
+   month badge stays a useful signal instead of one undifferentiated count. */
+.log-filter-btn{display:inline-flex;align-items:center;gap:5px;padding:6px 13px;
+  border-radius:20px;border:1.5px solid var(--border);background:var(--white);
+  font-size:12px;font-weight:700;color:var(--text-mid);cursor:pointer;white-space:nowrap}
+.log-filter-btn.active{background:var(--navy);color:var(--white);border-color:var(--navy)}
+.log-section-head{font-size:11px;font-weight:700;letter-spacing:.5px;color:var(--text-soft);
+  margin:16px 0 6px;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.log-section-head:first-child{margin-top:0}
+.log-section-sum{font-size:11px;font-weight:600;color:var(--text-mid);letter-spacing:0}
+.cal-badge.nutri{background:var(--blue)}
+.cal-dot-row{display:flex;gap:3px;justify-content:center;margin-top:3px}
+.cal-dot{width:6px;height:6px;border-radius:50%}
 .cal-day{min-height:48px;border-radius:8px;padding:4px;cursor:pointer;
   display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
   transition:background .15s;position:relative}
@@ -484,6 +497,13 @@ table{border-collapse:collapse}#print-log-container{display:none}
         List
       </button>
     </div>
+  </div>
+
+  <!-- What the calendar counts -->
+  <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">
+    <button class="log-filter-btn active" id="lfb-all" onclick="setLogFilter('all',this)">All</button>
+    <button class="log-filter-btn" id="lfb-peptides" onclick="setLogFilter('peptides',this)">💉 Peptides</button>
+    <button class="log-filter-btn" id="lfb-nutrition" onclick="setLogFilter('nutrition',this)">🍽 Food &amp; Water</button>
   </div>
 
   <!-- MONTH VIEW -->
@@ -1045,7 +1065,7 @@ if ('serviceWorker' in navigator) {
 // ── App Version ──
 // Bump this string every time you deploy a change — makes it obvious
 // in the app (and in the console) whether a fix actually made it live.
-const APP_VERSION = 'v2.9.2 — 2026-08-22 (fixed: logging food/water now refreshes the dashboard banner; water logging added to the Log Food/Water sheet; nutrition goals moved into Settings; + Add limited to My Stack; ported the v2.6.2 missed/late fix)';
+const APP_VERSION = 'v2.9.3 — 2026-08-22 (Log now covers peptides + food/water in one calendar with All / Peptides / Food & Water filters; day view sectioned peptides > water > food with daily macro totals)';
 
 // ── Screen Wake Lock ──
 let wakeLock=null;
@@ -2767,6 +2787,13 @@ function unlogDose(entryId){
     }
   }
   renderLog();renderDashboard();
+  // Unlogging from a day detail should redraw that day, not leave it stale.
+  const dd=document.getElementById('log-day-detail');
+  if(dd&&dd.style.display==='block'&&currentDayDetailKey){
+    const k=currentDayDetailKey;
+    const stillHas=(buildLogIndex()[k]||[]).length||nutriLog.some(e=>e.date===k);
+    if(stillHas)openDayDetail(k); else closeDayDetail();
+  }
   // If the "Logged Today" modal is what you unlogged from, refresh it in
   // place so the row disappears instead of going stale behind the toast.
   const statModal=document.getElementById('stat-detail-modal');
@@ -2796,6 +2823,31 @@ function setLogView(view, el) {
   if (view === 'list')  renderLogList();
 }
 
+// ── Log filter: 'all' | 'peptides' | 'nutrition' ──
+// The calendar covers doses and nutrition in one place so a single day can be
+// read across both, but the month badge would be meaningless if a day's dozen
+// food entries buried two doses — so the filter scopes what gets counted.
+let logFilter = 'all';
+function setLogFilter(f, el) {
+  logFilter = f;
+  document.querySelectorAll('.log-filter-btn').forEach(b => b.classList.remove('active'));
+  if (el) el.classList.add('active');
+  // Coming back from a day detail would strand you on a stale day — go back
+  // to whichever calendar view you were in and re-count it.
+  document.getElementById('log-day-detail').style.display = 'none';
+  setLogView(logView, document.getElementById('lvb-' + logView));
+}
+function showDoses(){return logFilter === 'all' || logFilter === 'peptides';}
+function showNutri(){return logFilter === 'all' || logFilter === 'nutrition';}
+
+// Nutrition entries already carry a local 'date' string, so the index is a
+// straight group-by — no timezone re-derivation needed.
+function buildNutriIndex() {
+  const idx = {};
+  nutriLog.forEach(e => { (idx[e.date] = idx[e.date] || []).push(e); });
+  return idx;
+}
+
 // ── Build a date-keyed index of log entries ──
 function buildLogIndex() {
   const idx = {};
@@ -2816,6 +2868,7 @@ function shiftMonth(dir) {
 
 function renderCalMonth() {
   const idx = buildLogIndex();
+  const nidx = buildNutriIndex();
   const today = new Date();
   const yr = calViewDate.getFullYear();
   const mo = calViewDate.getMonth();
@@ -2835,12 +2888,16 @@ function renderCalMonth() {
   // This month
   for (let d = 1; d <= daysInMonth; d++) {
     const key = yr + '-' + String(mo+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
-    const entries = idx[key] || [];
-    const total   = entries.length;
-    const missed  = entries.filter(e => e.missed).length;
-    const late    = entries.filter(e => e.late).length;
+    const doses   = showDoses() ? (idx[key] || []) : [];
+    const nutri   = showNutri() ? (nidx[key] || []) : [];
+    const total   = doses.length + nutri.length;
+    const missed  = doses.filter(e => e.missed).length;
+    const late    = doses.filter(e => e.late).length;
     const isToday = today.getFullYear()===yr && today.getMonth()===mo && today.getDate()===d;
-    const badge   = total ? `<div class="cal-badge ${missed>0?'has-missed':late>0?'has-late':''}">${total}</div>` : '';
+    // Missed/late is a dosing signal, so it only colors the badge when doses
+    // are in view; a nutrition-only badge is just "you logged this day".
+    const badgeClass = missed>0 ? 'has-missed' : late>0 ? 'has-late' : (doses.length ? '' : 'nutri');
+    const badge   = total ? `<div class="cal-badge ${badgeClass}">${total}</div>` : '';
     cells += `<div class="cal-day${isToday?' today':''}" onclick="openDayDetail('${key}')">
       <div class="cal-day-num">${d}</div>${badge}
     </div>`;
@@ -2862,6 +2919,7 @@ function shiftWeek(dir) {
 
 function renderCalWeek() {
   const idx = buildLogIndex();
+  const nidx = buildNutriIndex();
   const today = new Date();
   // Find Sunday of the week containing calViewDate
   const dow = calViewDate.getDay();
@@ -2879,11 +2937,20 @@ function renderCalWeek() {
   for (let i = 0; i < 7; i++) {
     const day = new Date(sunday); day.setDate(sunday.getDate() + i);
     const key = day.getFullYear() + '-' + String(day.getMonth()+1).padStart(2,'0') + '-' + String(day.getDate()).padStart(2,'0');
-    const entries = idx[key] || [];
+    const doses = showDoses() ? (idx[key] || []) : [];
+    const nutri = showNutri() ? (nidx[key] || []) : [];
     const isToday = today.toDateString() === day.toDateString();
-    const chips = entries.length
-      ? entries.map(e => `<div class="week-dose-chip${e.missed?' missed':e.late?' late':''}">${e.name}${e.missed?' ✕':e.late?' ⏱':''}</div>`).join('')
-      : '<div style="font-size:12px;color:var(--text-soft)">—</div>';
+    const doseChips = doses.map(e => `<div class="week-dose-chip${e.missed?' missed':e.late?' late':''}">${e.name}${e.missed?' ✕':e.late?' ⏱':''}</div>`).join('');
+    // Food/water would swamp the row at one chip per item, so they collapse
+    // into summary chips — tap through for the itemized day.
+    const foods = nutri.filter(e=>e.kind==='food');
+    const wOz   = sumWaterOz(nutri);
+    const wUnit = nutriGoals.waterUnit||'oz';
+    let nutriChips = '';
+    if (foods.length) nutriChips += `<div class="week-dose-chip">🍽 ${foods.length} item${foods.length===1?'':'s'} · ${Math.round(sumFoodTotals(nutri).cal)} cal</div>`;
+    if (wOz > 0)      nutriChips += `<div class="week-dose-chip">💧 ${Math.round(fromOz(wOz,wUnit))}${wUnit}</div>`;
+    const entries = [...doses, ...nutri];
+    const chips = (doseChips + nutriChips) || '<div style="font-size:12px;color:var(--text-soft)">—</div>';
     rows += `<div class="week-day-row" onclick="${entries.length?`openDayDetail('${key}')`:''}" style="${entries.length?'cursor:pointer':''}">
       <div class="week-day-label${isToday?' today':''}">
         <span style="font-size:10px;font-weight:700;color:var(--text-soft)">${dayNames[i]}</span>
@@ -2896,10 +2963,12 @@ function renderCalWeek() {
 }
 
 // ── Day detail ──
+let currentDayDetailKey = null;
 function openDayDetail(key) {
   prevLogView = logView;
+  currentDayDetailKey = key;
   const idx = buildLogIndex();
-  const entries = idx[key] || [];
+  const entries = showDoses() ? (idx[key] || []) : [];
   // Parse date for label
   const [yr, mo, d] = key.split('-').map(Number);
   const dayNames   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
@@ -2908,27 +2977,65 @@ function openDayDetail(key) {
   document.getElementById('day-detail-label').textContent =
     dayNames[dayDate.getDay()] + ', ' + monthNames[mo-1] + ' ' + d + ', ' + yr;
 
+  // One day, read across both: peptides on top, then water, then food.
+  const nutriAll = showNutri() ? (buildNutriIndex()[key] || []) : [];
+  const waters   = nutriAll.filter(e=>e.kind==='water');
+  const foods    = nutriAll.filter(e=>e.kind==='food');
+  const fmtT = ts => new Date(ts).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+
   let inner = '';
-  if (!entries.length) {
-    inner = '<div class="empty-state"><div class="icon">💤</div><h3>Nothing logged</h3><p>No doses recorded on this day.</p></div>';
+  if (!entries.length && !nutriAll.length) {
+    const what = logFilter==='peptides' ? 'No doses recorded on this day.'
+               : logFilter==='nutrition' ? 'No food or water recorded on this day.'
+               : 'Nothing recorded on this day.';
+    inner = `<div class="empty-state"><div class="icon">💤</div><h3>Nothing logged</h3><p>${what}</p></div>`;
   } else {
-    // Sort by time
-    const sorted = [...entries].sort((a,b) => new Date(a.ts) - new Date(b.ts));
-    sorted.forEach(e => {
-      const t = new Date(e.ts);
-      const missedBadge  = e.missed  ? '<span class="badge badge-red"  style="margin-left:6px">missed</span>'  : '';
-      const skippedBadge = e.skipped ? '<span class="badge badge-amber" style="margin-left:6px">skipped</span>' : '';
-      const lateBadge    = e.late    ? '<span class="badge badge-orange" style="margin-left:6px">late</span>' : '';
-      inner += `<div class="log-item">
-        <div class="log-dot" style="background:${e.missed?'var(--red)':e.skipped?'var(--amber,#d97706)':e.late?'var(--orange,#c2540a)':e.color||'var(--blue)'}"></div>
-        <div class="log-info">
-          <div class="log-name">${e.name}${missedBadge}${skippedBadge}${lateBadge}</div>
-          <div class="log-meta">${e.dose} mcg${e.site?' · '+e.site:''}${e.notes?' · '+e.notes:''}</div>
-        </div>
-        <div class="log-time">${t.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}</div>
-        <button class="btn btn-sm" onclick="unlogDose('${e.id}')" style="background:var(--red-light);color:var(--red);margin-left:8px" title="Unlog">✕</button>
-      </div>`;
-    });
+    if (entries.length) {
+      const missedN = entries.filter(e=>e.missed).length;
+      inner += `<div class="log-section-head"><span>💉 PEPTIDES</span><span class="log-section-sum">${entries.length} entr${entries.length===1?'y':'ies'}${missedN?' · '+missedN+' missed':''}</span></div>`;
+      [...entries].sort((a,b) => new Date(a.ts) - new Date(b.ts)).forEach(e => {
+        const missedBadge  = e.missed  ? '<span class="badge badge-red"  style="margin-left:6px">missed</span>'  : '';
+        const skippedBadge = e.skipped ? '<span class="badge badge-amber" style="margin-left:6px">skipped</span>' : '';
+        const lateBadge    = e.late    ? '<span class="badge badge-orange" style="margin-left:6px">late</span>' : '';
+        inner += `<div class="log-item">
+          <div class="log-dot" style="background:${e.missed?'var(--red)':e.skipped?'var(--amber,#d97706)':e.late?'var(--orange,#c2540a)':e.color||'var(--blue)'}"></div>
+          <div class="log-info">
+            <div class="log-name">${e.name}${missedBadge}${skippedBadge}${lateBadge}</div>
+            <div class="log-meta">${e.dose} mcg${e.site?' · '+e.site:''}${e.notes?' · '+e.notes:''}</div>
+          </div>
+          <div class="log-time">${fmtT(e.ts)}</div>
+          <button class="btn btn-sm" onclick="unlogDose('${e.id}')" style="background:var(--red-light);color:var(--red);margin-left:8px" title="Unlog">✕</button>
+        </div>`;
+      });
+    }
+    if (waters.length) {
+      const wUnit = nutriGoals.waterUnit||'oz';
+      const wTot  = Math.round(fromOz(sumWaterOz(waters),wUnit));
+      inner += `<div class="log-section-head"><span>💧 WATER</span><span class="log-section-sum">${wTot}${wUnit} total</span></div>`;
+      [...waters].sort((a,b)=>(a.ts||0)-(b.ts||0)).forEach(e => {
+        inner += `<div class="log-item">
+          <div class="log-dot" style="background:#6cc4f5"></div>
+          <div class="log-info"><div class="log-name">Water — ${e.displayAmount}${e.displayUnit}</div></div>
+          <div class="log-time">${fmtT(e.ts)}</div>
+          <button class="btn btn-sm" onclick="deleteNutriFromLogDay('${e.id}','${key}')" style="background:var(--red-light);color:var(--red);margin-left:8px" title="Remove">✕</button>
+        </div>`;
+      });
+    }
+    if (foods.length) {
+      const t = sumFoodTotals(foods);
+      inner += `<div class="log-section-head"><span>🍽 FOOD</span><span class="log-section-sum">${Math.round(t.cal)} cal · ${round1(t.protein)}p / ${round1(t.carbs)}c / ${round1(t.fat)}f</span></div>`;
+      [...foods].sort((a,b)=>(a.ts||0)-(b.ts||0)).forEach(e => {
+        inner += `<div class="log-item">
+          <div class="log-dot" style="background:#57cbb0"></div>
+          <div class="log-info">
+            <div class="log-name">${e.name}</div>
+            <div class="log-meta">${Math.round(e.cal)} cal · ${round1(e.protein)}p / ${round1(e.carbs)}c / ${round1(e.fat)}f${e.servings&&e.servings!==1?' · '+e.servings+'x serving':''}</div>
+          </div>
+          <div class="log-time">${fmtT(e.ts)}</div>
+          <button class="btn btn-sm" onclick="deleteNutriFromLogDay('${e.id}','${key}')" style="background:var(--red-light);color:var(--red);margin-left:8px" title="Remove">✕</button>
+        </div>`;
+      });
+    }
   }
   document.getElementById('day-detail-list').innerHTML = inner;
 
@@ -2939,7 +3046,20 @@ function openDayDetail(key) {
   document.getElementById('log-day-detail').style.display = 'block';
 }
 
+// Removing a food/water entry from the Log's day view — keeps the day open
+// (unless it's now empty) and re-syncs the Nutrition screen and banner.
+function deleteNutriFromLogDay(id, key) {
+  nutriLog = nutriLog.filter(e => e.id !== id);
+  sv('n', nutriLog);
+  renderNutrition();
+  const stillHas = (buildLogIndex()[key] || []).length || nutriLog.some(e => e.date === key);
+  if (stillHas) openDayDetail(key);
+  else closeDayDetail();
+  toast('Removed');
+}
+
 function closeDayDetail() {
+  currentDayDetailKey = null;
   document.getElementById('log-day-detail').style.display = 'none';
   setLogView(prevLogView, document.getElementById('lvb-' + prevLogView));
 }
@@ -2947,35 +3067,70 @@ function closeDayDetail() {
 // ── List view (original) ──
 function renderLogList() {
   const el = document.getElementById('full-log-list');
-  if (!doseLog.length) {
-    el.innerHTML = `<div class="empty-state"><div class="icon">📋</div><h3>No doses logged yet</h3><p>Mark doses as done from the Dashboard.</p></div>`;
+  // One merged stream, newest first, grouped by day and honoring the filter.
+  const items = [];
+  if (showDoses()) doseLog.forEach(e => items.push({kind:'dose', ts:e.ts, e}));
+  if (showNutri()) nutriLog.forEach(e => items.push({kind:e.kind, ts:e.ts, e}));
+  if (!items.length) {
+    const msg = logFilter==='peptides' ? 'Mark doses as done from the Dashboard.'
+              : logFilter==='nutrition' ? 'Log food or water from the dashboard banner.'
+              : 'Nothing logged yet.';
+    el.innerHTML = `<div class="empty-state"><div class="icon">📋</div><h3>Nothing logged yet</h3><p>${msg}</p></div>`;
     return;
   }
-  const sorted = [...doseLog].reverse();
+  items.sort((a,b) => new Date(b.ts) - new Date(a.ts));
   let lastDate = '', out = '';
-  sorted.forEach(e => {
-    const d  = new Date(e.ts);
+  items.forEach(it => {
+    const e = it.e;
+    const d  = new Date(it.ts);
     const ds = d.toLocaleDateString('en-US', {weekday:'long', month:'long', day:'numeric'});
     if (ds !== lastDate) {
       if (lastDate) out += '</div>';
       out += `<div class="section-label" style="margin-top:14px">${ds}</div><div>`;
       lastDate = ds;
     }
-    const missedBadge  = e.missed  ? '<span class="badge badge-red"  style="margin-left:6px">missed</span>'  : '';
-    const skippedBadge = e.skipped ? '<span class="badge badge-amber" style="margin-left:6px">skipped</span>' : '';
-    const lateBadge    = e.late    ? '<span class="badge badge-orange" style="margin-left:6px">late</span>' : '';
-    out += `<div class="log-item">
-      <div class="log-dot" style="background:${e.missed?'var(--red)':e.skipped?'var(--amber,#d97706)':e.late?'var(--orange,#c2540a)':e.color||'var(--blue)'}"></div>
-      <div class="log-info">
-        <div class="log-name">${e.name}${missedBadge}${skippedBadge}${lateBadge}</div>
-        <div class="log-meta">${e.dose} mcg${e.site?' · '+e.site:''}${e.notes?' · '+e.notes:''}</div>
-      </div>
-      <div class="log-time">${d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}</div>
-      <button class="btn btn-sm" onclick="unlogDose('${e.id}')" style="background:var(--red-light);color:var(--red);margin-left:8px" title="Unlog">✕</button>
-    </div>`;
+    const time = d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+    if (it.kind === 'water') {
+      out += `<div class="log-item">
+        <div class="log-dot" style="background:#6cc4f5"></div>
+        <div class="log-info"><div class="log-name">Water — ${e.displayAmount}${e.displayUnit}</div></div>
+        <div class="log-time">${time}</div>
+        <button class="btn btn-sm" onclick="deleteNutriFromList('${e.id}')" style="background:var(--red-light);color:var(--red);margin-left:8px" title="Remove">✕</button>
+      </div>`;
+    } else if (it.kind === 'food') {
+      out += `<div class="log-item">
+        <div class="log-dot" style="background:#57cbb0"></div>
+        <div class="log-info">
+          <div class="log-name">${e.name}</div>
+          <div class="log-meta">${Math.round(e.cal)} cal · ${round1(e.protein)}p / ${round1(e.carbs)}c / ${round1(e.fat)}f${e.servings&&e.servings!==1?' · '+e.servings+'x serving':''}</div>
+        </div>
+        <div class="log-time">${time}</div>
+        <button class="btn btn-sm" onclick="deleteNutriFromList('${e.id}')" style="background:var(--red-light);color:var(--red);margin-left:8px" title="Remove">✕</button>
+      </div>`;
+    } else {
+      const missedBadge  = e.missed  ? '<span class="badge badge-red"  style="margin-left:6px">missed</span>'  : '';
+      const skippedBadge = e.skipped ? '<span class="badge badge-amber" style="margin-left:6px">skipped</span>' : '';
+      const lateBadge    = e.late    ? '<span class="badge badge-orange" style="margin-left:6px">late</span>' : '';
+      out += `<div class="log-item">
+        <div class="log-dot" style="background:${e.missed?'var(--red)':e.skipped?'var(--amber,#d97706)':e.late?'var(--orange,#c2540a)':e.color||'var(--blue)'}"></div>
+        <div class="log-info">
+          <div class="log-name">${e.name}${missedBadge}${skippedBadge}${lateBadge}</div>
+          <div class="log-meta">${e.dose} mcg${e.site?' · '+e.site:''}${e.notes?' · '+e.notes:''}</div>
+        </div>
+        <div class="log-time">${time}</div>
+        <button class="btn btn-sm" onclick="unlogDose('${e.id}')" style="background:var(--red-light);color:var(--red);margin-left:8px" title="Unlog">✕</button>
+      </div>`;
+    }
   });
   if (lastDate) out += '</div>';
   el.innerHTML = out;
+}
+function deleteNutriFromList(id) {
+  nutriLog = nutriLog.filter(e => e.id !== id);
+  sv('n', nutriLog);
+  renderNutrition();
+  renderLogList();
+  toast('Removed');
 }
 
 // Keep renderLog as alias (called from other places)
