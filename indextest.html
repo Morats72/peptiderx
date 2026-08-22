@@ -911,9 +911,10 @@ table{border-collapse:collapse}#print-log-container{display:none}
       </div>
       <div id="food-pick-list" style="max-height:240px;overflow-y:auto;margin-bottom:12px"></div>
       <div class="form-row">
-        <div class="form-group"><label class="form-label">Servings</label><input class="form-input" type="number" id="food-servings" value="1" step="0.25" min="0.25"></div>
+        <div class="form-group"><label class="form-label">Servings</label><input class="form-input" type="number" id="food-servings" value="1" step="0.25" min="0.25" oninput="updatePickServingReadout()"></div>
         <div class="form-group" style="display:flex;align-items:flex-end"><button class="btn btn-primary btn-full" onclick="addSelectedFoodToLog()">Add to Log</button></div>
       </div>
+      <div class="form-hint" id="pick-serving-readout" style="margin:-6px 0 12px;font-weight:700;color:var(--blue)"></div>
       <div style="height:1px;background:var(--border);margin:16px 0"></div>
       <div class="section-label">Or Add a New Food</div>
       <div id="manual-food-hint"></div>
@@ -928,14 +929,20 @@ table{border-collapse:collapse}#print-log-container{display:none}
         <div class="form-group"><label class="form-label">Fat (g)</label><input class="form-input" type="number" id="manual-food-fat" placeholder="0"></div>
       </div>
       <div class="form-group">
+        <label class="form-label">Serving Size — optional</label>
+        <input class="form-input" type="text" id="manual-food-serving" placeholder="e.g. 4 oz, 1 cup, 1 patty (113 g)">
+        <div class="form-hint">What one serving actually is. Barcode scans fill this in when the label has it — then the Servings box tells you how much you really ate.</div>
+      </div>
+      <div class="form-group">
         <label class="form-label">Fluid (fl oz) — optional</label>
         <input class="form-input" type="number" id="manual-food-fluid" placeholder="0" step="0.5" min="0">
         <div class="form-hint">For anything you drink — soda, coffee, hot chocolate, milk. Counts toward your water goal on top of the macros above. (A can is 12 oz, a bottle 16.9, a large coffee ~20.)</div>
       </div>
       <div class="form-group">
         <label class="form-label">Servings</label>
-        <input class="form-input" type="number" id="manual-food-servings" value="1" step="0.25" min="0.25">
+        <input class="form-input" type="number" id="manual-food-servings" value="1" step="0.25" min="0.25" oninput="updateServingReadout()">
         <div class="form-hint">The numbers above are per serving — bump this up if you ate more (e.g. 2.5 for a whole can labeled 2.5 servings).</div>
+        <div class="form-hint" id="manual-serving-readout" style="margin-top:6px;font-weight:700;color:var(--blue)"></div>
       </div>
       <button class="btn btn-secondary btn-full" onclick="addManualFoodEntry()">Add Manual Entry</button>
     </div>
@@ -1075,7 +1082,7 @@ if ('serviceWorker' in navigator) {
 // ── App Version ──
 // Bump this string every time you deploy a change — makes it obvious
 // in the app (and in the console) whether a fix actually made it live.
-const APP_VERSION = 'v2.9.4 — 2026-08-22 (Drinks now count toward the water goal: optional Fluid (fl oz) on food entries, saved per food, auto-detected from barcode serving sizes; water shows a plain-water vs drinks split)';
+const APP_VERSION = 'v2.9.5 — 2026-08-22 (Serving sizes: captured from barcode scans, saved per food, and scaled by your servings so 2x of a 4 oz portion reads 8 oz — with a lb conversion once it is worth showing)';
 
 // ── Screen Wake Lock ──
 let wakeLock=null;
@@ -1984,7 +1991,7 @@ function renderNutrition(){
       }
       return `<div class="nutri-item">
         <div class="nutri-item-icon">🍽</div>
-        <div class="nutri-item-info"><div class="nutri-item-name">${e.name}</div><div class="nutri-item-detail">${Math.round(e.cal)} cal · ${round1(e.protein)}p / ${round1(e.carbs)}c / ${round1(e.fat)}f${e.fluidOz?` · 💧${round1(e.fluidOz)}oz`:''}${e.servings&&e.servings!==1?` · ${e.servings}x serving`:''} · ${fmtTime(e.ts)}</div></div>
+        <div class="nutri-item-info"><div class="nutri-item-name">${e.name}</div><div class="nutri-item-detail">${Math.round(e.cal)} cal · ${round1(e.protein)}p / ${round1(e.carbs)}c / ${round1(e.fat)}f${e.fluidOz?` · 💧${round1(e.fluidOz)}oz`:''}${entryAmountText(e)?` · ${entryAmountText(e)}`:''} · ${fmtTime(e.ts)}</div></div>
         <button class="nutri-del-btn" onclick="deleteNutriEntry('${e.id}')">✕</button>
       </div>`;
     }).join('');
@@ -2021,7 +2028,8 @@ function promptCustomWater(){
 function quickLogCustomMeal(id){
   const m=customMeals.find(x=>x.id===id);
   if(!m)return;
-  nutriLog.push({id:'nf_'+Date.now()+Math.random().toString(36).slice(2,7),date:todayStr(),ts:Date.now(),kind:'food',name:m.name,servings:1,cal:m.cal,protein:m.protein,carbs:m.carbs,fat:m.fat,fluidOz:m.fluidOz||0});
+  nutriLog.push({id:'nf_'+Date.now()+Math.random().toString(36).slice(2,7),date:todayStr(),ts:Date.now(),kind:'food',name:m.name,servings:1,cal:m.cal,protein:m.protein,carbs:m.carbs,fat:m.fat,fluidOz:m.fluidOz||0,
+    servingDesc:m.servingDesc||'',servingTotal:m.servingDesc||''});
   sv('n',nutriLog);
   renderNutrition();
   toast(m.name+' logged');
@@ -2034,8 +2042,10 @@ function openLogFoodModal(){
   document.getElementById('food-search-input').value='';
   document.getElementById('food-servings').value='1';
   document.getElementById('manual-food-hint').innerHTML='';
-  ['manual-food-name','manual-food-cal','manual-food-protein','manual-food-carbs','manual-food-fat','manual-food-fluid'].forEach(id=>document.getElementById(id).value='');
+  ['manual-food-name','manual-food-cal','manual-food-protein','manual-food-carbs','manual-food-fat','manual-food-fluid','manual-food-serving'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('manual-food-servings').value='1';
+  document.getElementById('manual-serving-readout').textContent='';
+  document.getElementById('pick-serving-readout').textContent='';
   renderFoodPickList();
   renderLogWaterButtons();
   document.getElementById('log-food-modal').classList.add('open');
@@ -2076,12 +2086,85 @@ let scanBusy=false;
 // Scanning always lands in Log Food's manual-entry fields for review — logging
 // from there (addManualFoodEntry) both logs it and saves it to My Foods.
 function scanFieldIds(){
-  return {name:'manual-food-name',cal:'manual-food-cal',protein:'manual-food-protein',carbs:'manual-food-carbs',fat:'manual-food-fat',fluid:'manual-food-fluid',hint:'manual-food-hint'};
+  return {name:'manual-food-name',cal:'manual-food-cal',protein:'manual-food-protein',carbs:'manual-food-carbs',fat:'manual-food-fat',fluid:'manual-food-fluid',serving:'manual-food-serving',hint:'manual-food-hint'};
 }
 // Open Food Facts gives serving_size as free text ("330 ml", "12 fl oz",
 // "1 can (355ml)"). If it names a liquid measure, prefill the fluid field so
 // drinks credit the water goal without you having to look up the can size.
 // Anything in grams is food, not fluid — left alone.
+// ── Serving size scaling ──
+// Open Food Facts gives serving_size as free text ("4 oz (113 g)", "1 cup",
+// "1 patty"). Rather than trying to understand it, scale EVERY number in the
+// string — "4 oz (113 g)" x2 becomes "8 oz (226 g)". Works for weights,
+// volumes, and countable units alike, and degrades to a plain multiplier for
+// anything unparseable. It's crowdsourced data, so plenty of products have no
+// serving_size at all; everything below no-ops on an empty string.
+function fmtNum(n){
+  const r=Math.round(n*100)/100;
+  return Number.isInteger(r)?String(r):String(Math.round(n*10)/10);
+}
+function scaleServingText(text,servings){
+  if(!text)return '';
+  const s=Number(servings)||1;
+  if(s===1)return text;
+  return String(text).replace(/\d+(?:\.\d+)?/g, m => fmtNum(parseFloat(m)*s));
+}
+// A big weight is easier to picture in pounds — "24 oz" means more as "1.5 lb".
+// Only appended when the scaled total actually crosses the threshold.
+const G_PER_OZ=28.3495, G_PER_LB=453.592;
+function weightHint(scaledText){
+  if(!scaledText)return '';
+  const t=String(scaledText).toLowerCase();
+  if(/\blb\b|\blbs\b|\bpound/.test(t))return ''; // already in pounds
+  let m=t.match(/([\d.]+)\s*(?:fl\.?\s*oz)/);
+  if(m)return ''; // fluid ounces aren't a weight
+  m=t.match(/([\d.]+)\s*oz\b/);
+  if(m){
+    const oz=parseFloat(m[1]);
+    return oz>=16 ? ` ≈ ${fmtNum(oz/16)} lb` : '';
+  }
+  m=t.match(/([\d.]+)\s*(?:g|grams?)\b/);
+  if(m){
+    const g=parseFloat(m[1]);
+    if(g>=G_PER_LB)return ` ≈ ${fmtNum(g/G_PER_LB)} lb`;
+    if(g>=2*G_PER_OZ)return ` ≈ ${fmtNum(g/G_PER_OZ)} oz`;
+    return '';
+  }
+  return '';
+}
+// The full "what did I actually eat" string for N servings of a food.
+function servingTotalText(servingDesc,servings){
+  // Strictly the scaled amount. With no serving size recorded this is empty —
+  // the "2x serving" multiplier is entryAmountText's job, and returning it
+  // here too produced "2x serving (2x serving)".
+  if(!servingDesc)return '';
+  const s=Number(servings)||1;
+  const scaled=scaleServingText(servingDesc,s);
+  return s===1 ? servingDesc : `${scaled}${weightHint(scaled)}`;
+}
+function updateServingReadout(){
+  const el=document.getElementById('manual-serving-readout');
+  if(!el)return;
+  const desc=(document.getElementById('manual-food-serving').value||'').trim();
+  const s=parseFloat(document.getElementById('manual-food-servings').value)||1;
+  el.textContent=(desc&&s!==1)?`${fmtNum(s)} servings = ${servingTotalText(desc,s)}`:'';
+}
+function updatePickServingReadout(){
+  const el=document.getElementById('pick-serving-readout');
+  if(!el)return;
+  const s=parseFloat(document.getElementById('food-servings').value)||1;
+  const desc=foodPickSelection&&foodPickSelection.servingDesc?foodPickSelection.servingDesc:'';
+  el.textContent=(desc&&s!==1)?`${fmtNum(s)} servings = ${servingTotalText(desc,s)}`:'';
+}
+
+// What a logged entry actually amounted to — "2x serving (8 oz ≈ 0.5 lb)".
+// Falls back to the bare multiplier for foods with no serving size recorded.
+function entryAmountText(e){
+  if(e.servingTotal && e.servings && e.servings!==1) return `${fmtNum(e.servings)} servings · ${e.servingTotal}`;
+  if(e.servingTotal && (!e.servings || e.servings===1)) return e.servingTotal;
+  if(e.servings && e.servings!==1) return `${fmtNum(e.servings)}x serving`;
+  return '';
+}
 function parseFluidOz(servingSize){
   if(!servingSize)return 0;
   const s=String(servingSize).toLowerCase();
@@ -2155,7 +2238,7 @@ function onBarcodeDecoded(code){
 async function lookupOpenFoodFacts(code){
   const f=scanFieldIds();
   try{
-    const res=await fetch(`https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(code)}.json?fields=product_name,brands,serving_size,nutriments`);
+    const res=await fetch(`https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(code)}.json?fields=product_name,brands,serving_size,serving_quantity,quantity,nutriments`);
     const data=await res.json();
     scanBusy=false;
     if(!data||data.status!==1||!data.product){
@@ -2181,6 +2264,9 @@ async function lookupOpenFoodFacts(code){
     document.getElementById(f.protein).value=round1(protein);
     document.getElementById(f.carbs).value=round1(carbs);
     document.getElementById(f.fat).value=round1(fat);
+    const servDesc=(p.serving_size||'').trim();
+    if(servDesc)document.getElementById(f.serving).value=servDesc;
+    updateServingReadout();
     const fluidOz=parseFluidOz(p.serving_size);
     if(fluidOz>0)document.getElementById(f.fluid).value=fluidOz;
     const servingNote=hasServing?(p.serving_size?`per serving (${p.serving_size})`:'per labeled serving'):'per 100g';
@@ -2219,6 +2305,7 @@ function renderFoodPickList(){
 function selectFoodPick(i){
   foodPickSelection=window._foodPickFiltered[i];
   renderFoodPickList();
+  updatePickServingReadout();
 }
 function addSelectedFoodToLog(){
   if(!foodPickSelection){toast('Pick a food first');return;}
@@ -2228,7 +2315,8 @@ function addSelectedFoodToLog(){
     id:'nf_'+Date.now()+Math.random().toString(36).slice(2,7),date:todayStr(),ts:Date.now(),kind:'food',
     name:f.name,servings,
     cal:f.cal*servings,protein:f.protein*servings,carbs:f.carbs*servings,fat:f.fat*servings,
-    fluidOz:(f.fluidOz||0)*servings
+    fluidOz:(f.fluidOz||0)*servings,
+    servingDesc:f.servingDesc||'',servingTotal:servingTotalText(f.servingDesc||'',servings)
   });
   sv('n',nutriLog);
   closeModal('log-food-modal');
@@ -2244,7 +2332,7 @@ function upsertFoodLibrary(name,cal,protein,carbs,fat,servingDesc,fluidOz){
   if(existing){
     existing.cal=cal;existing.protein=protein;existing.carbs=carbs;existing.fat=fat;
     existing.fluidOz=fluidOz||0;
-    if(servingDesc)existing.servingDesc=servingDesc;
+    if(servingDesc!==undefined)existing.servingDesc=servingDesc||existing.servingDesc||'';
   } else {
     customMeals.push({id:'cm_'+Date.now()+Math.random().toString(36).slice(2,7),name,servingDesc:servingDesc||'',cal,protein,carbs,fat,fluidOz:fluidOz||0});
   }
@@ -2257,18 +2345,20 @@ function addManualFoodEntry(){
   const carbs=parseFloat(document.getElementById('manual-food-carbs').value)||0;
   const fat=parseFloat(document.getElementById('manual-food-fat').value)||0;
   const fluid=parseFloat(document.getElementById('manual-food-fluid').value)||0;
+  const servDesc=(document.getElementById('manual-food-serving').value||'').trim();
   const servings=parseFloat(document.getElementById('manual-food-servings').value)||1;
   if(!name){toast('Give it a name');return;}
   nutriLog.push({
     id:'nf_'+Date.now()+Math.random().toString(36).slice(2,7),date:todayStr(),ts:Date.now(),kind:'food',name,servings,
-    cal:cal*servings,protein:protein*servings,carbs:carbs*servings,fat:fat*servings,fluidOz:fluid*servings
+    cal:cal*servings,protein:protein*servings,carbs:carbs*servings,fat:fat*servings,fluidOz:fluid*servings,
+    servingDesc:servDesc,servingTotal:servingTotalText(servDesc,servings)
   });
   sv('n',nutriLog);
-  upsertFoodLibrary(name,cal,protein,carbs,fat,'',fluid);
+  upsertFoodLibrary(name,cal,protein,carbs,fat,servDesc,fluid);
   closeModal('log-food-modal');
   renderNutrition();
   toast(name+' logged & saved to My Foods');
-  ['manual-food-name','manual-food-cal','manual-food-protein','manual-food-carbs','manual-food-fat','manual-food-fluid'].forEach(id=>document.getElementById(id).value='');
+  ['manual-food-name','manual-food-cal','manual-food-protein','manual-food-carbs','manual-food-fat','manual-food-fluid','manual-food-serving'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('manual-food-servings').value='1';
 }
 
@@ -2410,7 +2500,7 @@ function openNutriDayDetail(dateStr){
     }
     return `<div class="nutri-item">
       <div class="nutri-item-icon">🍽</div>
-      <div class="nutri-item-info"><div class="nutri-item-name">${e.name}</div><div class="nutri-item-detail">${Math.round(e.cal)} cal · ${round1(e.protein)}p / ${round1(e.carbs)}c / ${round1(e.fat)}f · ${new Date(e.ts).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}</div></div>
+      <div class="nutri-item-info"><div class="nutri-item-name">${e.name}</div><div class="nutri-item-detail">${Math.round(e.cal)} cal · ${round1(e.protein)}p / ${round1(e.carbs)}c / ${round1(e.fat)}f${e.fluidOz?` · 💧${round1(e.fluidOz)}oz`:''}${entryAmountText(e)?` · ${entryAmountText(e)}`:''} · ${new Date(e.ts).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}</div></div>
       <button class="nutri-del-btn" onclick="deleteNutriEntryFromHistory('${e.id}','${dateStr}')">✕</button>
     </div>`;
   }).join('');
@@ -2435,16 +2525,16 @@ function clearNutriLog(){
   toast('Nutrition log cleared');
 }
 function buildNutriCSV(){
-  const rows=[['Date','Time','Type','Name','Calories','Protein (g)','Carbs (g)','Fat (g)','Fluid (fl oz)','Water Amount','Water Unit']];
+  const rows=[['Date','Time','Type','Name','Serving Size','Servings','Amount Eaten','Calories','Protein (g)','Carbs (g)','Fat (g)','Fluid (fl oz)','Water Amount','Water Unit']];
   const sorted=[...nutriLog].sort((a,b)=>(a.ts||0)-(b.ts||0));
   sorted.forEach(e=>{
     const d=new Date(e.ts);
     const dateStr=d.toLocaleDateString('en-US');
     const timeStr=d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
     if(e.kind==='water'){
-      rows.push([dateStr,timeStr,'Water','','','','','','',e.displayAmount,e.displayUnit]);
+      rows.push([dateStr,timeStr,'Water','','','','','','','','','',e.displayAmount,e.displayUnit]);
     } else {
-      rows.push([dateStr,timeStr,'Food',e.name,Math.round(e.cal),round1(e.protein),round1(e.carbs),round1(e.fat),e.fluidOz?round1(e.fluidOz):'','','']);
+      rows.push([dateStr,timeStr,'Food',e.name,e.servingDesc||'',e.servings||1,e.servingTotal||'',Math.round(e.cal),round1(e.protein),round1(e.carbs),round1(e.fat),e.fluidOz?round1(e.fluidOz):'','','']);
     }
   });
   return rows.map(r=>r.map(csvEscape).join(',')).join('\r\n');
@@ -3079,7 +3169,7 @@ function openDayDetail(key) {
           <div class="log-dot" style="background:#57cbb0"></div>
           <div class="log-info">
             <div class="log-name">${e.name}</div>
-            <div class="log-meta">${Math.round(e.cal)} cal · ${round1(e.protein)}p / ${round1(e.carbs)}c / ${round1(e.fat)}f${e.fluidOz?' · 💧'+round1(e.fluidOz)+'oz':''}${e.servings&&e.servings!==1?' · '+e.servings+'x serving':''}</div>
+            <div class="log-meta">${Math.round(e.cal)} cal · ${round1(e.protein)}p / ${round1(e.carbs)}c / ${round1(e.fat)}f${e.fluidOz?' · 💧'+round1(e.fluidOz)+'oz':''}${entryAmountText(e)?' · '+entryAmountText(e):''}</div>
           </div>
           <div class="log-time">${fmtT(e.ts)}</div>
           <button class="btn btn-sm" onclick="deleteNutriFromLogDay('${e.id}','${key}')" style="background:var(--red-light);color:var(--red);margin-left:8px" title="Remove">✕</button>
@@ -3152,7 +3242,7 @@ function renderLogList() {
         <div class="log-dot" style="background:#57cbb0"></div>
         <div class="log-info">
           <div class="log-name">${e.name}</div>
-          <div class="log-meta">${Math.round(e.cal)} cal · ${round1(e.protein)}p / ${round1(e.carbs)}c / ${round1(e.fat)}f${e.fluidOz?' · 💧'+round1(e.fluidOz)+'oz':''}${e.servings&&e.servings!==1?' · '+e.servings+'x serving':''}</div>
+          <div class="log-meta">${Math.round(e.cal)} cal · ${round1(e.protein)}p / ${round1(e.carbs)}c / ${round1(e.fat)}f${e.fluidOz?' · 💧'+round1(e.fluidOz)+'oz':''}${entryAmountText(e)?' · '+entryAmountText(e):''}</div>
         </div>
         <div class="log-time">${time}</div>
         <button class="btn btn-sm" onclick="deleteNutriFromList('${e.id}')" style="background:var(--red-light);color:var(--red);margin-left:8px" title="Remove">✕</button>
