@@ -16,7 +16,7 @@
   --white:#ffffff;--bg:#f4f7fb;--card:#ffffff;--border:#dde3ee;
   --text:#1a2744;--text-mid:#4a5568;--text-soft:#8a9abf;
   --amber:#c47a1e;--amber-light:#fdf3e3;--red:#b92c2c;--red-light:#fdecea;
-  --green:#1e7a6e;--green-light:#d0ede9;
+  --green:#1e7a6e;--green-light:#d0ede9;--orange:#c2540a;--orange-light:#fbe8d9;
   --tab-h:68px;--safe-bottom:env(safe-area-inset-bottom,0px);--safe-top:env(safe-area-inset-top,0px);
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -58,6 +58,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',sans-
 .badge-blue{background:var(--blue-light);color:var(--blue)}
 .badge-green{background:var(--green-light);color:var(--green)}
 .badge-amber{background:var(--amber-light);color:var(--amber)}
+.badge-orange{background:var(--orange-light);color:var(--orange)}
 .today-header{background:var(--navy);border-radius:14px;padding:18px;margin-bottom:12px;color:var(--white)}
 .today-header .date{font-size:12px;color:#8aafd4;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
 .today-header .greeting{font-size:22px;font-weight:700;margin-bottom:12px}
@@ -191,6 +192,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',sans-
 .cal-badge{font-size:10px;font-weight:700;background:var(--green);color:white;
   border-radius:10px;padding:1px 5px;margin-top:2px;line-height:14px}
 .cal-badge.has-missed{background:var(--amber)}
+.cal-badge.has-late{background:var(--orange)}
 .week-day-row{display:grid;grid-template-columns:60px 1fr;gap:8px;
   padding:8px 0;border-bottom:1px solid var(--border);align-items:center}
 .week-day-row:last-child{border-bottom:none}
@@ -201,6 +203,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',sans-
 .week-dose-chip{font-size:11px;font-weight:600;padding:3px 8px;border-radius:12px;
   background:var(--blue-light);color:var(--blue)}
 .week-dose-chip.missed{background:var(--red-light);color:var(--red)}
+.week-dose-chip.late{background:var(--orange-light);color:var(--orange)}
 .upcoming-dose-detail{font-size:12px;color:var(--text-mid);margin-top:2px}
 .upcoming-time-badge{font-size:12px;font-weight:700;color:var(--blue);
   background:var(--blue-light);padding:5px 9px;border-radius:8px;white-space:nowrap}
@@ -779,7 +782,7 @@ if ('serviceWorker' in navigator) {
 // ── App Version ──
 // Bump this string every time you deploy a change — makes it obvious
 // in the app (and in the console) whether a fix actually made it live.
-const APP_VERSION = 'v2.6.1 — 2026-08-20 (removed calculator unit reference table; settings button sized to match Add)';
+const APP_VERSION = 'v2.6.2 — 2026-08-22 (fixed false "missed" marking on weekly/interval/cycle peptides; added a real Late status for doses logged 30+ min past their scheduled time)';
 
 // ── Screen Wake Lock ──
 let wakeLock=null;
@@ -1335,11 +1338,13 @@ function checkMidnightRollover(){
   try{
     const raw=JSON.parse(localStorage.getItem(SK.c));
     if(raw&&raw.date&&raw.date!==todayStr()){
-      // New day — log any unchecked doses as missed
-      const prevDue=peptides.filter(p=>{
-        // Reconstruct if they were due on prev date
-        return p.active&&p.schedType!=='asneeded';
-      });
+      // New day — log any unchecked doses as missed, but only for peptides
+      // that were actually due on that previous date (weekly/interval/cycle
+      // schedules must NOT get marked missed on their off days — that was
+      // the bug: this used to just check active+not-as-needed and missed
+      // every single off-day night for those schedules).
+      const prevDate=new Date(raw.date+'T00:00:00');
+      const prevDue=peptides.filter(p=>isDueOnDate(p,prevDate));
       const prevChecked=raw.ids||[];
       let missedCount=0;
       prevDue.forEach(p=>{
@@ -1364,7 +1369,7 @@ function logAllDue(){
     const freq=p.freq||1;
     for(let i=0;i<freq;i++){
       const cid=p.id+'_'+i;
-      if(!todayChecked.includes(cid)){todayChecked.push(cid);logEntry(p,getCurrentDose(p),'','',false);}
+      if(!todayChecked.includes(cid)){todayChecked.push(cid);logEntry(p,getCurrentDose(p),'','',false,null,cid);}
     }
   });
   saveTodayChecked();renderDashboard();toast('All doses marked done');
@@ -1739,6 +1744,7 @@ function skipDose(){
     const d=new Date();d.setHours(hh,mm,0,0);
     customTs=d.toISOString();
   }
+  reconcileStaleMissed(checkId);
   doseLog.push({id:'l_'+Date.now()+Math.random(),peptideId:p.id,name:p.name,color:p.color,
     dose:parseFloat(document.getElementById('log-dose').value)||getCurrentDose(p),
     site:'',notes:document.getElementById('log-notes').value||'',
@@ -1748,8 +1754,36 @@ function skipDose(){
   closeModal('log-dose-modal');renderDashboard();toast('Dose skipped');
   syncScheduleToServer();
 }
+// A dose only counts "late" if the peptide has a specific scheduled clock
+// time AND it was logged more than 30 minutes after that time. No time set
+// on the peptide = no late status, just Logged or Missed as before.
+function isLogLate(p,idx,tsIso){
+  const rawTime=p.times&&p.times[idx]?p.times[idx]:null;
+  if(!rawTime)return false;
+  const logDate=new Date(tsIso);
+  const [hh,mm]=rawTime.split(':').map(Number);
+  const scheduled=new Date(logDate.getFullYear(),logDate.getMonth(),logDate.getDate(),hh,mm,0,0);
+  return (logDate-scheduled)>30*60000;
+}
+// If a dose slot already has a stale auto-generated "missed" entry (from a
+// prior midnight rollover) and you go ahead and log it anyway, that old
+// missed record no longer reflects reality — remove it and let the new
+// entry (tagged late) stand in its place instead of leaving both around.
+function reconcileStaleMissed(checkId){
+  if(!checkId)return false;
+  const before=doseLog.length;
+  doseLog=doseLog.filter(e=>!(e.missed&&e.checkId===checkId));
+  return doseLog.length<before;
+}
 function logEntry(p,dose,site,notes,missed,customTs,checkId){
-  doseLog.push({id:'l_'+Date.now()+Math.random(),peptideId:p.id,name:p.name,color:p.color,dose,site,notes,missed:!!missed,ts:customTs||new Date().toISOString(),checkId:checkId||null});
+  const ts=customTs||new Date().toISOString();
+  let late=false;
+  if(!missed&&checkId){
+    const idx=parseInt(checkId.slice((p.id+'_').length),10)||0;
+    late=isLogLate(p,idx,ts);
+    if(reconcileStaleMissed(checkId))late=true; // was marked missed, now actually logged — that's late by definition
+  }
+  doseLog.push({id:'l_'+Date.now()+Math.random(),peptideId:p.id,name:p.name,color:p.color,dose,site,notes,missed:!!missed,late:!!late,ts,checkId:checkId||null});
   sv('l',doseLog);
   // decrement vial tracking
   if(p.dosesLeft!=null){
@@ -1873,8 +1907,9 @@ function renderCalMonth() {
     const entries = idx[key] || [];
     const total   = entries.length;
     const missed  = entries.filter(e => e.missed).length;
+    const late    = entries.filter(e => e.late).length;
     const isToday = today.getFullYear()===yr && today.getMonth()===mo && today.getDate()===d;
-    const badge   = total ? `<div class="cal-badge ${missed>0?'has-missed':''}">${total}</div>` : '';
+    const badge   = total ? `<div class="cal-badge ${missed>0?'has-missed':late>0?'has-late':''}">${total}</div>` : '';
     cells += `<div class="cal-day${isToday?' today':''}" onclick="openDayDetail('${key}')">
       <div class="cal-day-num">${d}</div>${badge}
     </div>`;
@@ -1916,7 +1951,7 @@ function renderCalWeek() {
     const entries = idx[key] || [];
     const isToday = today.toDateString() === day.toDateString();
     const chips = entries.length
-      ? entries.map(e => `<div class="week-dose-chip${e.missed?' missed':''}">${e.name}${e.missed?' ✕':''}</div>`).join('')
+      ? entries.map(e => `<div class="week-dose-chip${e.missed?' missed':e.late?' late':''}">${e.name}${e.missed?' ✕':e.late?' ⏱':''}</div>`).join('')
       : '<div style="font-size:12px;color:var(--text-soft)">—</div>';
     rows += `<div class="week-day-row" onclick="${entries.length?`openDayDetail('${key}')`:''}" style="${entries.length?'cursor:pointer':''}">
       <div class="week-day-label${isToday?' today':''}">
@@ -1952,10 +1987,11 @@ function openDayDetail(key) {
       const t = new Date(e.ts);
       const missedBadge  = e.missed  ? '<span class="badge badge-red"  style="margin-left:6px">missed</span>'  : '';
       const skippedBadge = e.skipped ? '<span class="badge badge-amber" style="margin-left:6px">skipped</span>' : '';
+      const lateBadge    = e.late    ? '<span class="badge badge-orange" style="margin-left:6px">late</span>' : '';
       inner += `<div class="log-item">
-        <div class="log-dot" style="background:${e.missed?'var(--red)':e.skipped?'var(--amber,#d97706)':e.color||'var(--blue)'}"></div>
+        <div class="log-dot" style="background:${e.missed?'var(--red)':e.skipped?'var(--amber,#d97706)':e.late?'var(--orange,#c2540a)':e.color||'var(--blue)'}"></div>
         <div class="log-info">
-          <div class="log-name">${e.name}${missedBadge}${skippedBadge}</div>
+          <div class="log-name">${e.name}${missedBadge}${skippedBadge}${lateBadge}</div>
           <div class="log-meta">${e.dose} mcg${e.site?' · '+e.site:''}${e.notes?' · '+e.notes:''}</div>
         </div>
         <div class="log-time">${t.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}</div>
@@ -1996,10 +2032,11 @@ function renderLogList() {
     }
     const missedBadge  = e.missed  ? '<span class="badge badge-red"  style="margin-left:6px">missed</span>'  : '';
     const skippedBadge = e.skipped ? '<span class="badge badge-amber" style="margin-left:6px">skipped</span>' : '';
+    const lateBadge    = e.late    ? '<span class="badge badge-orange" style="margin-left:6px">late</span>' : '';
     out += `<div class="log-item">
-      <div class="log-dot" style="background:${e.missed?'var(--red)':e.skipped?'var(--amber,#d97706)':e.color||'var(--blue)'}"></div>
+      <div class="log-dot" style="background:${e.missed?'var(--red)':e.skipped?'var(--amber,#d97706)':e.late?'var(--orange,#c2540a)':e.color||'var(--blue)'}"></div>
       <div class="log-info">
-        <div class="log-name">${e.name}${missedBadge}${skippedBadge}</div>
+        <div class="log-name">${e.name}${missedBadge}${skippedBadge}${lateBadge}</div>
         <div class="log-meta">${e.dose} mcg${e.site?' · '+e.site:''}${e.notes?' · '+e.notes:''}</div>
       </div>
       <div class="log-time">${d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}</div>
@@ -2034,7 +2071,7 @@ function buildLogCSV(){
     const d=new Date(e.ts);
     const dateStr=d.toLocaleDateString('en-US');
     const timeStr=d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
-    const status=e.missed?'Missed':e.skipped?'Skipped':'Logged';
+    const status=e.missed?'Missed':e.skipped?'Skipped':e.late?'Late':'Logged';
     rows.push([dateStr,timeStr,e.name,e.dose,e.site||'',status,e.notes||'']);
   });
   return rows.map(r=>r.map(csvEscape).join(',')).join('\r\n');
@@ -2072,7 +2109,7 @@ function exportLogPDF(){
   const sorted=[...doseLog].sort((a,b)=>new Date(a.ts)-new Date(b.ts));
   const rows=sorted.map(e=>{
     const d=new Date(e.ts);
-    const status=e.missed?'Missed':e.skipped?'Skipped':'Logged';
+    const status=e.missed?'Missed':e.skipped?'Skipped':e.late?'Late':'Logged';
     return `<tr><td>${d.toLocaleDateString('en-US')}</td><td>${d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}</td><td>${e.name}</td><td>${e.dose} mcg</td><td>${e.site||'—'}</td><td>${status}</td><td>${(e.notes||'').replace(/</g,'&lt;')}</td></tr>`;
   }).join('');
   const container=document.getElementById('print-log-container');
