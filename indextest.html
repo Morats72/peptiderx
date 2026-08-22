@@ -537,8 +537,8 @@ table{border-collapse:collapse}#print-log-container{display:none}
     </div>
   </div>
   <div class="card">
-    <div class="card-header"><h2>Custom Meals</h2><button class="btn btn-secondary btn-sm" onclick="openCustomMealModal()">+ New</button></div>
-    <div class="card-body" id="custom-meals-list"><div class="empty-state"><div class="icon">🥗</div><h3>No custom meals yet</h3><p>Save a combo you eat often — like Greek yogurt + protein powder — so it's one tap to log.</p></div></div>
+    <div class="card-header"><h2>My Foods</h2></div>
+    <div class="card-body" id="custom-meals-list"><div class="empty-state"><div class="icon">🥗</div><h3>No foods saved yet</h3><p>Log something below — type it in or scan the barcode — and it'll land here automatically for one-tap logging next time.</p></div></div>
   </div>
   <div class="card">
     <div class="card-header"><h2>Today's Log</h2></div>
@@ -863,12 +863,12 @@ table{border-collapse:collapse}#print-log-container{display:none}
       <button class="modal-close" onclick="closeModal('log-food-modal')">✕</button>
     </div>
     <div class="modal-body">
-      <button class="btn btn-secondary btn-full" onclick="openScanModal('log')" style="margin-bottom:12px">
+      <button class="btn btn-secondary btn-full" onclick="openScanModal()" style="margin-bottom:12px">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/></svg> Scan Barcode
       </button>
       <div class="ref-search">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="text" placeholder="Search foods & custom meals..." id="food-search-input" oninput="renderFoodPickList()">
+        <input type="text" placeholder="Search My Foods..." id="food-search-input" oninput="renderFoodPickList()">
       </div>
       <div id="food-pick-list" style="max-height:240px;overflow-y:auto;margin-bottom:12px"></div>
       <div class="form-row">
@@ -876,8 +876,9 @@ table{border-collapse:collapse}#print-log-container{display:none}
         <div class="form-group" style="display:flex;align-items:flex-end"><button class="btn btn-primary btn-full" onclick="addSelectedFoodToLog()">Add to Log</button></div>
       </div>
       <div style="height:1px;background:var(--border);margin:16px 0"></div>
-      <div class="section-label">Or Log Something Not Listed</div>
+      <div class="section-label">Or Add a New Food</div>
       <div id="manual-food-hint"></div>
+      <div class="form-hint" style="margin-bottom:10px">Logs now and saves to My Foods for one-tap logging next time. Typing an existing name updates that entry instead of duplicating it.</div>
       <div class="form-group"><label class="form-label">Name</label><input class="form-input" type="text" id="manual-food-name" placeholder="e.g. Leftover chili"></div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">Calories</label><input class="form-input" type="number" id="manual-food-cal" placeholder="0"></div>
@@ -913,21 +914,18 @@ table{border-collapse:collapse}#print-log-container{display:none}
   </div>
 </div>
 
-<!-- CUSTOM MEAL MODAL -->
+<!-- EDIT FOOD MODAL (My Foods library — created automatically by logging, edited here) -->
 <div class="modal-overlay" id="custom-meal-modal">
   <div class="modal">
     <div class="modal-handle"></div>
     <div class="modal-header">
-      <h3 id="custom-meal-modal-title">New Custom Meal</h3>
+      <h3 id="custom-meal-modal-title">Edit Food</h3>
       <button class="modal-close" onclick="closeModal('custom-meal-modal')">✕</button>
     </div>
     <div class="modal-body">
-      <button class="btn btn-secondary btn-full" onclick="openScanModal('customMeal')" style="margin-bottom:14px">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/></svg> Scan Barcode
-      </button>
       <input type="hidden" id="edit-custom-meal-id">
       <div id="custom-meal-hint"></div>
-      <div class="form-group"><label class="form-label">Meal Name *</label><input class="form-input" type="text" id="cm-name" placeholder="e.g. Greek Yogurt + Protein Powder"></div>
+      <div class="form-group"><label class="form-label">Name *</label><input class="form-input" type="text" id="cm-name" placeholder="e.g. Greek Yogurt + Protein Powder"></div>
       <div class="form-group"><label class="form-label">Serving Description</label><input class="form-input" type="text" id="cm-serving" placeholder="e.g. 1 bowl"></div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">Calories</label><input class="form-input" type="number" id="cm-cal" placeholder="0"></div>
@@ -937,12 +935,8 @@ table{border-collapse:collapse}#print-log-container{display:none}
         <div class="form-group"><label class="form-label">Carbs (g)</label><input class="form-input" type="number" id="cm-carbs" placeholder="0"></div>
         <div class="form-group"><label class="form-label">Fat (g)</label><input class="form-input" type="number" id="cm-fat" placeholder="0"></div>
       </div>
-      <div class="form-group">
-        <label class="form-label">Servings to Bake In</label>
-        <input class="form-input" type="number" id="cm-servings-multiplier" value="1" step="0.25" min="0.25">
-        <div class="form-hint">If the numbers above are per serving and you want this saved meal to represent more than one — a whole can labeled 2.5 servings, say — set it here. Multiplies into the totals when you save, then this always logs as one flat entry from then on.</div>
-      </div>
-      <button class="btn btn-primary btn-full" onclick="saveCustomMeal()">Save Custom Meal</button>
+      <div class="form-hint" style="margin-bottom:10px">These are per-serving numbers — the Servings field when logging multiplies them out.</div>
+      <button class="btn btn-primary btn-full" onclick="saveCustomMeal()">Save Changes</button>
     </div>
   </div>
 </div>
@@ -1032,7 +1026,7 @@ if ('serviceWorker' in navigator) {
 // ── App Version ──
 // Bump this string every time you deploy a change — makes it obvious
 // in the app (and in the console) whether a fix actually made it live.
-const APP_VERSION = 'v2.8.1 — 2026-08-22 (Scan Barcode added to Custom Meals; Servings multiplier for manual entries & custom meals)';
+const APP_VERSION = 'v2.9.0 — 2026-08-22 (My Foods: no baked-in staples — every manual entry and scan auto-saves to your own food library)';
 
 // ── Screen Wake Lock ──
 let wakeLock=null;
@@ -1300,56 +1294,13 @@ function ld(k){try{return JSON.parse(localStorage.getItem(SK[k]))||[]}catch{retu
 function sv(k,d){try{localStorage.setItem(SK[k],JSON.stringify(d))}catch(e){toast('Storage error')}}
 let peptides=ld('p'),doseLog=ld('l');
 
-// ── Nutrition: baked-in food list ──
-// Source: Walter's "Food Macro Template" spreadsheet. Values are a mix of
-// official brand nutrition (cited per-item below) and USDA-generic ballpark
-// averages — not exact, "close enough to track by" per the spreadsheet's
-// own design. To add more foods: fill in the spreadsheet template and send
-// it back — this array gets regenerated and redeployed, same pattern as
-// the peptide Reference library.
-// Fields: name, cat, servingDesc, cal, protein(g), carbs(g), fat(g)
-const FOOD_LIST=[
-  {name:"Wendy's Dave's Single (with bun, as served)",cat:'Fast Food',servingDesc:'1 sandwich',cal:524,protein:28,carbs:37,fat:29},
-  {name:"Wendy's American Cheese (slice)",cat:'Dairy',servingDesc:'1 slice',cal:42,protein:1.9,carbs:1.3,fat:3.2},
-  {name:"Wendy's Dave's Single, patty only (no bun)",cat:'Fast Food',servingDesc:'1 patty, no bun/toppings',cal:240,protein:20,carbs:0,fat:18},
-  {name:'Chicken Breast, cooked, skinless',cat:'Protein',servingDesc:'4 oz',cal:165,protein:31,carbs:0,fat:4},
-  {name:'Chicken Thigh, cooked, skinless',cat:'Protein',servingDesc:'4 oz',cal:220,protein:26,carbs:0,fat:12},
-  {name:'Ground Beef 90/10, cooked',cat:'Protein',servingDesc:'4 oz',cal:200,protein:24,carbs:0,fat:11},
-  {name:'Ground Beef 80/20, cooked',cat:'Protein',servingDesc:'4 oz',cal:290,protein:23,carbs:0,fat:21},
-  {name:'Sirloin Steak, cooked',cat:'Protein',servingDesc:'4 oz',cal:240,protein:33,carbs:0,fat:11},
-  {name:'Pork Chop, cooked',cat:'Protein',servingDesc:'4 oz',cal:220,protein:28,carbs:0,fat:11},
-  {name:'Bacon',cat:'Protein',servingDesc:'2 slices',cal:80,protein:6,carbs:0,fat:6},
-  {name:'Turkey Breast, cooked',cat:'Protein',servingDesc:'4 oz',cal:150,protein:34,carbs:0,fat:1},
-  {name:'Salmon, cooked',cat:'Protein',servingDesc:'4 oz',cal:230,protein:25,carbs:0,fat:14},
-  {name:'Shrimp, cooked',cat:'Protein',servingDesc:'4 oz',cal:120,protein:25,carbs:0,fat:1.5},
-  {name:'Egg, whole, large, cooked',cat:'Protein',servingDesc:'1 egg',cal:70,protein:6,carbs:0.5,fat:5},
-  {name:'Egg Whites',cat:'Protein',servingDesc:'1/2 cup (~4 whites)',cal:100,protein:21,carbs:1,fat:0},
-  {name:'Cheddar Cheese',cat:'Dairy',servingDesc:'1 oz',cal:115,protein:7,carbs:0.5,fat:9},
-  {name:'Mozzarella, part-skim',cat:'Dairy',servingDesc:'1 oz',cal:80,protein:7,carbs:1,fat:5},
-  {name:'String Cheese',cat:'Dairy',servingDesc:'1 stick',cal:80,protein:7,carbs:1,fat:6},
-  {name:'Cottage Cheese, low-fat (2%)',cat:'Dairy',servingDesc:'1/2 cup',cal:90,protein:12,carbs:5,fat:2.5},
-  {name:'Cottage Cheese, full-fat (4%)',cat:'Dairy',servingDesc:'1/2 cup',cal:110,protein:12,carbs:4,fat:5},
-  {name:'Plain Greek Yogurt, nonfat',cat:'Dairy',servingDesc:'6 oz — brand varies',cal:100,protein:17,carbs:6,fat:0},
-  {name:'Plain Greek Yogurt, whole milk',cat:'Dairy',servingDesc:'6 oz — brand varies',cal:150,protein:13,carbs:6,fat:8},
-  {name:'Milk, 2%',cat:'Dairy',servingDesc:'1 cup',cal:120,protein:8,carbs:12,fat:5},
-  {name:'Butter',cat:'Fat/Oil',servingDesc:'1 tbsp',cal:100,protein:0,carbs:0,fat:11},
-  {name:'Broccoli, steamed',cat:'Fruit/Veg',servingDesc:'1 cup',cal:55,protein:4,carbs:11,fat:0.5},
-  {name:'Spinach, raw',cat:'Fruit/Veg',servingDesc:'2 cups',cal:15,protein:2,carbs:2,fat:0},
-  {name:'Green Beans, cooked',cat:'Fruit/Veg',servingDesc:'1 cup',cal:45,protein:2,carbs:10,fat:0},
-  {name:'Carrots, raw, chopped',cat:'Fruit/Veg',servingDesc:'1 cup',cal:50,protein:1,carbs:12,fat:0},
-  {name:'Bell Pepper, raw',cat:'Fruit/Veg',servingDesc:'1 cup sliced',cal:30,protein:1,carbs:7,fat:0},
-  {name:'Zucchini, cooked',cat:'Fruit/Veg',servingDesc:'1 cup',cal:30,protein:2,carbs:6,fat:0.5},
-  {name:'Asparagus, cooked',cat:'Fruit/Veg',servingDesc:'1 cup',cal:40,protein:4,carbs:7,fat:0},
-  {name:'Sweet Potato, baked',cat:'Fruit/Veg',servingDesc:'1 medium',cal:130,protein:2,carbs:30,fat:0},
-  {name:'Potato, baked (plain)',cat:'Fruit/Veg',servingDesc:'1 medium',cal:160,protein:4,carbs:37,fat:0},
-  {name:'Mixed Salad Greens',cat:'Fruit/Veg',servingDesc:'2 cups',cal:15,protein:1,carbs:3,fat:0},
-  {name:'White Rice, cooked',cat:'Grain/Carb',servingDesc:'1 cup',cal:205,protein:4,carbs:45,fat:0.5},
-  {name:'Brown Rice, cooked',cat:'Grain/Carb',servingDesc:'1 cup',cal:215,protein:5,carbs:45,fat:1.5},
-  {name:'Oatmeal, cooked, plain',cat:'Grain/Carb',servingDesc:'1 cup',cal:150,protein:5,carbs:27,fat:3},
-  {name:'Whole Wheat Bread',cat:'Grain/Carb',servingDesc:'1 slice',cal:80,protein:4,carbs:14,fat:1},
-];
-
-let customMeals=ld('m'); // reusable saved combos, e.g. "Greek Yogurt + Protein Powder"
+// ── Nutrition: personal food library ──
+// No baked-in staple list. Every food comes from the user themselves: type
+// it in once (Log Food → manual entry) or scan its barcode, and it's saved
+// here automatically so it's a one-tap re-log next time. Matching an
+// existing name (case-insensitive) updates that entry instead of making a
+// duplicate, so correcting a number later is just re-entering it.
+let customMeals=ld('m'); // the user's self-built food library: {id,name,servingDesc,cal,protein,carbs,fat}
 let nutriLog=ld('n');    // today's + all past food/water entries: {id,date,time,kind:'food'|'water',name,servings,cal,protein,carbs,fat,waterOz}
 function loadGoals(){try{return JSON.parse(localStorage.getItem(SK.g))}catch{return null}}
 function saveGoals(g){try{localStorage.setItem(SK.g,JSON.stringify(g))}catch(e){toast('Storage error')}}
@@ -1855,7 +1806,7 @@ function renderNutrition(){
   // Custom meals list
   const cmList=document.getElementById('custom-meals-list');
   if(!customMeals.length){
-    cmList.innerHTML='<div class="empty-state"><div class="icon">🥗</div><h3>No custom meals yet</h3><p>Save a combo you eat often — like Greek yogurt + protein powder — so it\'s one tap to log.</p></div>';
+    cmList.innerHTML='<div class="empty-state"><div class="icon">🥗</div><h3>No foods saved yet</h3><p>Log something below — type it in or scan the barcode — and it\'ll land here automatically for one-tap logging next time.</p></div>';
   } else {
     cmList.innerHTML=customMeals.map(m=>`
       <div class="custom-meal-row">
@@ -1926,7 +1877,7 @@ function quickLogCustomMeal(id){
 }
 
 // ── Log Food modal ──
-let foodPickSelection=null; // {source:'food'|'custom', item}
+let foodPickSelection=null; // the selected entry from customMeals (the user's food library)
 function openLogFoodModal(){
   foodPickSelection=null;
   document.getElementById('food-search-input').value='';
@@ -1948,15 +1899,13 @@ function openLogFoodModal(){
 let scannerLibLoading=false;
 let activeScanner=null;
 let scanBusy=false;
-let scanTarget='log'; // 'log' (Log Food's manual fields) or 'customMeal' (the Custom Meal form)
+// Scanning always lands in Log Food's manual-entry fields for review — logging
+// from there (addManualFoodEntry) both logs it and saves it to My Foods.
 function scanFieldIds(){
-  return scanTarget==='customMeal'
-    ?{name:'cm-name',cal:'cm-cal',protein:'cm-protein',carbs:'cm-carbs',fat:'cm-fat',hint:'custom-meal-hint'}
-    :{name:'manual-food-name',cal:'manual-food-cal',protein:'manual-food-protein',carbs:'manual-food-carbs',fat:'manual-food-fat',hint:'manual-food-hint'};
+  return {name:'manual-food-name',cal:'manual-food-cal',protein:'manual-food-protein',carbs:'manual-food-carbs',fat:'manual-food-fat',hint:'manual-food-hint'};
 }
 function openScanTargetModal(){
-  if(scanTarget==='customMeal')openCustomMealModal();
-  else openLogFoodModal();
+  openLogFoodModal();
 }
 function loadScannerLib(cb){
   if(window.Html5Qrcode){cb();return;}
@@ -1975,8 +1924,7 @@ function loadScannerLib(cb){
   };
   document.head.appendChild(s);
 }
-function openScanModal(target){
-  scanTarget=target||'log';
+function openScanModal(){
   scanBusy=false;
   document.getElementById('scan-status').textContent='Loading scanner…';
   document.getElementById('scan-modal').classList.add('open');
@@ -2044,9 +1992,8 @@ async function lookupOpenFoodFacts(code){
     document.getElementById(f.protein).value=round1(protein);
     document.getElementById(f.carbs).value=round1(carbs);
     document.getElementById(f.fat).value=round1(fat);
-    const servingWord=scanTarget==='customMeal'?'"Servings to Bake In"':'"Servings"';
     const servingNote=hasServing?(p.serving_size?`per serving (${p.serving_size})`:'per labeled serving'):'per 100g';
-    document.getElementById(f.hint).innerHTML=`<div class="form-hint" style="margin-bottom:8px">Scanned: <strong>${name}</strong> — numbers are ${servingNote}. If you had more than one serving — a whole can, say — use the ${servingWord} field below instead of retyping. Review before ${scanTarget==='customMeal'?'saving':'adding'}.</div>`;
+    document.getElementById(f.hint).innerHTML=`<div class="form-hint" style="margin-bottom:8px">Scanned: <strong>${name}</strong> — numbers are ${servingNote}. If you had more than one serving — a whole can, say — use the "Servings" field below instead of retyping. Review before adding.</div>`;
     toast('Found it — check the numbers below');
   }catch(err){
     scanBusy=false;
@@ -2058,21 +2005,19 @@ async function lookupOpenFoodFacts(code){
 }
 function renderFoodPickList(){
   const q=(document.getElementById('food-search-input').value||'').toLowerCase().trim();
-  const custom=customMeals.map(m=>({source:'custom',item:m}));
-  const staple=FOOD_LIST.map(f=>({source:'food',item:f}));
-  const all=[...custom,...staple];
-  const filtered=q?all.filter(x=>x.item.name.toLowerCase().includes(q)):all;
+  const filtered=q?customMeals.filter(f=>f.name.toLowerCase().includes(q)):customMeals;
   const list=document.getElementById('food-pick-list');
   if(!filtered.length){
-    list.innerHTML='<div class="empty-state"><div class="icon">🔍</div><h3>No matches</h3><p>Try a different search, or use Quick Add below.</p></div>';
+    list.innerHTML=customMeals.length
+      ?'<div class="empty-state"><div class="icon">🔍</div><h3>No matches</h3><p>Try a different search, or add it below.</p></div>'
+      :'<div class="empty-state"><div class="icon">🥗</div><h3>Nothing saved yet</h3><p>Add your first food below — it\'ll be here to pick next time.</p></div>';
     return;
   }
-  list.innerHTML=filtered.slice(0,60).map((x,i)=>{
-    const f=x.item;
-    const selected=foodPickSelection&&foodPickSelection.item.name===f.name&&foodPickSelection.source===x.source;
-    return `<div class="food-pick-row ${selected?'selected':''}" onclick='selectFoodPick(${i},${JSON.stringify(x.source)})'>
+  list.innerHTML=filtered.slice(0,60).map((f,i)=>{
+    const selected=foodPickSelection&&foodPickSelection.name===f.name;
+    return `<div class="food-pick-row ${selected?'selected':''}" onclick='selectFoodPick(${i})'>
       <div class="food-pick-info">
-        <div class="food-pick-name">${f.name}${x.source==='custom'?' <span class="badge badge-blue">Custom</span>':''}</div>
+        <div class="food-pick-name">${f.name}</div>
         <div class="food-pick-sub">${f.servingDesc||'1 serving'} · ${Math.round(f.cal)} cal · ${round1(f.protein)}p / ${round1(f.carbs)}c / ${round1(f.fat)}f</div>
       </div>
     </div>`;
@@ -2080,15 +2025,14 @@ function renderFoodPickList(){
   // stash the filtered list for selectFoodPick to index into
   window._foodPickFiltered=filtered;
 }
-function selectFoodPick(i,source){
-  const x=window._foodPickFiltered[i];
-  foodPickSelection=x;
+function selectFoodPick(i){
+  foodPickSelection=window._foodPickFiltered[i];
   renderFoodPickList();
 }
 function addSelectedFoodToLog(){
   if(!foodPickSelection){toast('Pick a food first');return;}
   const servings=parseFloat(document.getElementById('food-servings').value)||1;
-  const f=foodPickSelection.item;
+  const f=foodPickSelection;
   nutriLog.push({
     id:'nf_'+Date.now()+Math.random().toString(36).slice(2,7),date:todayStr(),ts:Date.now(),kind:'food',
     name:f.name,servings,
@@ -2098,6 +2042,20 @@ function addSelectedFoodToLog(){
   closeModal('log-food-modal');
   renderNutrition();
   toast(f.name+' logged');
+}
+function upsertFoodLibrary(name,cal,protein,carbs,fat,servingDesc){
+  // Every manual entry or scan-and-log saves itself here automatically — no
+  // separate "save as custom meal" step. Matching an existing name (case-
+  // insensitive) updates that entry in place instead of creating a duplicate.
+  const key=name.trim().toLowerCase();
+  const existing=customMeals.find(m=>m.name.trim().toLowerCase()===key);
+  if(existing){
+    existing.cal=cal;existing.protein=protein;existing.carbs=carbs;existing.fat=fat;
+    if(servingDesc)existing.servingDesc=servingDesc;
+  } else {
+    customMeals.push({id:'cm_'+Date.now()+Math.random().toString(36).slice(2,7),name,servingDesc:servingDesc||'',cal,protein,carbs,fat});
+  }
+  sv('m',customMeals);
 }
 function addManualFoodEntry(){
   const name=(document.getElementById('manual-food-name').value||'').trim();
@@ -2112,33 +2070,31 @@ function addManualFoodEntry(){
     cal:cal*servings,protein:protein*servings,carbs:carbs*servings,fat:fat*servings
   });
   sv('n',nutriLog);
+  upsertFoodLibrary(name,cal,protein,carbs,fat);
   closeModal('log-food-modal');
   renderNutrition();
-  toast(name+' logged');
+  toast(name+' logged & saved to My Foods');
   ['manual-food-name','manual-food-cal','manual-food-protein','manual-food-carbs','manual-food-fat'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('manual-food-servings').value='1';
 }
 
-// ── Custom Meal modal ──
+// ── Edit Food modal (My Foods library) ──
+// Library entries are created automatically by logging (manual entry or a
+// scan), never by a standalone "new" flow here — this modal only corrects
+// an existing entry (via the Edit button on its row in My Foods).
 function openCustomMealModal(editId){
   document.getElementById('edit-custom-meal-id').value=editId||'';
-  document.getElementById('custom-meal-modal-title').textContent=editId?'Edit Custom Meal':'New Custom Meal';
-  if(editId){
-    const m=customMeals.find(x=>x.id===editId);
-    if(m){
-      document.getElementById('cm-name').value=m.name;
-      document.getElementById('cm-serving').value=m.servingDesc||'';
-      document.getElementById('cm-cal').value=m.cal;
-      document.getElementById('cm-protein').value=m.protein;
-      document.getElementById('cm-carbs').value=m.carbs;
-      document.getElementById('cm-fat').value=m.fat;
-    }
+  const m=editId?customMeals.find(x=>x.id===editId):null;
+  if(m){
+    document.getElementById('cm-name').value=m.name;
+    document.getElementById('cm-serving').value=m.servingDesc||'';
+    document.getElementById('cm-cal').value=m.cal;
+    document.getElementById('cm-protein').value=m.protein;
+    document.getElementById('cm-carbs').value=m.carbs;
+    document.getElementById('cm-fat').value=m.fat;
   } else {
     ['cm-name','cm-serving','cm-cal','cm-protein','cm-carbs','cm-fat'].forEach(id=>document.getElementById(id).value='');
   }
-  // Servings-to-bake-in always resets to 1 — it's a one-time multiplier applied
-  // at save, never a stored property of the meal itself (even when editing).
-  document.getElementById('cm-servings-multiplier').value='1';
   document.getElementById('custom-meal-hint').innerHTML='';
   document.getElementById('custom-meal-modal').classList.add('open');
 }
@@ -2146,15 +2102,14 @@ function saveCustomMeal(){
   const id=document.getElementById('edit-custom-meal-id').value;
   const name=(document.getElementById('cm-name').value||'').trim();
   if(!name){toast('Name it first');return;}
-  const mult=parseFloat(document.getElementById('cm-servings-multiplier').value)||1;
   const meal={
     id:id||('cm_'+Date.now()+Math.random().toString(36).slice(2,7)),
     name,
     servingDesc:(document.getElementById('cm-serving').value||'').trim(),
-    cal:(parseFloat(document.getElementById('cm-cal').value)||0)*mult,
-    protein:(parseFloat(document.getElementById('cm-protein').value)||0)*mult,
-    carbs:(parseFloat(document.getElementById('cm-carbs').value)||0)*mult,
-    fat:(parseFloat(document.getElementById('cm-fat').value)||0)*mult,
+    cal:parseFloat(document.getElementById('cm-cal').value)||0,
+    protein:parseFloat(document.getElementById('cm-protein').value)||0,
+    carbs:parseFloat(document.getElementById('cm-carbs').value)||0,
+    fat:parseFloat(document.getElementById('cm-fat').value)||0,
   };
   if(id){
     customMeals=customMeals.map(m=>m.id===id?meal:m);
@@ -2164,7 +2119,7 @@ function saveCustomMeal(){
   sv('m',customMeals);
   closeModal('custom-meal-modal');
   renderNutrition();
-  toast('Custom meal saved');
+  toast('Saved');
 }
 function deleteCustomMeal(id){
   customMeals=customMeals.filter(m=>m.id!==id);
