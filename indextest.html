@@ -161,6 +161,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',sans-
 .log-meta{font-size:12px;color:var(--text-mid);margin-top:2px}
 .log-time{font-size:11px;color:var(--text-soft)}
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:flex-end;justify-content:center}
+#scan-modal{z-index:260}
 .modal-overlay.open{display:flex}
 .modal{background:var(--white);border-radius:20px 20px 0 0;width:100%;max-height:92dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 0 calc(var(--safe-bottom) + 20px);animation:slideUp .25s ease}
 @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
@@ -862,7 +863,7 @@ table{border-collapse:collapse}#print-log-container{display:none}
       <button class="modal-close" onclick="closeModal('log-food-modal')">✕</button>
     </div>
     <div class="modal-body">
-      <button class="btn btn-secondary btn-full" onclick="openScanModal()" style="margin-bottom:12px">
+      <button class="btn btn-secondary btn-full" onclick="openScanModal('log')" style="margin-bottom:12px">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/></svg> Scan Barcode
       </button>
       <div class="ref-search">
@@ -885,6 +886,11 @@ table{border-collapse:collapse}#print-log-container{display:none}
       <div class="form-row">
         <div class="form-group"><label class="form-label">Carbs (g)</label><input class="form-input" type="number" id="manual-food-carbs" placeholder="0"></div>
         <div class="form-group"><label class="form-label">Fat (g)</label><input class="form-input" type="number" id="manual-food-fat" placeholder="0"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Servings</label>
+        <input class="form-input" type="number" id="manual-food-servings" value="1" step="0.25" min="0.25">
+        <div class="form-hint">The numbers above are per serving — bump this up if you ate more (e.g. 2.5 for a whole can labeled 2.5 servings).</div>
       </div>
       <button class="btn btn-secondary btn-full" onclick="addManualFoodEntry()">Add Manual Entry</button>
     </div>
@@ -916,7 +922,11 @@ table{border-collapse:collapse}#print-log-container{display:none}
       <button class="modal-close" onclick="closeModal('custom-meal-modal')">✕</button>
     </div>
     <div class="modal-body">
+      <button class="btn btn-secondary btn-full" onclick="openScanModal('customMeal')" style="margin-bottom:14px">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/></svg> Scan Barcode
+      </button>
       <input type="hidden" id="edit-custom-meal-id">
+      <div id="custom-meal-hint"></div>
       <div class="form-group"><label class="form-label">Meal Name *</label><input class="form-input" type="text" id="cm-name" placeholder="e.g. Greek Yogurt + Protein Powder"></div>
       <div class="form-group"><label class="form-label">Serving Description</label><input class="form-input" type="text" id="cm-serving" placeholder="e.g. 1 bowl"></div>
       <div class="form-row">
@@ -926,6 +936,11 @@ table{border-collapse:collapse}#print-log-container{display:none}
       <div class="form-row">
         <div class="form-group"><label class="form-label">Carbs (g)</label><input class="form-input" type="number" id="cm-carbs" placeholder="0"></div>
         <div class="form-group"><label class="form-label">Fat (g)</label><input class="form-input" type="number" id="cm-fat" placeholder="0"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Servings to Bake In</label>
+        <input class="form-input" type="number" id="cm-servings-multiplier" value="1" step="0.25" min="0.25">
+        <div class="form-hint">If the numbers above are per serving and you want this saved meal to represent more than one — a whole can labeled 2.5 servings, say — set it here. Multiplies into the totals when you save, then this always logs as one flat entry from then on.</div>
       </div>
       <button class="btn btn-primary btn-full" onclick="saveCustomMeal()">Save Custom Meal</button>
     </div>
@@ -1017,7 +1032,7 @@ if ('serviceWorker' in navigator) {
 // ── App Version ──
 // Bump this string every time you deploy a change — makes it obvious
 // in the app (and in the console) whether a fix actually made it live.
-const APP_VERSION = 'v2.8.0 — 2026-08-22 (Pass 1.5: barcode scan → Open Food Facts lookup, review-before-log)';
+const APP_VERSION = 'v2.8.1 — 2026-08-22 (Scan Barcode added to Custom Meals; Servings multiplier for manual entries & custom meals)';
 
 // ── Screen Wake Lock ──
 let wakeLock=null;
@@ -1918,6 +1933,7 @@ function openLogFoodModal(){
   document.getElementById('food-servings').value='1';
   document.getElementById('manual-food-hint').innerHTML='';
   ['manual-food-name','manual-food-cal','manual-food-protein','manual-food-carbs','manual-food-fat'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('manual-food-servings').value='1';
   renderFoodPickList();
   document.getElementById('log-food-modal').classList.add('open');
 }
@@ -1932,6 +1948,16 @@ function openLogFoodModal(){
 let scannerLibLoading=false;
 let activeScanner=null;
 let scanBusy=false;
+let scanTarget='log'; // 'log' (Log Food's manual fields) or 'customMeal' (the Custom Meal form)
+function scanFieldIds(){
+  return scanTarget==='customMeal'
+    ?{name:'cm-name',cal:'cm-cal',protein:'cm-protein',carbs:'cm-carbs',fat:'cm-fat',hint:'custom-meal-hint'}
+    :{name:'manual-food-name',cal:'manual-food-cal',protein:'manual-food-protein',carbs:'manual-food-carbs',fat:'manual-food-fat',hint:'manual-food-hint'};
+}
+function openScanTargetModal(){
+  if(scanTarget==='customMeal')openCustomMealModal();
+  else openLogFoodModal();
+}
 function loadScannerLib(cb){
   if(window.Html5Qrcode){cb();return;}
   if(scannerLibLoading){
@@ -1949,7 +1975,8 @@ function loadScannerLib(cb){
   };
   document.head.appendChild(s);
 }
-function openScanModal(){
+function openScanModal(target){
+  scanTarget=target||'log';
   scanBusy=false;
   document.getElementById('scan-status').textContent='Loading scanner…';
   document.getElementById('scan-modal').classList.add('open');
@@ -1989,15 +2016,16 @@ function onBarcodeDecoded(code){
   lookupOpenFoodFacts(code);
 }
 async function lookupOpenFoodFacts(code){
+  const f=scanFieldIds();
   try{
     const res=await fetch(`https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(code)}.json?fields=product_name,brands,serving_size,nutriments`);
     const data=await res.json();
     scanBusy=false;
     if(!data||data.status!==1||!data.product){
       closeScanModal();
-      openLogFoodModal();
-      document.getElementById('manual-food-name').value=`Unknown item (UPC ${code})`;
-      document.getElementById('manual-food-hint').innerHTML=`<div class="form-hint" style="color:var(--amber);margin-bottom:8px">Barcode ${code} isn't in Open Food Facts. Name it and fill in the macros yourself below.</div>`;
+      openScanTargetModal();
+      document.getElementById(f.name).value=`Unknown item (UPC ${code})`;
+      document.getElementById(f.hint).innerHTML=`<div class="form-hint" style="color:var(--amber);margin-bottom:8px">Barcode ${code} isn't in Open Food Facts. Name it and fill in the macros yourself below.</div>`;
       toast('Not found — enter it manually');
       return;
     }
@@ -2010,20 +2038,21 @@ async function lookupOpenFoodFacts(code){
     const fat=hasServing?(n.fat_serving||0):(n.fat_100g||0);
     const name=p.product_name?(p.brands?`${p.product_name} (${p.brands})`:p.product_name):`Scanned item (UPC ${code})`;
     closeScanModal();
-    openLogFoodModal();
-    document.getElementById('manual-food-name').value=name;
-    document.getElementById('manual-food-cal').value=Math.round(cal);
-    document.getElementById('manual-food-protein').value=round1(protein);
-    document.getElementById('manual-food-carbs').value=round1(carbs);
-    document.getElementById('manual-food-fat').value=round1(fat);
-    const servingNote=hasServing?(p.serving_size?`per serving (${p.serving_size})`:'per labeled serving'):'per 100g — adjust these to match how much you actually ate';
-    document.getElementById('manual-food-hint').innerHTML=`<div class="form-hint" style="margin-bottom:8px">Scanned: <strong>${name}</strong> — numbers are ${servingNote}. Review before adding.</div>`;
+    openScanTargetModal();
+    document.getElementById(f.name).value=name;
+    document.getElementById(f.cal).value=Math.round(cal);
+    document.getElementById(f.protein).value=round1(protein);
+    document.getElementById(f.carbs).value=round1(carbs);
+    document.getElementById(f.fat).value=round1(fat);
+    const servingWord=scanTarget==='customMeal'?'"Servings to Bake In"':'"Servings"';
+    const servingNote=hasServing?(p.serving_size?`per serving (${p.serving_size})`:'per labeled serving'):'per 100g';
+    document.getElementById(f.hint).innerHTML=`<div class="form-hint" style="margin-bottom:8px">Scanned: <strong>${name}</strong> — numbers are ${servingNote}. If you had more than one serving — a whole can, say — use the ${servingWord} field below instead of retyping. Review before ${scanTarget==='customMeal'?'saving':'adding'}.</div>`;
     toast('Found it — check the numbers below');
   }catch(err){
     scanBusy=false;
     closeScanModal();
-    openLogFoodModal();
-    document.getElementById('manual-food-hint').innerHTML=`<div class="form-hint" style="color:var(--red);margin-bottom:8px">Couldn't reach Open Food Facts (check your connection). Enter it manually below, or try scanning again.</div>`;
+    openScanTargetModal();
+    document.getElementById(f.hint).innerHTML=`<div class="form-hint" style="color:var(--red);margin-bottom:8px">Couldn't reach Open Food Facts (check your connection). Enter it manually below, or try scanning again.</div>`;
     toast('Lookup failed');
   }
 }
@@ -2076,13 +2105,18 @@ function addManualFoodEntry(){
   const protein=parseFloat(document.getElementById('manual-food-protein').value)||0;
   const carbs=parseFloat(document.getElementById('manual-food-carbs').value)||0;
   const fat=parseFloat(document.getElementById('manual-food-fat').value)||0;
+  const servings=parseFloat(document.getElementById('manual-food-servings').value)||1;
   if(!name){toast('Give it a name');return;}
-  nutriLog.push({id:'nf_'+Date.now()+Math.random().toString(36).slice(2,7),date:todayStr(),ts:Date.now(),kind:'food',name,servings:1,cal,protein,carbs,fat});
+  nutriLog.push({
+    id:'nf_'+Date.now()+Math.random().toString(36).slice(2,7),date:todayStr(),ts:Date.now(),kind:'food',name,servings,
+    cal:cal*servings,protein:protein*servings,carbs:carbs*servings,fat:fat*servings
+  });
   sv('n',nutriLog);
   closeModal('log-food-modal');
   renderNutrition();
   toast(name+' logged');
   ['manual-food-name','manual-food-cal','manual-food-protein','manual-food-carbs','manual-food-fat'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('manual-food-servings').value='1';
 }
 
 // ── Custom Meal modal ──
@@ -2102,20 +2136,25 @@ function openCustomMealModal(editId){
   } else {
     ['cm-name','cm-serving','cm-cal','cm-protein','cm-carbs','cm-fat'].forEach(id=>document.getElementById(id).value='');
   }
+  // Servings-to-bake-in always resets to 1 — it's a one-time multiplier applied
+  // at save, never a stored property of the meal itself (even when editing).
+  document.getElementById('cm-servings-multiplier').value='1';
+  document.getElementById('custom-meal-hint').innerHTML='';
   document.getElementById('custom-meal-modal').classList.add('open');
 }
 function saveCustomMeal(){
   const id=document.getElementById('edit-custom-meal-id').value;
   const name=(document.getElementById('cm-name').value||'').trim();
   if(!name){toast('Name it first');return;}
+  const mult=parseFloat(document.getElementById('cm-servings-multiplier').value)||1;
   const meal={
     id:id||('cm_'+Date.now()+Math.random().toString(36).slice(2,7)),
     name,
     servingDesc:(document.getElementById('cm-serving').value||'').trim(),
-    cal:parseFloat(document.getElementById('cm-cal').value)||0,
-    protein:parseFloat(document.getElementById('cm-protein').value)||0,
-    carbs:parseFloat(document.getElementById('cm-carbs').value)||0,
-    fat:parseFloat(document.getElementById('cm-fat').value)||0,
+    cal:(parseFloat(document.getElementById('cm-cal').value)||0)*mult,
+    protein:(parseFloat(document.getElementById('cm-protein').value)||0)*mult,
+    carbs:(parseFloat(document.getElementById('cm-carbs').value)||0)*mult,
+    fat:(parseFloat(document.getElementById('cm-fat').value)||0)*mult,
   };
   if(id){
     customMeals=customMeals.map(m=>m.id===id?meal:m);
