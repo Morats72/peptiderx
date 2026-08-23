@@ -1146,7 +1146,7 @@ if ('serviceWorker' in navigator) {
 // ── App Version ──
 // Bump this string every time you deploy a change — makes it obvious
 // in the app (and in the console) whether a fix actually made it live.
-const APP_VERSION = 'v2.10.1 — 2026-08-23 (reminders now send the phone timezone so they fire on your local clock, not the UTC clock on Render)';
+const APP_VERSION = 'v2.10.3 — 2026-08-23 (self-healing push resubscribe; dose AND nutrition reminders now fire on your phone clock instead of the UTC clock on Render)';
 
 // ── Screen Wake Lock ──
 let wakeLock=null;
@@ -1327,7 +1327,9 @@ async function syncScheduleToServer(){
   try{
     await fetch(PUSH_SERVER_URL+'/api/schedule',{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({userId,schedule})
+      // Send the phone's zone here too — the server needs it to fire dose
+      // times on your clock rather than its own (Render runs UTC).
+      body:JSON.stringify({userId,schedule,tz:(Intl.DateTimeFormat().resolvedOptions().timeZone||'')})
     });
   }catch(err){
     console.error('[Push] schedule sync failed',err);
@@ -1337,10 +1339,38 @@ async function syncScheduleToServer(){
 // stored subscriptions and schedules. Re-pushing on every app open means the
 // worst case is "reminders resume next time you open the app" instead of
 // "reminders silently stopped and nobody noticed."
+// Re-register the push subscription silently on open.
+// Learned the hard way 2026-08-23: a Render redeploy wiped the ephemeral disk
+// and took subscriptions.json with it. The server still had schedules, but
+// with no subscription on file every reminder — doses included — silently
+// stopped. Re-pushing the schedule wasn't enough; the SUBSCRIPTION has to go
+// back up too. Permission is already granted at this point, so nothing
+// prompts and the user sees nothing.
+async function resubscribeSilently(){
+  if(PUSH_SERVER_URL.includes('YOUR-APP-NAME'))return;
+  if(!('serviceWorker' in navigator)||!('PushManager' in window))return;
+  if(typeof Notification==='undefined'||Notification.permission!=='granted')return;
+  try{
+    const reg=await navigator.serviceWorker.ready;
+    let sub=await reg.pushManager.getSubscription();
+    if(!sub){
+      // Browser dropped it but permission still stands — re-subscribing here
+      // does not prompt.
+      sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlBase64ToUint8Array(PUSH_PUBLIC_KEY)});
+    }
+    await fetch(PUSH_SERVER_URL+'/api/subscribe',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({userId:getUserId(),subscription:sub,label:getUserId()})
+    });
+  }catch(err){ console.warn('[Push] silent resubscribe failed',err); }
+}
 (function resyncOnOpen(){
-  setTimeout(()=>{
-    try{ writeTodaySnapshot(); syncRemindersToServer(); syncScheduleToServer(); }
-    catch(err){ console.warn('[Reminders] resync failed',err); }
+  setTimeout(async ()=>{
+    try{
+      // Subscription first — schedules and reminders are useless without it.
+      await resubscribeSilently();
+      writeTodaySnapshot(); syncRemindersToServer(); syncScheduleToServer();
+    }catch(err){ console.warn('[Reminders] resync failed',err); }
   },2500);
 })();
 (function initPushStatus(){
