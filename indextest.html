@@ -857,6 +857,11 @@ table{border-collapse:collapse}#print-log-container{display:none}
       <button class="btn btn-primary btn-sm" id="wakelock-btn" onclick="toggleWakeLock()">Keep Screen On</button>
       <div class="form-hint" style="margin-top:8px">Only stays on while this app is the active tab on screen — turns off automatically if you switch apps or lock your phone. Turn it off when you're done so you're not burning battery for no reason.</div>
 
+      <div class="section-label" style="margin:20px 0 8px">Nutrition Reminders</div>
+      <div id="settings-reminders-summary" style="font-size:13px;color:var(--text-mid);margin-bottom:10px"></div>
+      <button class="btn btn-primary btn-sm" onclick="openRemindersFromSettings()">Set Water &amp; Macro Reminders</button>
+      <div class="form-hint" style="margin-top:8px">Push reminders that show where you stand — how much you've had and what's left. The numbers are read off your phone when the reminder fires, so nothing about what you ate is stored on the server.</div>
+
       <div class="section-label" style="margin:20px 0 8px">Nutrition Goals</div>
       <div id="settings-goals-summary" style="font-size:13px;color:var(--text-mid);margin-bottom:10px"></div>
       <button class="btn btn-primary btn-sm" onclick="openGoalsFromSettings()">Set Macro &amp; Water Goals</button>
@@ -1045,6 +1050,64 @@ table{border-collapse:collapse}#print-log-container{display:none}
   </div>
 </div>
 
+<!-- NUTRITION REMINDERS MODAL -->
+<div class="modal-overlay" id="reminders-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <h3>Nutrition Reminders</h3>
+      <button class="modal-close" onclick="closeModal('reminders-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-hint" style="margin-bottom:16px">Reminders show your numbers at a glance. They go quiet once you've hit the goal.</div>
+
+      <div class="section-label" style="margin:0 0 8px">💧 Water</div>
+      <div class="form-group">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="rem-water-on"><span class="form-label" style="margin:0">Remind me to drink</span></label>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Every</label>
+          <select class="form-select" id="rem-water-interval">
+            <option value="1">1 hour</option>
+            <option value="1.5">1.5 hours</option>
+            <option value="2">2 hours</option>
+            <option value="3">3 hours</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Starting</label><input class="form-input" type="time" id="rem-water-start"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Goal met by</label>
+        <input class="form-input" type="time" id="rem-water-end">
+        <div class="form-hint">Reminders stop at this time — no 3 a.m. wake-ups. Your daily total should be done by here, so the reminders pace you to finish on time.</div>
+      </div>
+
+      <div style="height:1px;background:var(--border);margin:18px 0"></div>
+
+      <div class="section-label" style="margin:0 0 8px">🍽 Protein / Macros</div>
+      <div class="form-group">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="rem-macro-on"><span class="form-label" style="margin:0">Protein check-ins</span></label>
+      </div>
+      <div id="rem-macro-times"></div>
+      <button class="btn btn-secondary btn-sm" onclick="addMacroTime()" style="margin-bottom:6px">+ Add a time</button>
+      <div class="form-hint" style="margin-bottom:4px">Breakfast, lunch, dinner — however many you want, at whatever times fit your shift.</div>
+
+      <div style="height:1px;background:var(--border);margin:18px 0"></div>
+
+      <div class="section-label" style="margin:0 0 8px">🌙 End of Day</div>
+      <div class="form-group">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="rem-eod-on"><span class="form-label" style="margin:0">Summary if I came up short</span></label>
+        <input class="form-input" type="time" id="rem-eod-time" style="margin-top:8px">
+        <div class="form-hint">Covers water and every macro you're tracking — and only mentions the ones you missed. Silent if you hit them all.</div>
+      </div>
+
+      <button class="btn btn-primary btn-full" onclick="saveRemindersFromModal()">Save Reminders</button>
+      <div class="form-hint" style="margin-top:10px">Requires notifications to be enabled above. Times are your phone's local time.</div>
+    </div>
+  </div>
+</div>
+
 <!-- NUTRITION DAY DETAIL MODAL -->
 <div class="modal-overlay" id="nutri-day-modal">
   <div class="modal">
@@ -1083,7 +1146,7 @@ if ('serviceWorker' in navigator) {
 // ── App Version ──
 // Bump this string every time you deploy a change — makes it obvious
 // in the app (and in the console) whether a fix actually made it live.
-const APP_VERSION = 'v2.9.6 — 2026-08-22 (Generic food lookup: 115 USDA whole foods searchable from Log Food — reference only until you log one, then it joins My Foods; plus USDA / Open Food Facts lookup links for anything not listed)';
+const APP_VERSION = 'v2.10.0 — 2026-08-23 (Nutrition reminders: water on an interval inside a window, protein check-ins at your times, end-of-day shortfall summary. Numbers are composed on-device by the service worker — the server only knows when to fire, never what you ate)';
 
 // ── Screen Wake Lock ──
 let wakeLock=null;
@@ -1270,6 +1333,16 @@ async function syncScheduleToServer(){
     console.error('[Push] schedule sync failed',err);
   }
 }
+// Render's filesystem is ephemeral — a redeploy or a spin-down can wipe the
+// stored subscriptions and schedules. Re-pushing on every app open means the
+// worst case is "reminders resume next time you open the app" instead of
+// "reminders silently stopped and nobody noticed."
+(function resyncOnOpen(){
+  setTimeout(()=>{
+    try{ writeTodaySnapshot(); syncRemindersToServer(); syncScheduleToServer(); }
+    catch(err){ console.warn('[Reminders] resync failed',err); }
+  },2500);
+})();
 (function initPushStatus(){
   if(!('serviceWorker' in navigator)||!('PushManager' in window)){setPushStatus('Push not supported on this browser');return;}
   Promise.race([
@@ -1346,7 +1419,7 @@ const REF_DATA = [
 ];
 
 
-const SK={p:'prx_p',l:'prx_l',c:'prx_c',s:'prx_s',m:'prx_m',n:'prx_n',g:'prx_g'};
+const SK={p:'prx_p',l:'prx_l',c:'prx_c',s:'prx_s',m:'prx_m',n:'prx_n',g:'prx_g',r:'prx_r'};
 function ld(k){try{return JSON.parse(localStorage.getItem(SK[k]))||[]}catch{return[]}}
 function sv(k,d){try{localStorage.setItem(SK[k],JSON.stringify(d))}catch(e){toast('Storage error')}}
 let peptides=ld('p'),doseLog=ld('l');
@@ -1987,6 +2060,7 @@ function openAddModal(){
 function closeModal(id){document.getElementById(id).classList.remove('open')}
 function openSettingsModal(){
   renderSettingsGoalsSummary();
+  renderSettingsRemindersSummary();
   document.getElementById('settings-modal').classList.add('open');
 }
 // Nutrition goals moved into Settings when the Nutrition tab came off the
@@ -2123,6 +2197,7 @@ function renderNutrition(){
   }
 
   renderNutriHistory();
+  writeTodaySnapshot();
   // The dashboard banner reads the same totals, so keep it in step. Without
   // this, logging food from the dashboard updated the Nutrition screen you
   // couldn't see while the banner in front of you sat stale.
@@ -2582,6 +2657,127 @@ function deleteCustomMeal(id){
   toast('Deleted');
 }
 
+
+// ══════════════════════════════════════════════════════════════
+// NUTRITION REMINDERS
+// ══════════════════════════════════════════════════════════════
+// Split of responsibility, on purpose: the push server knows only WHEN to
+// fire — it never sees a gram or an ounce of what you logged. It sends a bare
+// {type:'water'|'macro'|'endofday'} trigger; the service worker wakes up,
+// reads today's numbers out of IndexedDB on THIS phone, and writes the
+// notification text itself. Your food log never leaves the device, and the
+// numbers on the lock screen are true as of the second it fires.
+function loadReminders(){
+  try{const r=JSON.parse(localStorage.getItem(SK.r));if(r)return r;}catch{}
+  return {water:{enabled:false,intervalHours:1.5,startTime:'07:00',endTime:'20:00'},
+          macro:{enabled:false,times:['08:00','12:00','18:00']},
+          endOfDay:{enabled:false,time:'21:00'}};
+}
+let nutriReminders=loadReminders();
+let macroTimeDraft=[];
+
+function openRemindersModal(){
+  const r=nutriReminders;
+  document.getElementById('rem-water-on').checked=!!r.water.enabled;
+  document.getElementById('rem-water-interval').value=String(r.water.intervalHours||1.5);
+  document.getElementById('rem-water-start').value=r.water.startTime||'07:00';
+  document.getElementById('rem-water-end').value=r.water.endTime||'20:00';
+  document.getElementById('rem-macro-on').checked=!!r.macro.enabled;
+  macroTimeDraft=[...(r.macro.times||[])];
+  renderMacroTimes();
+  document.getElementById('rem-eod-on').checked=!!r.endOfDay.enabled;
+  document.getElementById('rem-eod-time').value=r.endOfDay.time||'21:00';
+  document.getElementById('reminders-modal').classList.add('open');
+}
+function openRemindersFromSettings(){closeModal('settings-modal');openRemindersModal();}
+function renderMacroTimes(){
+  const el=document.getElementById('rem-macro-times');
+  if(!el)return;
+  el.innerHTML=macroTimeDraft.map((t,i)=>`
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+      <input class="form-input" type="time" value="${t}" style="flex:1" onchange="macroTimeDraft[${i}]=this.value">
+      <button class="nutri-del-btn" onclick="removeMacroTime(${i})">✕</button>
+    </div>`).join('')||'<div class="form-hint" style="margin-bottom:8px">No times set yet.</div>';
+}
+function addMacroTime(){macroTimeDraft.push('12:00');renderMacroTimes();}
+function removeMacroTime(i){macroTimeDraft.splice(i,1);renderMacroTimes();}
+function saveRemindersFromModal(){
+  const start=document.getElementById('rem-water-start').value||'07:00';
+  const end=document.getElementById('rem-water-end').value||'20:00';
+  if(end<=start){toast('Water end time has to be after the start');return;}
+  nutriReminders={
+    water:{enabled:document.getElementById('rem-water-on').checked,
+           intervalHours:parseFloat(document.getElementById('rem-water-interval').value)||1.5,
+           startTime:start,endTime:end},
+    macro:{enabled:document.getElementById('rem-macro-on').checked,
+           times:[...macroTimeDraft].filter(Boolean).sort()},
+    endOfDay:{enabled:document.getElementById('rem-eod-on').checked,
+              time:document.getElementById('rem-eod-time').value||'21:00'}
+  };
+  try{localStorage.setItem(SK.r,JSON.stringify(nutriReminders));}catch(e){toast('Storage error');}
+  closeModal('reminders-modal');
+  renderSettingsRemindersSummary();
+  writeTodaySnapshot();
+  syncRemindersToServer();
+  toast('Reminders saved');
+}
+function renderSettingsRemindersSummary(){
+  const el=document.getElementById('settings-reminders-summary');
+  if(!el)return;
+  const r=nutriReminders,bits=[];
+  if(r.water.enabled)bits.push(`Water every ${r.water.intervalHours} hr, ${fmtTimeTo12(r.water.startTime)}–${fmtTimeTo12(r.water.endTime)}`);
+  if(r.macro.enabled&&r.macro.times.length)bits.push(`Protein check ${r.macro.times.map(fmtTimeTo12).join(', ')}`);
+  if(r.endOfDay.enabled)bits.push(`End-of-day at ${fmtTimeTo12(r.endOfDay.time)}`);
+  el.textContent=bits.length?bits.join(' · '):'No reminders set.';
+}
+
+// ── IndexedDB mirror ──
+// Service workers can't read localStorage, so today's numbers get mirrored
+// here for the push handler to pick up. Rewritten on every nutrition change.
+function idbOpen(){
+  return new Promise((resolve,reject)=>{
+    const req=indexedDB.open('peptiderx',1);
+    req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains('today'))db.createObjectStore('today');};
+    req.onsuccess=()=>resolve(req.result);
+    req.onerror=()=>reject(req.error);
+  });
+}
+async function writeTodaySnapshot(){
+  if(!('indexedDB' in window))return;
+  try{
+    const entries=todaysNutriEntries();
+    const t=sumFoodTotals(entries);
+    const wUnit=nutriGoals.waterUnit||'oz';
+    const snap={
+      date:todayStr(),
+      updated:Date.now(),
+      goals:{cal:nutriGoals.trackCal?nutriGoals.cal:0,protein:nutriGoals.trackProtein?nutriGoals.protein:0,
+             carbs:nutriGoals.trackCarbs?nutriGoals.carbs:0,fat:nutriGoals.trackFat?nutriGoals.fat:0,
+             water:nutriGoals.trackWater?nutriGoals.water:0,waterUnit:wUnit},
+      totals:{cal:Math.round(t.cal),protein:round1(t.protein),carbs:round1(t.carbs),fat:round1(t.fat),
+              water:Math.round(fromOz(sumWaterOz(entries),wUnit))},
+      water:{startTime:nutriReminders.water.startTime,endTime:nutriReminders.water.endTime}
+    };
+    const db=await idbOpen();
+    await new Promise((res,rej)=>{
+      const tx=db.transaction('today','readwrite');
+      tx.objectStore('today').put(snap,'snapshot');
+      tx.oncomplete=res;tx.onerror=()=>rej(tx.error);
+    });
+    db.close();
+  }catch(err){console.warn('[Reminders] snapshot write failed',err);}
+}
+
+async function syncRemindersToServer(){
+  if(PUSH_SERVER_URL.includes('YOUR-APP-NAME'))return;
+  try{
+    await fetch(PUSH_SERVER_URL+'/api/nutrition-reminders',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({userId:getUserId(),reminders:nutriReminders})
+    });
+  }catch(err){console.error('[Reminders] sync failed',err);}
+}
+
 // ── Goals modal ──
 function openGoalsModal(){
   document.getElementById('goal-track-cal').checked=!!nutriGoals.trackCal;
@@ -2615,6 +2811,7 @@ function saveGoalsFromModal(){
   closeModal('goals-modal');
   renderNutrition();
   renderSettingsGoalsSummary();
+  writeTodaySnapshot();
   toast('Goals saved');
 }
 
