@@ -1146,7 +1146,7 @@ if ('serviceWorker' in navigator) {
 // ── App Version ──
 // Bump this string every time you deploy a change — makes it obvious
 // in the app (and in the console) whether a fix actually made it live.
-const APP_VERSION = 'v2.10.0 — 2026-08-23 (Nutrition reminders: water on an interval inside a window, protein check-ins at your times, end-of-day shortfall summary. Numbers are composed on-device by the service worker — the server only knows when to fire, never what you ate)';
+const APP_VERSION = 'v2.10.1 — 2026-08-23 (reminders now send the phone timezone so they fire on your local clock, not the UTC clock on Render)';
 
 // ── Screen Wake Lock ──
 let wakeLock=null;
@@ -2773,7 +2773,10 @@ async function syncRemindersToServer(){
   try{
     await fetch(PUSH_SERVER_URL+'/api/nutrition-reminders',{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({userId:getUserId(),reminders:nutriReminders})
+      // Send the phone's IANA timezone with the settings. The server runs on
+      // Render (UTC), so without this a 7am reminder would fire at 2am.
+      body:JSON.stringify({userId:getUserId(),
+        reminders:{...nutriReminders,tz:(Intl.DateTimeFormat().resolvedOptions().timeZone||'')}})
     });
   }catch(err){console.error('[Reminders] sync failed',err);}
 }
