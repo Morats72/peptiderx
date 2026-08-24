@@ -28,7 +28,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',sans-
 .screens{flex:1;overflow:hidden;position:relative}
 .screen{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 16px 24px;display:none}
 .screen.active{display:block}
-.tab-bar{flex-shrink:0;height:calc(var(--tab-h) + var(--safe-bottom));background:var(--white);border-top:1px solid var(--border);display:flex;z-index:100;padding-bottom:var(--safe-bottom);box-shadow:0 40px 0 40px var(--white)}
+.tab-bar{position:fixed;left:0;right:0;bottom:0;height:calc(var(--tab-h) + var(--safe-bottom));background:var(--white);border-top:1px solid var(--border);display:flex;z-index:100;padding-bottom:var(--safe-bottom)}
+.tab-spacer{flex-shrink:0;height:calc(var(--tab-h) + var(--safe-bottom))}
+#edge-probe{position:fixed;left:0;right:0;bottom:0;height:3px;background:#ff00c8;z-index:9999;display:none;pointer-events:none}
+#edge-probe.on{display:block}
 .tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;color:var(--text-soft);transition:color .15s;padding:8px 0}
 .tab.active{color:var(--blue)}
 .tab svg{width:22px;height:22px}
@@ -613,6 +616,8 @@ table{border-collapse:collapse}#print-log-container{display:none}
 <!-- MORE -->
 </div>
 
+<div class="tab-spacer"></div>
+
 <!-- TAB BAR -->
 <div class="tab-bar">
   <div class="tab active" onclick="switchTab('dashboard',this)">
@@ -1190,6 +1195,7 @@ table{border-collapse:collapse}#print-log-container{display:none}
 <div id="print-log-container"></div>
 
 <div class="toast" id="toast"></div>
+<div id="edge-probe"></div>
 
 <script>
 
@@ -1210,7 +1216,7 @@ if ('serviceWorker' in navigator) {
 // ── App Version ──
 // Bump this string every time you deploy a change — makes it obvious
 // in the app (and in the console) whether a fix actually made it live.
-const APP_VERSION = 'v2.11.3 — 2026-08-24 (bottom nav: removed over-constrained height that was cancelling bottom:0, plus a JS-measured viewport lock and white bleed under the bar)';
+const APP_VERSION = 'v2.11.4 — 2026-08-24 (tab bar anchored directly to the viewport with position:fixed bottom:0 + spacer; measurement readout in Settings, tap it for the magenta edge probe)';
 
 // ── Screen Wake Lock ──
 let wakeLock=null;
@@ -4067,11 +4073,27 @@ syncScheduleToServer();
 console.log('[PeptideRx] '+APP_VERSION);
 const versionEl=document.getElementById('app-version');
 if(versionEl){
-  const dims=()=>`viewport ${window.innerWidth}x${window.innerHeight} · screen ${screen.width}x${screen.height}`
-    +` · safe-bottom ${getComputedStyle(document.documentElement).getPropertyValue('--safe-bottom').trim()||'0px'}`
-    +` · standalone ${(window.navigator.standalone||matchMedia('(display-mode: standalone)').matches)?'yes':'no'}`;
-  versionEl.textContent=APP_VERSION+'\n'+dims();
+  const dims=()=>{
+    const bar=document.querySelector('.tab-bar'), br=bar?bar.getBoundingClientRect():null;
+    const vv=window.visualViewport;
+    const sb=getComputedStyle(document.documentElement).getPropertyValue('--safe-bottom').trim()||'0px';
+    return `A win.innerHeight ${window.innerHeight} · screen ${screen.height}`
+      +`\nB docEl.clientHeight ${document.documentElement.clientHeight} · body.rect ${document.body.getBoundingClientRect().height.toFixed(0)}`
+      +`\nC visualViewport ${vv?vv.height.toFixed(0)+' @off '+vv.offsetTop.toFixed(0):'n/a'}`
+      +`\nD tabbar top ${br?br.top.toFixed(0):'?'} bottom ${br?br.bottom.toFixed(0):'?'} h ${br?br.height.toFixed(0):'?'}`
+      +`\nE GAP below bar = ${br?(window.innerHeight-br.bottom).toFixed(0):'?'} px`
+      +`\nF safe-bottom ${sb} · standalone ${(window.navigator.standalone||matchMedia('(display-mode: standalone)').matches)?'yes':'no'}`;
+  };
+  const paint=()=>{versionEl.textContent=APP_VERSION+'\n'+dims();};
   versionEl.style.whiteSpace='pre-line';
+  paint();
+  setTimeout(paint,500);
+  // tap the version text to flash a magenta bar at the true viewport bottom
+  versionEl.style.cursor='pointer';
+  versionEl.addEventListener('click',()=>{
+    document.getElementById('edge-probe').classList.toggle('on');
+    paint();
+  });
 }
 
 </script>
