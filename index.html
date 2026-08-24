@@ -900,6 +900,18 @@ table{border-collapse:collapse}#print-log-container{display:none}
       </div>
       <div class="form-hint">Every food and water entry ever logged, one row each — opens in Excel, Numbers, or Sheets.</div>
 
+      <div class="section-label" style="margin:20px 0 8px">Backup &amp; Restore</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+        <button class="btn btn-secondary btn-sm" onclick="backupAll(false)">Back Up Everything</button>
+        <button class="btn btn-secondary btn-sm" onclick="backupAll(true)">Share / Email Backup</button>
+      </div>
+      <div class="form-hint">One file with everything — peptides, dose log, food library, nutrition log, goals, settings, reminders. Save it to Files or iCloud. Unlike the CSVs above, this one can be loaded back in.</div>
+      <div id="backup-status" class="form-hint" style="margin-top:6px"></div>
+
+      <input type="file" id="restore-file" accept="application/json,.json" style="display:none" onchange="handleRestoreFile(this)">
+      <button class="btn btn-secondary btn-sm" style="margin-top:12px" onclick="document.getElementById('restore-file').click()">Restore From Backup</button>
+      <div class="form-hint" style="margin-top:8px">Shows you what's in the file and asks before it overwrites anything.</div>
+
       <div class="section-label" style="margin:20px 0 8px;color:var(--red)">Danger Zone</div>
       <button class="btn btn-danger btn-sm" onclick="clearLog()">Clear Entire Dose Log</button>
       <div class="form-hint" style="margin-top:8px">Permanently deletes every logged dose. This cannot be undone — export a copy first if you want to keep a record.</div>
@@ -1216,7 +1228,7 @@ if ('serviceWorker' in navigator) {
 // ── App Version ──
 // Bump this string every time you deploy a change — makes it obvious
 // in the app (and in the console) whether a fix actually made it live.
-const APP_VERSION = 'v2.11.6 — 2026-08-24 (iOS clips elements at the short layout viewport but paints the canvas full-screen, so the 59px dead strip can only be filled by the html background — now white, continuing the tab bar to the glass, with the safe-area padding removed since the home indicator sits inside that strip)';
+const APP_VERSION = 'v2.12.0 — 2026-08-24 (Backup & Restore: one JSON file with every prx_ key, validated end-to-end before anything is written, device userId preserved. Plus the v2.11.6 nav fix — white canvas fills the strip iOS clips)';
 
 // ── Screen Wake Lock ──
 let wakeLock=null;
@@ -3084,6 +3096,126 @@ async function exportNutriCSV(share){
   }
   downloadBlob(blob,filename);
   if(share)toast('Sharing not available on this device — downloaded instead. Attach it to your email manually.');
+}
+
+// ── Backup & Restore ────────────────────────────────────────────────────────
+// The CSV exports above are reports: human-readable, lossy, one-way. This is
+// the other thing — a complete, reloadable copy of the app's state. Everything
+// lives under the 'prx_' prefix in localStorage, so we sweep by prefix rather
+// than a hardcoded key list. Anything added later comes along for free instead
+// of being silently left out of the backup.
+const BACKUP_FORMAT = 1;
+
+function collectBackup(){
+  const data={};
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i);
+    if(k&&k.indexOf('prx_')===0)data[k]=localStorage.getItem(k);
+  }
+  return data;
+}
+
+// What's actually IN a backup, in plain language. Used both to stamp the file
+// and to tell you what you're about to restore before it overwrites anything.
+function describeBackup(data){
+  const n=k=>{try{const v=JSON.parse(data[k]);return Array.isArray(v)?v.length:(v?1:0);}catch{return 0}};
+  return {
+    peptides:n('prx_p'), doses:n('prx_l'), foods:n('prx_m'),
+    nutrition:n('prx_n'), goals:data['prx_g']?1:0, reminders:data['prx_r']?1:0,
+    keys:Object.keys(data).length
+  };
+}
+
+function summaryLine(c){
+  const bits=[];
+  if(c.peptides)bits.push(c.peptides+' peptide'+(c.peptides===1?'':'s'));
+  if(c.doses)bits.push(c.doses+' logged dose'+(c.doses===1?'':'s'));
+  if(c.foods)bits.push(c.foods+' food'+(c.foods===1?'':'s')+' in your library');
+  if(c.nutrition)bits.push(c.nutrition+' nutrition entr'+(c.nutrition===1?'y':'ies'));
+  if(c.goals)bits.push('goals');
+  if(c.reminders)bits.push('reminders');
+  return bits.length?bits.join(', '):'no data';
+}
+
+async function backupAll(share){
+  const data=collectBackup();
+  const counts=describeBackup(data);
+  if(!counts.keys){toast('Nothing to back up yet');return;}
+  const payload={
+    app:'PeptideRx', format:BACKUP_FORMAT, version:APP_VERSION.split(' ')[0],
+    created:new Date().toISOString(), contains:counts, data
+  };
+  const filename=`peptiderx-backup-${todayStr()}.json`;
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  const el=document.getElementById('backup-status');
+  if(el)el.textContent='Last backup: '+summaryLine(counts)+'.';
+  if(share&&navigator.share){
+    try{
+      const file=new File([blob],filename,{type:'application/json'});
+      if(navigator.canShare&&navigator.canShare({files:[file]})){
+        await navigator.share({files:[file],title:'PeptideRx Backup'});
+        return;
+      }
+    }catch(err){ if(err.name==='AbortError')return; }
+  }
+  downloadBlob(blob,filename);
+  toast(share?'Sharing unavailable — downloaded instead':'Backup saved');
+}
+
+function handleRestoreFile(input){
+  const file=input.files&&input.files[0];
+  input.value='';                       // so picking the same file twice still fires
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onerror=()=>toast("Couldn't read that file");
+  reader.onload=()=>{ try{ restoreFromText(String(reader.result)); }
+                      catch(e){ alert("That file couldn't be read as a PeptideRx backup.\n\n"+(e.message||e)); } };
+  reader.readAsText(file);
+}
+
+function restoreFromText(text){
+  let payload;
+  try{ payload=JSON.parse(text); }
+  catch{ throw new Error('It is not valid JSON — is it one of the CSV exports by mistake?'); }
+  if(!payload||typeof payload!=='object')throw new Error('Unexpected file contents.');
+  if(payload.app!=='PeptideRx')throw new Error('This is not a PeptideRx backup file.');
+  const data=payload.data;
+  if(!data||typeof data!=='object')throw new Error('The backup has no data section.');
+
+  const keys=Object.keys(data).filter(k=>k.indexOf('prx_')===0&&typeof data[k]==='string');
+  if(!keys.length)throw new Error('The backup is empty — nothing to restore.');
+
+  // Every value has to survive a JSON round-trip before ANY of it is written.
+  // A half-applied restore is worse than a refused one.
+  for(const k of keys){
+    try{ JSON.parse(data[k]); }
+    catch{ if(k!=='prx_userId'&&k!=='prx_wakelock'&&k!=='prx_migrated_v13')
+             throw new Error('The backup is damaged (bad entry: '+k+'). Nothing was changed.'); }
+  }
+
+  const incoming=describeBackup(data);
+  const current=describeBackup(collectBackup());
+  const when=payload.created?new Date(payload.created).toLocaleString():'unknown date';
+
+  if(!confirm(
+    'Restore this backup?\n\n'+
+    'FROM THE FILE ('+when+'):\n  '+summaryLine(incoming)+'\n\n'+
+    'ON THIS PHONE RIGHT NOW:\n  '+summaryLine(current)+'\n\n'+
+    'The data on this phone will be replaced. This cannot be undone.'
+  ))return;
+
+  // Keep this device's own identity. The push subscription on the server is
+  // keyed to this userId — inheriting the other phone's would silently point
+  // your notifications at their schedule.
+  const myId=localStorage.getItem('prx_userId');
+  for(const k of keys){
+    if(k==='prx_userId')continue;
+    localStorage.setItem(k,data[k]);
+  }
+  if(myId)localStorage.setItem('prx_userId',myId);
+
+  alert('Restored: '+summaryLine(incoming)+'.\n\nThe app will reload now.');
+  location.reload();
 }
 
 function resetForm(){
