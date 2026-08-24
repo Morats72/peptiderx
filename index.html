@@ -181,6 +181,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',sans-
 .log-time{font-size:11px;color:var(--text-soft)}
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:flex-end;justify-content:center}
 #scan-modal{z-index:260}
+#scan-result-modal{z-index:265}
+.scan-hit{display:flex;gap:11px;align-items:flex-start;margin-bottom:12px}
+.scan-hit-icon{width:38px;height:38px;border-radius:10px;background:var(--blue-light);
+  display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
+.scan-hit-icon.miss{background:var(--amber-light,#fdf3e3)}
+.scan-hit-icon.err{background:var(--red-light)}
+.scan-hit-txt{flex:1;min-width:0;font-size:12.5px;line-height:1.45;color:var(--text-mid)}
+.scan-hit-txt strong{color:var(--text)}
+.scan-upc{font-size:11px;color:var(--text-soft);letter-spacing:.04em;margin-top:2px}
+.scan-total{background:var(--blue-light);border-radius:10px;padding:10px 12px;margin:2px 0 14px;
+  font-size:13px;font-weight:700;color:var(--blue);text-align:center}
+.scan-total span{font-weight:600;color:var(--text-mid)}
 .modal-overlay.open{display:flex}
 .modal{background:var(--white);border-radius:20px 20px 0 0;width:100%;max-height:92dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 0 calc(var(--safe-bottom) + 20px);animation:slideUp .25s ease}
 @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
@@ -971,6 +983,57 @@ table{border-collapse:collapse}#print-log-container{display:none}
   </div>
 </div>
 
+<!-- SCAN RESULT MODAL -->
+<!-- Scan results used to drop into the manual-entry fields at the very bottom of
+     the Log Food sheet, which meant scrolling past everything to see what you
+     just scanned. This puts the result in front of you instead. -->
+<div class="modal-overlay" id="scan-result-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <h3 id="scan-result-title">Scanned</h3>
+      <button class="modal-close" onclick="closeModal('scan-result-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="scan-hit">
+        <div class="scan-hit-icon" id="scan-hit-icon">🔎</div>
+        <div class="scan-hit-txt" id="scan-hit-note"></div>
+      </div>
+
+      <div class="form-group" style="margin-bottom:12px">
+        <label class="form-label">Name</label>
+        <input class="form-input" type="text" id="sr-name" placeholder="Name this item">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Calories</label><input class="form-input" type="number" id="sr-cal" placeholder="0" oninput="updateScanTotals()"></div>
+        <div class="form-group"><label class="form-label">Protein (g)</label><input class="form-input" type="number" id="sr-protein" placeholder="0" oninput="updateScanTotals()"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Carbs (g)</label><input class="form-input" type="number" id="sr-carbs" placeholder="0" oninput="updateScanTotals()"></div>
+        <div class="form-group"><label class="form-label">Fat (g)</label><input class="form-input" type="number" id="sr-fat" placeholder="0" oninput="updateScanTotals()"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Serving Size</label><input class="form-input" type="text" id="sr-serving" placeholder="e.g. 12 fl oz" oninput="updateScanTotals()"></div>
+        <div class="form-group"><label class="form-label">Fluid (fl oz)</label><input class="form-input" type="number" id="sr-fluid" placeholder="0" step="0.5" min="0" oninput="updateScanTotals()"></div>
+      </div>
+      <div class="form-group" style="margin-bottom:8px">
+        <label class="form-label">Servings — how many did you have?</label>
+        <input class="form-input" type="number" id="sr-servings" value="1" step="0.25" min="0.25" oninput="updateScanTotals()">
+      </div>
+
+      <div class="scan-total" id="sr-total"></div>
+
+      <button class="btn btn-primary btn-full" onclick="addScannedToLog()">Add to Log</button>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn btn-secondary btn-sm" style="flex:1" onclick="scanAnother()">Scan Another</button>
+        <button class="btn btn-secondary btn-sm" style="flex:1" onclick="closeModal('scan-result-modal')">Cancel</button>
+      </div>
+      <div class="form-hint" style="margin-top:10px">Adding also saves this to My Foods, so next time it's one tap.</div>
+    </div>
+  </div>
+</div>
+
 <!-- EDIT FOOD MODAL (My Foods library — created automatically by logging, edited here) -->
 <div class="modal-overlay" id="custom-meal-modal">
   <div class="modal">
@@ -1146,7 +1209,7 @@ if ('serviceWorker' in navigator) {
 // ── App Version ──
 // Bump this string every time you deploy a change — makes it obvious
 // in the app (and in the console) whether a fix actually made it live.
-const APP_VERSION = 'v2.10.3 — 2026-08-23 (self-healing push resubscribe; dose AND nutrition reminders now fire on your phone clock instead of the UTC clock on Render)';
+const APP_VERSION = 'v2.11.0 — 2026-08-24 (barcode scans now open a review sheet with the result front and center — no more scrolling to the bottom of the Log Food page to find what you scanned)';
 
 // ── Screen Wake Lock ──
 let wakeLock=null;
@@ -2316,8 +2379,63 @@ let activeScanner=null;
 let scanBusy=false;
 // Scanning always lands in Log Food's manual-entry fields for review — logging
 // from there (addManualFoodEntry) both logs it and saves it to My Foods.
-function scanFieldIds(){
-  return {name:'manual-food-name',cal:'manual-food-cal',protein:'manual-food-protein',carbs:'manual-food-carbs',fat:'manual-food-fat',fluid:'manual-food-fluid',serving:'manual-food-serving',hint:'manual-food-hint'};
+// ── Scan review sheet ──
+// A scan lands here rather than in the manual-entry fields at the foot of the
+// Log Food sheet: you shouldn't have to scroll past the whole form to find out
+// what you just scanned.
+let lastScanCode='';
+function showScanResult(o){
+  lastScanCode=o.code||'';
+  const set=(id,v)=>{document.getElementById(id).value=(v===0||v)?v:'';};
+  document.getElementById('scan-result-title').textContent=o.found?'Scanned':'Not Found';
+  const icon=document.getElementById('scan-hit-icon');
+  icon.textContent=o.found?'🔎':(o.error?'⚠️':'❓');
+  icon.className='scan-hit-icon'+(o.error?' err':(o.found?'':' miss'));
+  document.getElementById('scan-hit-note').innerHTML=o.note;
+  set('sr-name',o.name||'');
+  set('sr-cal',o.cal); set('sr-protein',o.protein); set('sr-carbs',o.carbs); set('sr-fat',o.fat);
+  set('sr-serving',o.servingDesc||''); set('sr-fluid',o.fluidOz||'');
+  document.getElementById('sr-servings').value='1';
+  updateScanTotals();
+  document.getElementById('scan-result-modal').classList.add('open');
+}
+// Live "here's what actually goes in the log" line, so the servings multiplier
+// is never a guess.
+function updateScanTotals(){
+  const el=document.getElementById('sr-total');
+  if(!el)return;
+  const num=id=>parseFloat(document.getElementById(id).value)||0;
+  const s=parseFloat(document.getElementById('sr-servings').value)||1;
+  const cal=num('sr-cal')*s, p=num('sr-protein')*s, cb=num('sr-carbs')*s, f=num('sr-fat')*s;
+  const fl=num('sr-fluid')*s;
+  const desc=(document.getElementById('sr-serving').value||'').trim();
+  const amount=servingTotalText(desc,s);
+  el.innerHTML=`${Math.round(cal)} cal · ${round1(p)}p / ${round1(cb)}c / ${round1(f)}f`
+    +(fl>0?` · 💧${round1(fl)}oz`:'')
+    +(amount?`<br><span>${s!==1?fmtNum(s)+' servings — ':''}${amount}</span>`:(s!==1?`<br><span>${fmtNum(s)} servings</span>`:''));
+}
+function addScannedToLog(){
+  const name=(document.getElementById('sr-name').value||'').trim();
+  if(!name){toast('Give it a name');return;}
+  const num=id=>parseFloat(document.getElementById(id).value)||0;
+  const s=parseFloat(document.getElementById('sr-servings').value)||1;
+  const cal=num('sr-cal'), p=num('sr-protein'), cb=num('sr-carbs'), f=num('sr-fat'), fl=num('sr-fluid');
+  const desc=(document.getElementById('sr-serving').value||'').trim();
+  nutriLog.push({
+    id:'nf_'+Date.now()+Math.random().toString(36).slice(2,7),date:todayStr(),ts:Date.now(),kind:'food',
+    name,servings:s,cal:cal*s,protein:p*s,carbs:cb*s,fat:f*s,fluidOz:fl*s,
+    servingDesc:desc,servingTotal:servingTotalText(desc,s)
+  });
+  sv('n',nutriLog);
+  upsertFoodLibrary(name,cal,p,cb,f,desc,fl);
+  closeModal('scan-result-modal');
+  closeModal('log-food-modal');
+  renderNutrition();
+  toast(name+' logged & saved to My Foods');
+}
+function scanAnother(){
+  closeModal('scan-result-modal');
+  openScanModal();
 }
 // Open Food Facts gives serving_size as free text ("330 ml", "12 fl oz",
 // "1 can (355ml)"). If it names a liquid measure, prefill the fluid field so
@@ -2407,9 +2525,6 @@ function parseFluidOz(servingSize){
   if(m)return Math.round(mlToOz(parseFloat(m[1])*1000)*10)/10;
   return 0;
 }
-function openScanTargetModal(){
-  openLogFoodModal();
-}
 function loadScannerLib(cb){
   if(window.Html5Qrcode){cb();return;}
   if(scannerLibLoading){
@@ -2467,47 +2582,54 @@ function onBarcodeDecoded(code){
   lookupOpenFoodFacts(code);
 }
 async function lookupOpenFoodFacts(code){
-  const f=scanFieldIds();
   try{
     const res=await fetch(`https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(code)}.json?fields=product_name,brands,serving_size,serving_quantity,quantity,nutriments`);
     const data=await res.json();
     scanBusy=false;
+    closeScanModal();
+
     if(!data||data.status!==1||!data.product){
-      closeScanModal();
-      openScanTargetModal();
-      document.getElementById(f.name).value=`Unknown item (UPC ${code})`;
-      document.getElementById(f.hint).innerHTML=`<div class="form-hint" style="color:var(--amber);margin-bottom:8px">Barcode ${code} isn't in Open Food Facts. Name it and fill in the macros yourself below.</div>`;
-      toast('Not found — enter it manually');
+      showScanResult({
+        found:false,code,
+        name:`Unknown item (UPC ${code})`,
+        note:`Open Food Facts doesn't have this barcode. Type the numbers off the label and it'll be saved for next time.<div class="scan-upc">UPC ${code}</div>`
+      });
+      toast('Not found — enter it below');
       return;
     }
+
     const p=data.product;
     const n=p.nutriments||{};
+    // Prefer the label's own serving figures; fall back to per-100g, and say
+    // which you're looking at — they are very different numbers.
     const hasServing=n['energy-kcal_serving']!=null||n.proteins_serving!=null;
     const cal=hasServing?(n['energy-kcal_serving']||0):(n['energy-kcal_100g']||0);
     const protein=hasServing?(n.proteins_serving||0):(n.proteins_100g||0);
     const carbs=hasServing?(n.carbohydrates_serving||0):(n.carbohydrates_100g||0);
     const fat=hasServing?(n.fat_serving||0):(n.fat_100g||0);
     const name=p.product_name?(p.brands?`${p.product_name} (${p.brands})`:p.product_name):`Scanned item (UPC ${code})`;
-    closeScanModal();
-    openScanTargetModal();
-    document.getElementById(f.name).value=name;
-    document.getElementById(f.cal).value=Math.round(cal);
-    document.getElementById(f.protein).value=round1(protein);
-    document.getElementById(f.carbs).value=round1(carbs);
-    document.getElementById(f.fat).value=round1(fat);
     const servDesc=(p.serving_size||'').trim();
-    if(servDesc)document.getElementById(f.serving).value=servDesc;
-    updateServingReadout();
     const fluidOz=parseFluidOz(p.serving_size);
-    if(fluidOz>0)document.getElementById(f.fluid).value=fluidOz;
-    const servingNote=hasServing?(p.serving_size?`per serving (${p.serving_size})`:'per labeled serving'):'per 100g';
-    document.getElementById(f.hint).innerHTML=`<div class="form-hint" style="margin-bottom:8px">Scanned: <strong>${name}</strong> — numbers are ${servingNote}. If you had more than one serving — a whole can, say — use the "Servings" field below instead of retyping. Review before adding.${fluidOz>0?` Looks like a drink — prefilled <strong>${fluidOz} fl oz</strong> toward your water goal.`:''}</div>`;
-    toast('Found it — check the numbers below');
+    const basis=hasServing?(servDesc?`per serving (${servDesc})`:'per labeled serving'):'per 100 g';
+
+    showScanResult({
+      found:true,code,name,
+      cal:Math.round(cal),protein:round1(protein),carbs:round1(carbs),fat:round1(fat),
+      servingDesc:servDesc,fluidOz:fluidOz>0?fluidOz:'',
+      note:`<strong>${name}</strong><br>Numbers are ${basis}.`
+        +(hasServing?'':' <strong>Check these</strong> — this product has no per-serving data, so these are per 100 g.')
+        +(fluidOz>0?` Looks like a drink — ${fluidOz} fl oz counted toward water.`:'')
+        +`<div class="scan-upc">UPC ${code}</div>`
+    });
+    toast('Found it — check the numbers');
   }catch(err){
     scanBusy=false;
     closeScanModal();
-    openScanTargetModal();
-    document.getElementById(f.hint).innerHTML=`<div class="form-hint" style="color:var(--red);margin-bottom:8px">Couldn't reach Open Food Facts (check your connection). Enter it manually below, or try scanning again.</div>`;
+    showScanResult({
+      found:false,error:true,code,
+      name:'',
+      note:`Couldn't reach Open Food Facts — check your connection. You can still type it in here, or tap Scan Another to retry.<div class="scan-upc">UPC ${code}</div>`
+    });
     toast('Lookup failed');
   }
 }
