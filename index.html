@@ -21,14 +21,14 @@
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html{height:100%}
-body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',sans-serif;background:var(--bg);color:var(--text);position:fixed;inset:0;height:100%;overflow:hidden;display:flex;flex-direction:column}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',sans-serif;background:var(--bg);color:var(--text);position:fixed;inset:0;height:var(--app-h);overflow:hidden;display:flex;flex-direction:column}
 .app-header{background:var(--navy);padding:calc(var(--safe-top) + 14px) 18px 14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;z-index:10}
 .app-header h1{font-size:20px;font-weight:700;color:var(--white);letter-spacing:-.3px}
 .app-header .subtitle{font-size:11px;color:#8aafd4;letter-spacing:.5px;text-transform:uppercase}
 .screens{flex:1;overflow:hidden;position:relative}
 .screen{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 16px 24px;display:none}
 .screen.active{display:block}
-.tab-bar{flex-shrink:0;height:calc(var(--tab-h) + var(--safe-bottom));background:var(--white);border-top:1px solid var(--border);display:flex;z-index:100;padding-bottom:var(--safe-bottom)}
+.tab-bar{flex-shrink:0;height:calc(var(--tab-h) + var(--safe-bottom));background:var(--white);border-top:1px solid var(--border);display:flex;z-index:100;padding-bottom:var(--safe-bottom);box-shadow:0 40px 0 40px var(--white)}
 .tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;color:var(--text-soft);transition:color .15s;padding:8px 0}
 .tab.active{color:var(--blue)}
 .tab svg{width:22px;height:22px}
@@ -1210,7 +1210,7 @@ if ('serviceWorker' in navigator) {
 // ── App Version ──
 // Bump this string every time you deploy a change — makes it obvious
 // in the app (and in the console) whether a fix actually made it live.
-const APP_VERSION = 'v2.11.1 — 2026-08-24 (fixed the bottom nav drifting up off the screen edge on iOS — the shell now pins to the real viewport instead of trusting 100dvh)';
+const APP_VERSION = 'v2.11.3 — 2026-08-24 (bottom nav: removed over-constrained height that was cancelling bottom:0, plus a JS-measured viewport lock and white bleed under the bar)';
 
 // ── Screen Wake Lock ──
 let wakeLock=null;
@@ -3934,6 +3934,19 @@ function quickAdd(name){openAddModal();document.getElementById('p-name').value=n
 
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
 
+// ── Viewport lock ──
+function lockShellHeight(){
+  const h=window.innerHeight||(window.visualViewport&&window.visualViewport.height)||0;
+  if(h>0)document.documentElement.style.setProperty('--app-h',Math.round(h)+'px');
+}
+lockShellHeight();
+window.addEventListener('resize',lockShellHeight);
+window.addEventListener('orientationchange',()=>{setTimeout(lockShellHeight,120);setTimeout(lockShellHeight,400);});
+window.addEventListener('pageshow',lockShellHeight);
+// Standalone PWAs can report a stale height on the very first paint.
+setTimeout(lockShellHeight,60);
+setTimeout(lockShellHeight,300);
+
 // ── Init ──
 // ── Upcoming Schedule ──
 let upcomingDaysAhead = 1;
@@ -4053,7 +4066,13 @@ if(localStorage.getItem('prx_wakelock')==='1'){
 syncScheduleToServer();
 console.log('[PeptideRx] '+APP_VERSION);
 const versionEl=document.getElementById('app-version');
-if(versionEl)versionEl.textContent=APP_VERSION;
+if(versionEl){
+  const dims=()=>`viewport ${window.innerWidth}x${window.innerHeight} · screen ${screen.width}x${screen.height}`
+    +` · safe-bottom ${getComputedStyle(document.documentElement).getPropertyValue('--safe-bottom').trim()||'0px'}`
+    +` · standalone ${(window.navigator.standalone||matchMedia('(display-mode: standalone)').matches)?'yes':'no'}`;
+  versionEl.textContent=APP_VERSION+'\n'+dims();
+  versionEl.style.whiteSpace='pre-line';
+}
 
 </script>
 </body>
