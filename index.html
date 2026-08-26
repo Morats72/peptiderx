@@ -200,6 +200,29 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',sans-
 .modal-overlay.open{display:flex}
 .modal{background:var(--white);border-radius:20px 20px 0 0;width:100%;max-height:92dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 0 calc(var(--tab-pad) + 20px);animation:slideUp .25s ease}
 @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+button.cm-toggle{width:100%;background:none;border:none;font:inherit;color:inherit;text-align:left;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.cm-count{font-size:12px;font-weight:600;color:var(--text-soft);letter-spacing:0}
+.cm-chev{color:var(--text-soft);transition:transform .18s ease;flex-shrink:0}
+.cm-toggle[aria-expanded="true"] .cm-chev{transform:rotate(180deg)}
+button.cm-toggle:focus-visible{outline:2px solid var(--blue);outline-offset:-2px}
+@media(prefers-reduced-motion:reduce){.cm-chev{transition:none}}
+#log-session-tray{display:none;background:var(--blue-light);border-bottom:1px solid var(--border);padding:11px 18px 12px}
+#log-session-tray.on{display:block}
+.lst-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:7px}
+.lst-title{font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--blue)}
+.lst-total{font-size:12px;font-weight:700;color:var(--blue);font-variant-numeric:tabular-nums}
+.lst-rows{max-height:132px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.lst-row{display:flex;align-items:center;gap:9px;padding:4px 0}
+.lst-row+.lst-row{border-top:1px solid rgba(46,74,140,.12)}
+.lst-info{flex:1;min-width:0}
+.lst-name{font-size:13.5px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lst-sub{font-size:11.5px;color:var(--text-mid);font-variant-numeric:tabular-nums}
+.lst-undo{flex-shrink:0;background:none;border:none;color:var(--text-soft);font-size:15px;padding:3px 7px;cursor:pointer;line-height:1}
+.lst-undo:active{color:var(--red)}
+.lst-done{width:100%;margin-top:9px}
+.lst-flash{animation:lstFlash .5s ease}
+@keyframes lstFlash{0%{background:var(--green-light)}100%{background:transparent}}
+@media(prefers-reduced-motion:reduce){.lst-flash{animation:none}}
 .modal-handle{width:40px;height:4px;background:var(--border);border-radius:2px;margin:12px auto 0}
 .modal-header{padding:16px 18px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
 .modal-header h3{font-size:17px;font-weight:700;color:var(--navy)}
@@ -600,12 +623,21 @@ table{border-collapse:collapse}#print-log-container{display:none}
     </div>
   </div>
   <div class="card">
-    <div class="card-header"><h2>My Foods</h2></div>
-    <div class="card-body" id="custom-meals-list"><div class="empty-state"><div class="icon">🥗</div><h3>No foods saved yet</h3><p>Log something below — type it in or scan the barcode — and it'll land here automatically for one-tap logging next time.</p></div></div>
-  </div>
-  <div class="card">
     <div class="card-header"><h2>Today's Log</h2></div>
     <div class="card-body" id="nutri-log-list"><div class="empty-state"><div class="icon">📋</div><h3>Nothing logged today</h3></div></div>
+  </div>
+  <div class="card">
+    <button class="card-header cm-toggle" id="cm-toggle" onclick="toggleMyFoods()" aria-expanded="false" aria-controls="cm-panel">
+      <h2>My Foods <span class="cm-count" id="cm-count"></span></h2>
+      <svg class="cm-chev" id="cm-chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+    </button>
+    <div class="card-body" id="cm-panel" hidden>
+      <div class="ref-search" id="cm-search-wrap" style="margin-bottom:10px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" placeholder="Search saved foods..." id="cm-search-input" oninput="renderCustomMealsList()">
+      </div>
+      <div id="custom-meals-list"></div>
+    </div>
   </div>
   <div class="card">
     <div class="card-header"><h2>History</h2></div>
@@ -931,6 +963,7 @@ table{border-collapse:collapse}#print-log-container{display:none}
       <h3>Log Food or Water</h3>
       <button class="modal-close" onclick="closeModal('log-food-modal')">✕</button>
     </div>
+    <div id="log-session-tray"></div>
     <div class="modal-body">
       <div class="section-label" style="margin:0 0 8px">Water</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px" id="log-water-buttons"></div>
@@ -1228,7 +1261,7 @@ if ('serviceWorker' in navigator) {
 // ── App Version ──
 // Bump this string every time you deploy a change — makes it obvious
 // in the app (and in the console) whether a fix actually made it live.
-const APP_VERSION = 'v2.12.0 — 2026-08-24 (Backup & Restore: one JSON file with every prx_ key, validated end-to-end before anything is written, device userId preserved. Plus the v2.11.6 nav fix — white canvas fills the strip iOS clips)';
+const APP_VERSION = "v2.13.0 — 2026-08-26 (log sheet stays open with a running Added-this-visit list, per-item undo and a Done button; water still closes. Nutrition screen: Today's Log above My Foods, which is now collapsed, searchable and sorted most-recently-used.)";
 
 // ── Screen Wake Lock ──
 let wakeLock=null;
@@ -2201,6 +2234,7 @@ function mlToOz(ml){return ml/29.5735}
 function toOz(amount,unit){return unit==='ml'?mlToOz(amount):amount}
 function fromOz(oz,unit){return unit==='ml'?ozToMl(oz):oz}
 function round1(n){return Math.round(n*10)/10}
+function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 
 function todaysNutriEntries(){return nutriLog.filter(e=>e.date===todayStr())}
 function sumFoodTotals(entries){
@@ -2269,22 +2303,7 @@ function renderNutrition(){
   ).join('')+`<button class="btn btn-secondary btn-sm" onclick="promptCustomWater()">+ Custom</button>`;
 
   // Custom meals list
-  const cmList=document.getElementById('custom-meals-list');
-  if(!customMeals.length){
-    cmList.innerHTML='<div class="empty-state"><div class="icon">🥗</div><h3>No foods saved yet</h3><p>Log something below — type it in or scan the barcode — and it\'ll land here automatically for one-tap logging next time.</p></div>';
-  } else {
-    cmList.innerHTML=customMeals.map(m=>`
-      <div class="custom-meal-row">
-        <div class="custom-meal-info" onclick="quickLogCustomMeal('${m.id}')">
-          <div class="custom-meal-name">${m.name}</div>
-          <div class="custom-meal-sub">${m.servingDesc||'1 serving'} · ${Math.round(m.cal)} cal · ${round1(m.protein)}p / ${round1(m.carbs)}c / ${round1(m.fat)}f${m.fluidOz?' · 💧'+round1(m.fluidOz)+'oz':''}</div>
-        </div>
-        <div class="custom-meal-actions">
-          <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();openCustomMealModal('${m.id}')">Edit</button>
-          <button class="nutri-del-btn" onclick="event.stopPropagation();deleteCustomMeal('${m.id}')">✕</button>
-        </div>
-      </div>`).join('');
-  }
+  renderCustomMealsList();
 
   // Today's combined log
   const logList=document.getElementById('nutri-log-list');
@@ -2343,6 +2362,7 @@ function quickLogCustomMeal(id){
   nutriLog.push({id:'nf_'+Date.now()+Math.random().toString(36).slice(2,7),date:todayStr(),ts:Date.now(),kind:'food',name:m.name,servings:1,cal:m.cal,protein:m.protein,carbs:m.carbs,fat:m.fat,fluidOz:m.fluidOz||0,
     servingDesc:m.servingDesc||'',servingTotal:m.servingDesc||''});
   sv('n',nutriLog);
+  touchFoodLibrary(m.name);
   renderNutrition();
   toast(m.name+' logged');
 }
@@ -2350,6 +2370,7 @@ function quickLogCustomMeal(id){
 // ── Log Food modal ──
 let foodPickSelection=null; // the selected entry from customMeals (the user's food library)
 function openLogFoodModal(){
+  resetLogSession();
   foodPickSelection=null;
   document.getElementById('food-search-input').value='';
   document.getElementById('food-servings').value='1';
@@ -2376,7 +2397,11 @@ function renderLogWaterButtons(){
 }
 function logWaterAndClose(amount,unit){
   addWater(amount,unit);
+  // Water closes on purpose: you log 16oz once, not 8oz twice. If food was
+  // already added this visit, say so on the way out so nothing feels lost.
+  const n=logSessionIds.length;
   closeModal('log-food-modal');
+  if(n)toast(amount+unit+' water · '+n+' food item'+(n===1?'':'s')+' logged');
 }
 function logCustomWaterAndClose(){
   const unit=nutriGoals.waterUnit||'oz';
@@ -2440,16 +2465,17 @@ function addScannedToLog(){
   const s=parseFloat(document.getElementById('sr-servings').value)||1;
   const cal=num('sr-cal'), p=num('sr-protein'), cb=num('sr-carbs'), f=num('sr-fat'), fl=num('sr-fluid');
   const desc=(document.getElementById('sr-serving').value||'').trim();
+  const entryId='nf_'+Date.now()+Math.random().toString(36).slice(2,7);
   nutriLog.push({
-    id:'nf_'+Date.now()+Math.random().toString(36).slice(2,7),date:todayStr(),ts:Date.now(),kind:'food',
+    id:entryId,date:todayStr(),ts:Date.now(),kind:'food',
     name,servings:s,cal:cal*s,protein:p*s,carbs:cb*s,fat:f*s,fluidOz:fl*s,
     servingDesc:desc,servingTotal:servingTotalText(desc,s)
   });
   sv('n',nutriLog);
   upsertFoodLibrary(name,cal,p,cb,f,desc,fl);
   closeModal('scan-result-modal');
-  closeModal('log-food-modal');
   renderNutrition();
+  noteLogged(entryId);
   toast(name+' logged & saved to My Foods');
 }
 function scanAnother(){
@@ -2656,7 +2682,10 @@ function renderFoodPickList(){
   const q=(document.getElementById('food-search-input').value||'').toLowerCase().trim();
   const list=document.getElementById('food-pick-list');
 
-  const mine=(q?customMeals.filter(f=>f.name.toLowerCase().includes(q)):customMeals)
+  // Same most-recently-used order as My Foods, so what you ate yesterday is
+  // at your thumb instead of whatever you happened to save first.
+  const sortedMine=myFoodsSorted();
+  const mine=(q?sortedMine.filter(f=>f.name.toLowerCase().includes(q)):sortedMine)
     .map(f=>({...f,_generic:false}));
   // Generic reference foods only appear once you're actually searching — an
   // empty box shows My Foods alone, so the library never looks padded out with
@@ -2725,17 +2754,125 @@ function addSelectedFoodToLog(){
   // Generic reference foods live outside My Foods until you log one — then it's
   // copied in (per-serving, unscaled) so it's yours to re-log and edit.
   if(f._generic)upsertFoodLibrary(f.name,f.cal,f.protein,f.carbs,f.fat,f.servingDesc||'',f.fluidOz||0);
+  const entryId='nf_'+Date.now()+Math.random().toString(36).slice(2,7);
   nutriLog.push({
-    id:'nf_'+Date.now()+Math.random().toString(36).slice(2,7),date:todayStr(),ts:Date.now(),kind:'food',
+    id:entryId,date:todayStr(),ts:Date.now(),kind:'food',
     name:f.name,servings,
     cal:f.cal*servings,protein:f.protein*servings,carbs:f.carbs*servings,fat:f.fat*servings,
     fluidOz:(f.fluidOz||0)*servings,
     servingDesc:f.servingDesc||'',servingTotal:servingTotalText(f.servingDesc||'',servings)
   });
   sv('n',nutriLog);
-  closeModal('log-food-modal');
+  touchFoodLibrary(f.name);
   renderNutrition();
+  noteLogged(entryId);
+  // Clear the selection so the next item starts from a clean picker
+  foodPickSelection=null;
+  document.getElementById('food-servings').value='1';
+  renderFoodPickList();updatePickServingReadout();
   toast(f.name+(f._generic?' logged & saved to My Foods':' logged'));
+}
+// ── Log session tray ──────────────────────────────────────────────────
+// The sheet used to close after every single item, which turned a dinner
+// plate into open/log/open/log/open/log. Now it stays put and keeps a
+// running list of what you've added this visit — confirmation you can
+// actually read, plus a record so halfway through a plate you still know
+// whether the rice went in. Each row can be undone; Done closes.
+// Everything is already committed to nutriLog on add, so closing the sheet
+// (or water closing it) never loses anything — the tray is a view, not a
+// buffer.
+let logSessionIds=[];
+function resetLogSession(){logSessionIds=[];renderLogSession();}
+function noteLogged(entryId){
+  if(entryId)logSessionIds.push(entryId);
+  renderLogSession(true);
+}
+function undoSessionEntry(entryId){
+  const e=nutriLog.find(x=>x.id===entryId);
+  nutriLog=nutriLog.filter(x=>x.id!==entryId);
+  sv('n',nutriLog);
+  logSessionIds=logSessionIds.filter(id=>id!==entryId);
+  renderLogSession();
+  renderNutrition();
+  toast((e&&e.name?e.name:'Entry')+' removed');
+}
+function renderLogSession(flash){
+  const tray=document.getElementById('log-session-tray');
+  if(!tray)return;
+  // Read back from nutriLog so an entry deleted elsewhere can't linger here
+  const items=logSessionIds.map(id=>nutriLog.find(x=>x.id===id)).filter(Boolean).reverse();
+  if(!items.length){tray.classList.remove('on');tray.innerHTML='';return;}
+  const t=items.reduce((a,e)=>({
+    cal:a.cal+(e.cal||0),protein:a.protein+(e.protein||0),
+    carbs:a.carbs+(e.carbs||0),fat:a.fat+(e.fat||0),fluidOz:a.fluidOz+(e.fluidOz||0)
+  }),{cal:0,protein:0,carbs:0,fat:0,fluidOz:0});
+  tray.classList.add('on');
+  tray.innerHTML=`
+    <div class="lst-head">
+      <span class="lst-title">Added this visit · ${items.length} item${items.length===1?'':'s'}</span>
+      <span class="lst-total">${round1(t.cal)} cal · ${round1(t.protein)}p</span>
+    </div>
+    <div class="lst-rows">${items.map(e=>`
+      <div class="lst-row">
+        <div class="lst-info">
+          <div class="lst-name">${esc(e.name)}</div>
+          <div class="lst-sub">${e.servings&&e.servings!==1?esc(String(e.servings))+' × · ':''}${round1(e.cal||0)} cal · ${round1(e.protein||0)}p / ${round1(e.carbs||0)}c / ${round1(e.fat||0)}f${e.fluidOz?' · 💧'+round1(e.fluidOz)+'oz':''}</div>
+        </div>
+        <button class="lst-undo" onclick="undoSessionEntry('${e.id}')" aria-label="Undo ${esc(e.name)}">&#10005;</button>
+      </div>`).join('')}</div>
+    <button class="btn btn-primary btn-sm lst-done" onclick="closeModal('log-food-modal')">Done adding food</button>`;
+  if(flash){
+    const first=tray.querySelector('.lst-row');
+    if(first){first.classList.add('lst-flash');setTimeout(()=>first.classList.remove('lst-flash'),520);}
+  }
+}
+// ── My Foods ──────────────────────────────────────────────────────────
+// This is a library, not a daily view: it only grows, and it used to sit
+// ABOVE Today's Log, pushing the one thing you check every day further down
+// the screen with every food you ever saved. It also had no sort at all —
+// pure insertion order, so a steak scanned in June outranked dinner an hour
+// ago. Now it lives below the log, collapsed, most-recently-used first.
+function myFoodsSorted(){
+  return [...customMeals].sort((a,b)=>
+    (b.lastUsed||0)-(a.lastUsed||0) || a.name.localeCompare(b.name));
+}
+function toggleMyFoods(){
+  const btn=document.getElementById('cm-toggle'), panel=document.getElementById('cm-panel');
+  if(!btn||!panel)return;
+  const open=btn.getAttribute('aria-expanded')==='true';
+  btn.setAttribute('aria-expanded',open?'false':'true');
+  panel.hidden=open;
+  if(!open){renderCustomMealsList();const i=document.getElementById('cm-search-input');if(i)i.focus();}
+}
+function renderCustomMealsList(){
+  const cmList=document.getElementById('custom-meals-list');
+  const countEl=document.getElementById('cm-count');
+  if(countEl)countEl.textContent=customMeals.length?`(${customMeals.length})`:'';
+  const wrap=document.getElementById('cm-search-wrap');
+  if(wrap)wrap.style.display=customMeals.length>6?'':'none';
+  if(!cmList)return;
+  if(!customMeals.length){
+    cmList.innerHTML='<div class="empty-state"><div class="icon">🥗</div><h3>No foods saved yet</h3><p>Log something — type it in or scan a barcode — and it lands here automatically for one-tap logging next time.</p></div>';
+    return;
+  }
+  const qEl=document.getElementById('cm-search-input');
+  const q=(qEl&&qEl.value||'').trim().toLowerCase();
+  const list=myFoodsSorted().filter(m=>!q||m.name.toLowerCase().includes(q));
+  if(!list.length){
+    cmList.innerHTML=`<div class="empty-state"><div class="icon">🔍</div><h3>No match</h3><p>Nothing saved matches "${esc(q)}".</p></div>`;
+    return;
+  }
+  cmList.innerHTML=list.map(m=>`
+      <div class="custom-meal-row">
+        <div class="custom-meal-info" onclick="quickLogCustomMeal('${m.id}')">
+          <div class="custom-meal-name">${esc(m.name)}</div>
+          <div class="custom-meal-sub">${esc(m.servingDesc||'1 serving')} · ${Math.round(m.cal)} cal · ${round1(m.protein)}p / ${round1(m.carbs)}c / ${round1(m.fat)}f${m.fluidOz?' · 💧'+round1(m.fluidOz)+'oz':''}</div>
+        </div>
+        <div class="custom-meal-actions">
+          <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();openCustomMealModal('${m.id}')">Edit</button>
+          <button class="nutri-del-btn" onclick="event.stopPropagation();deleteCustomMeal('${m.id}')" aria-label="Delete ${esc(m.name)}">&#10005;</button>
+        </div>
+      </div>`).join('');
 }
 function upsertFoodLibrary(name,cal,protein,carbs,fat,servingDesc,fluidOz){
   // Every manual entry or scan-and-log saves itself here automatically — no
@@ -2746,12 +2883,41 @@ function upsertFoodLibrary(name,cal,protein,carbs,fat,servingDesc,fluidOz){
   if(existing){
     existing.cal=cal;existing.protein=protein;existing.carbs=carbs;existing.fat=fat;
     existing.fluidOz=fluidOz||0;
+    existing.lastUsed=Date.now();
     if(servingDesc!==undefined)existing.servingDesc=servingDesc||existing.servingDesc||'';
   } else {
-    customMeals.push({id:'cm_'+Date.now()+Math.random().toString(36).slice(2,7),name,servingDesc:servingDesc||'',cal,protein,carbs,fat,fluidOz:fluidOz||0});
+    customMeals.push({id:'cm_'+Date.now()+Math.random().toString(36).slice(2,7),name,servingDesc:servingDesc||'',cal,protein,carbs,fat,fluidOz:fluidOz||0,lastUsed:Date.now()});
   }
   sv('m',customMeals);
 }
+// Re-logging a food you already have shouldn't rewrite its numbers — it only
+// means you ate it again. Bump lastUsed so it floats to the top of My Foods.
+function touchFoodLibrary(name){
+  const key=String(name||'').trim().toLowerCase();
+  const m=customMeals.find(x=>x.name.trim().toLowerCase()===key);
+  if(!m)return;
+  m.lastUsed=Date.now();
+  sv('m',customMeals);
+}
+// Entries saved before lastUsed existed have no timestamp. Rather than dump
+// them all at the bottom in arbitrary order, date them from the most recent
+// time that name appears in the nutrition log. Runs once.
+function backfillFoodLastUsed(){
+  let changed=false;
+  customMeals.forEach(m=>{
+    if(m.lastUsed)return;
+    const key=m.name.trim().toLowerCase();
+    let newest=0;
+    nutriLog.forEach(e=>{
+      if(e.kind!=='food'||!e.name)return;
+      if(e.name.trim().toLowerCase()===key&&(e.ts||0)>newest)newest=e.ts||0;
+    });
+    m.lastUsed=newest||1; // 1 = "used, but before we tracked it": sorts last, stable
+    changed=true;
+  });
+  if(changed)sv('m',customMeals);
+}
+backfillFoodLastUsed();
 function addManualFoodEntry(){
   const name=(document.getElementById('manual-food-name').value||'').trim();
   const cal=parseFloat(document.getElementById('manual-food-cal').value)||0;
@@ -2762,15 +2928,16 @@ function addManualFoodEntry(){
   const servDesc=(document.getElementById('manual-food-serving').value||'').trim();
   const servings=parseFloat(document.getElementById('manual-food-servings').value)||1;
   if(!name){toast('Give it a name');return;}
+  const entryId='nf_'+Date.now()+Math.random().toString(36).slice(2,7);
   nutriLog.push({
-    id:'nf_'+Date.now()+Math.random().toString(36).slice(2,7),date:todayStr(),ts:Date.now(),kind:'food',name,servings,
+    id:entryId,date:todayStr(),ts:Date.now(),kind:'food',name,servings,
     cal:cal*servings,protein:protein*servings,carbs:carbs*servings,fat:fat*servings,fluidOz:fluid*servings,
     servingDesc:servDesc,servingTotal:servingTotalText(servDesc,servings)
   });
   sv('n',nutriLog);
   upsertFoodLibrary(name,cal,protein,carbs,fat,servDesc,fluid);
-  closeModal('log-food-modal');
   renderNutrition();
+  noteLogged(entryId);
   toast(name+' logged & saved to My Foods');
   ['manual-food-name','manual-food-cal','manual-food-protein','manual-food-carbs','manual-food-fat','manual-food-fluid','manual-food-serving'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('manual-food-servings').value='1';
