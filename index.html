@@ -16,22 +16,18 @@
   --white:#ffffff;--bg:#f4f7fb;--card:#ffffff;--border:#dde3ee;
   --text:#1a2744;--text-mid:#4a5568;--text-soft:#8a9abf;
   --amber:#c47a1e;--amber-light:#fdf3e3;--red:#b92c2c;--red-light:#fdecea;
-  --green:#1e7a6e;--green-light:#d0ede9;--orange:#c2540a;--orange-light:#fbe8d9;
-  --tab-h:68px;--safe-bottom:env(safe-area-inset-bottom,0px);--safe-top:env(safe-area-inset-top,0px);--vp-drop:0px;--tab-pad:max(0px, calc(var(--safe-bottom) - var(--vp-drop)));
+  --green:#1e7a6e;--green-light:#d0ede9;
+  --tab-h:68px;--safe-bottom:env(safe-area-inset-bottom,0px);--safe-top:env(safe-area-inset-top,0px);
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html{height:100%;background:var(--white)}
-body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',sans-serif;background:var(--bg);color:var(--text);position:fixed;inset:0;height:var(--app-h);overflow:hidden;display:flex;flex-direction:column}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',sans-serif;background:var(--bg);color:var(--text);height:100dvh;overflow:hidden;display:flex;flex-direction:column}
 .app-header{background:var(--navy);padding:calc(var(--safe-top) + 14px) 18px 14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;z-index:10}
 .app-header h1{font-size:20px;font-weight:700;color:var(--white);letter-spacing:-.3px}
 .app-header .subtitle{font-size:11px;color:#8aafd4;letter-spacing:.5px;text-transform:uppercase}
 .screens{flex:1;overflow:hidden;position:relative}
-.screen{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 16px 24px;display:none}
+.screen{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 16px calc(var(--tab-h) + var(--safe-bottom) + 16px);display:none}
 .screen.active{display:block}
-.tab-bar{position:fixed;left:0;right:0;bottom:0;height:calc(var(--tab-h) + var(--tab-pad));background:var(--white);border-top:1px solid var(--border);display:flex;z-index:100;padding-bottom:var(--tab-pad)}
-.tab-spacer{flex-shrink:0;height:calc(var(--tab-h) + var(--tab-pad))}
-#edge-probe{position:fixed;left:0;right:0;bottom:0;height:3px;background:#ff00c8;z-index:9999;display:none;pointer-events:none}
-#edge-probe.on{display:block}
+.tab-bar{position:fixed;bottom:0;left:0;right:0;height:calc(var(--tab-h) + var(--safe-bottom));background:var(--white);border-top:1px solid var(--border);display:flex;z-index:100;padding-bottom:var(--safe-bottom)}
 .tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;color:var(--text-soft);transition:color .15s;padding:8px 0}
 .tab.active{color:var(--blue)}
 .tab svg{width:22px;height:22px}
@@ -62,7 +58,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',sans-
 .badge-blue{background:var(--blue-light);color:var(--blue)}
 .badge-green{background:var(--green-light);color:var(--green)}
 .badge-amber{background:var(--amber-light);color:var(--amber)}
-.badge-orange{background:var(--orange-light);color:var(--orange)}
 .today-header{background:var(--navy);border-radius:14px;padding:18px;margin-bottom:12px;color:var(--white)}
 .today-header .date{font-size:12px;color:#8aafd4;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
 .today-header .greeting{font-size:22px;font-weight:700;margin-bottom:12px}
@@ -70,24 +65,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',sans-
 .stat-box{background:rgba(255,255,255,.1);border-radius:10px;padding:10px;text-align:center}
 .stat-box .num{font-size:24px;font-weight:700}
 .stat-box .lbl{font-size:10px;color:#8aafd4;text-transform:uppercase;letter-spacing:.3px}
-/* Dashboard nutrition banner — the Nutrition tab's entry point now that it's
-   off the bottom nav. Mirrors .today-header's navy card, with macro meters. */
-.nutri-banner{background:var(--navy);border-radius:14px;padding:16px 18px;margin-bottom:12px;color:var(--white);cursor:pointer;-webkit-tap-highlight-color:transparent}
-.nutri-banner:active{opacity:.92}
-.nb-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:14px}
-.nb-title{font-size:12px;color:#8aafd4;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px}
-.nb-sub{font-size:19px;font-weight:700;line-height:1.15}
-.nb-log-btn{background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.3);color:#fff;border-radius:10px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0}
-.nb-row{margin-bottom:11px}
-.nb-row:last-child{margin-bottom:0}
-.nb-row-top{display:flex;justify-content:space-between;align-items:baseline;font-size:12.5px;font-weight:600;margin-bottom:4px}
-.nb-vals{font-size:11.5px;color:#8aafd4;font-weight:600}
-.nb-vals.good{color:#6fd8a8}
-.nb-vals.over{color:#ff8a7a}
-.nb-bar{height:7px;background:rgba(255,255,255,.14);border-radius:4px;overflow:hidden}
-.nb-fill{height:100%;border-radius:4px;transition:width .4s}
-.nb-foot{margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.14);
-  font-size:12px;font-weight:600;color:#8aafd4;display:flex;justify-content:space-between;align-items:center;gap:10px}
 .dose-item{display:flex;align-items:center;padding:12px 0;border-bottom:1px solid var(--border);gap:12px}
 .dose-item:last-child{border-bottom:none}
 .dose-check{width:28px;height:28px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:all .2s}
@@ -122,39 +99,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',sans-
 .cycle-bar{height:8px;background:var(--border);border-radius:4px;overflow:hidden}
 .cycle-bar-fill{height:100%;background:var(--blue);border-radius:4px;transition:width .4s}
 .cycle-bar-fill.off-phase{background:var(--amber)}
-.cycle-bar-fill.good{background:var(--green)}
-.cycle-bar-fill.over{background:var(--red)}
-.macro-row{margin-bottom:14px}
-.macro-row:last-child{margin-bottom:0}
-.macro-row-top{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;font-weight:600;margin-bottom:5px}
-.macro-row-top .macro-vals{color:var(--text-mid);font-weight:600;font-size:12px}
-.nutri-item{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--border)}
-.nutri-item:last-child{border-bottom:none}
-.nutri-item-icon{width:34px;height:34px;border-radius:50%;background:var(--blue-light);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
-.nutri-item-icon.water{background:#dcecfb}
-.nutri-item-info{flex:1;min-width:0}
-.nutri-item-name{font-size:14px;font-weight:600;color:var(--text)}
-.nutri-item-detail{font-size:11px;color:var(--text-mid);margin-top:1px}
-.nutri-item-time{font-size:11px;color:var(--text-soft);white-space:nowrap}
-.nutri-del-btn{width:26px;height:26px;border-radius:50%;background:var(--red-light);color:var(--red);border:none;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.custom-meal-row{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--border);cursor:pointer}
-.custom-meal-row:last-child{border-bottom:none}
-.custom-meal-info{flex:1;min-width:0}
-.custom-meal-name{font-size:14px;font-weight:700;color:var(--text)}
-.custom-meal-sub{font-size:12px;color:var(--text-mid);margin-top:1px}
-.custom-meal-actions{display:flex;gap:6px;flex-shrink:0}
-.food-pick-row{display:flex;align-items:center;gap:10px;padding:11px 8px;border-radius:10px;cursor:pointer;transition:background .15s}
-.food-pick-row:active{background:var(--bg)}
-.food-pick-row.selected{background:var(--blue-light)}
-.food-pick-info{flex:1;min-width:0}
-.food-pick-name{font-size:14px;font-weight:600;color:var(--text)}
-.food-pick-sub{font-size:11px;color:var(--text-mid);margin-top:1px}
-.more-menu-row{display:flex;align-items:center;gap:12px;padding:16px 14px;cursor:pointer}
-.more-menu-row:active{background:var(--bg)}
-.more-menu-icon{width:38px;height:38px;border-radius:10px;background:var(--blue-light);color:var(--blue);display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.more-menu-name{font-size:15px;font-weight:700;color:var(--text)}
-.more-menu-sub{font-size:12px;color:var(--text-mid);margin-top:1px}
-.back-link{display:inline-flex;align-items:center;gap:4px;color:var(--blue);font-weight:600;font-size:13px;cursor:pointer;margin-bottom:12px}
 .days-row{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
 .day-pill{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;background:var(--bg);color:var(--text-soft);border:1.5px solid var(--border);cursor:pointer;transition:all .15s}
 .day-pill.active{background:var(--blue);color:var(--white);border-color:var(--blue)}
@@ -170,10 +114,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',sans-
 .syringe-needle{width:40px;height:6px;background:var(--text-soft);border-radius:0 3px 3px 0}
 .syringe-plunger{width:18px;height:42px;border:2px solid var(--border);border-radius:4px;background:var(--white);display:flex;align-items:center;justify-content:center}
 .syringe-plunger-inner{width:8px;height:28px;background:var(--border);border-radius:2px}
-.syringe-marks{display:grid;grid-template-columns:repeat(var(--mark-cols,7),1fr);margin-top:4px;margin-left:18px;margin-right:40px}
-.syringe-marks span{font-size:9px;color:var(--text-soft);text-align:center}
-.syringe-inline-labels{position:absolute;inset:0;pointer-events:none;z-index:4}
-.syringe-inline-labels span{position:absolute;top:50%;font-size:9px;font-weight:700;color:rgba(0,0,0,.85);mix-blend-mode:overlay;transform:translate(50%,-50%)}
+.syringe-marks{display:flex;justify-content:space-between;padding:0 2px;margin-top:4px}
+.syringe-marks span{font-size:9px;color:var(--text-soft)}
 .pull-indicator{position:absolute;top:0;width:2px;height:28px;background:var(--red);transition:right .4s ease}
 .pull-label{position:absolute;top:-20px;transform:translateX(-50%);background:var(--red);color:white;font-size:10px;font-weight:700;padding:2px 5px;border-radius:4px;white-space:nowrap}
 .log-item{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
@@ -184,45 +126,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',sans-
 .log-meta{font-size:12px;color:var(--text-mid);margin-top:2px}
 .log-time{font-size:11px;color:var(--text-soft)}
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:flex-end;justify-content:center}
-#scan-modal{z-index:260}
-#scan-result-modal{z-index:265}
-.scan-hit{display:flex;gap:11px;align-items:flex-start;margin-bottom:12px}
-.scan-hit-icon{width:38px;height:38px;border-radius:10px;background:var(--blue-light);
-  display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
-.scan-hit-icon.miss{background:var(--amber-light,#fdf3e3)}
-.scan-hit-icon.err{background:var(--red-light)}
-.scan-hit-txt{flex:1;min-width:0;font-size:12.5px;line-height:1.45;color:var(--text-mid)}
-.scan-hit-txt strong{color:var(--text)}
-.scan-upc{font-size:11px;color:var(--text-soft);letter-spacing:.04em;margin-top:2px}
-.scan-total{background:var(--blue-light);border-radius:10px;padding:10px 12px;margin:2px 0 14px;
-  font-size:13px;font-weight:700;color:var(--blue);text-align:center}
-.scan-total span{font-weight:600;color:var(--text-mid)}
 .modal-overlay.open{display:flex}
-.modal{background:var(--white);border-radius:20px 20px 0 0;width:100%;max-height:92dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 0 calc(var(--tab-pad) + 20px);animation:slideUp .25s ease}
+.modal{background:var(--white);border-radius:20px 20px 0 0;width:100%;max-height:92dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 0 calc(var(--safe-bottom) + 20px);animation:slideUp .25s ease}
 @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
-button.cm-toggle{width:100%;background:none;border:none;font:inherit;color:inherit;text-align:left;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px}
-.cm-count{font-size:12px;font-weight:600;color:var(--text-soft);letter-spacing:0}
-.cm-chev{color:var(--text-soft);transition:transform .18s ease;flex-shrink:0}
-.cm-toggle[aria-expanded="true"] .cm-chev{transform:rotate(180deg)}
-button.cm-toggle:focus-visible{outline:2px solid var(--blue);outline-offset:-2px}
-@media(prefers-reduced-motion:reduce){.cm-chev{transition:none}}
-#log-session-tray{display:none;background:var(--blue-light);border-bottom:1px solid var(--border);padding:11px 18px 12px}
-#log-session-tray.on{display:block}
-.lst-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:7px}
-.lst-title{font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--blue)}
-.lst-total{font-size:12px;font-weight:700;color:var(--blue);font-variant-numeric:tabular-nums}
-.lst-rows{max-height:132px;overflow-y:auto;-webkit-overflow-scrolling:touch}
-.lst-row{display:flex;align-items:center;gap:9px;padding:4px 0}
-.lst-row+.lst-row{border-top:1px solid rgba(46,74,140,.12)}
-.lst-info{flex:1;min-width:0}
-.lst-name{font-size:13.5px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.lst-sub{font-size:11.5px;color:var(--text-mid);font-variant-numeric:tabular-nums}
-.lst-undo{flex-shrink:0;background:none;border:none;color:var(--text-soft);font-size:15px;padding:3px 7px;cursor:pointer;line-height:1}
-.lst-undo:active{color:var(--red)}
-.lst-done{width:100%;margin-top:9px}
-.lst-flash{animation:lstFlash .5s ease}
-@keyframes lstFlash{0%{background:var(--green-light)}100%{background:transparent}}
-@media(prefers-reduced-motion:reduce){.lst-flash{animation:none}}
 .modal-handle{width:40px;height:4px;background:var(--border);border-radius:2px;margin:12px auto 0}
 .modal-header{padding:16px 18px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
 .modal-header h3{font-size:17px;font-weight:700;color:var(--navy)}
@@ -237,7 +143,7 @@ button.cm-toggle:focus-visible{outline:2px solid var(--blue);outline-offset:-2px
 .colors-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 .color-dot{width:28px;height:28px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:border-color .15s}
 .color-dot.selected{border-color:var(--text)}
-.toast{position:fixed;bottom:calc(var(--tab-h) + var(--tab-pad) + 12px);left:50%;transform:translateX(-50%) translateY(20px);background:var(--navy);color:var(--white);padding:10px 18px;border-radius:10px;font-size:13px;font-weight:600;z-index:300;opacity:0;transition:all .3s;white-space:nowrap;pointer-events:none}
+.toast{position:fixed;bottom:calc(var(--tab-h) + var(--safe-bottom) + 12px);left:50%;transform:translateX(-50%) translateY(20px);background:var(--navy);color:var(--white);padding:10px 18px;border-radius:10px;font-size:13px;font-weight:600;z-index:300;opacity:0;transition:all .3s;white-space:nowrap;pointer-events:none}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .ref-search{position:relative;margin-bottom:12px}
 .ref-search input{width:100%;padding:11px 13px 11px 38px;border:1.5px solid var(--border);border-radius:10px;font-size:15px;background:var(--white);outline:none}
@@ -271,19 +177,6 @@ button.cm-toggle:focus-visible{outline:2px solid var(--blue);outline-offset:-2px
   border-radius:8px;font-size:12px;font-weight:600;border:1.5px solid var(--border);
   cursor:pointer;background:var(--bg);color:var(--text-mid);transition:all .15s}
 .log-view-btn.active{background:var(--blue);color:var(--white);border-color:var(--blue)}
-/* Log filter pills — scope the calendar to doses, nutrition, or both, so the
-   month badge stays a useful signal instead of one undifferentiated count. */
-.log-filter-btn{display:inline-flex;align-items:center;gap:5px;padding:6px 13px;
-  border-radius:20px;border:1.5px solid var(--border);background:var(--white);
-  font-size:12px;font-weight:700;color:var(--text-mid);cursor:pointer;white-space:nowrap}
-.log-filter-btn.active{background:var(--navy);color:var(--white);border-color:var(--navy)}
-.log-section-head{font-size:11px;font-weight:700;letter-spacing:.5px;color:var(--text-soft);
-  margin:16px 0 6px;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
-.log-section-head:first-child{margin-top:0}
-.log-section-sum{font-size:11px;font-weight:600;color:var(--text-mid);letter-spacing:0}
-.cal-badge.nutri{background:var(--blue)}
-.cal-dot-row{display:flex;gap:3px;justify-content:center;margin-top:3px}
-.cal-dot{width:6px;height:6px;border-radius:50%}
 .cal-day{min-height:48px;border-radius:8px;padding:4px;cursor:pointer;
   display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
   transition:background .15s;position:relative}
@@ -296,7 +189,6 @@ button.cm-toggle:focus-visible{outline:2px solid var(--blue);outline-offset:-2px
 .cal-badge{font-size:10px;font-weight:700;background:var(--green);color:white;
   border-radius:10px;padding:1px 5px;margin-top:2px;line-height:14px}
 .cal-badge.has-missed{background:var(--amber)}
-.cal-badge.has-late{background:var(--orange)}
 .week-day-row{display:grid;grid-template-columns:60px 1fr;gap:8px;
   padding:8px 0;border-bottom:1px solid var(--border);align-items:center}
 .week-day-row:last-child{border-bottom:none}
@@ -307,24 +199,13 @@ button.cm-toggle:focus-visible{outline:2px solid var(--blue);outline-offset:-2px
 .week-dose-chip{font-size:11px;font-weight:600;padding:3px 8px;border-radius:12px;
   background:var(--blue-light);color:var(--blue)}
 .week-dose-chip.missed{background:var(--red-light);color:var(--red)}
-.week-dose-chip.late{background:var(--orange-light);color:var(--orange)}
 .upcoming-dose-detail{font-size:12px;color:var(--text-mid);margin-top:2px}
 .upcoming-time-badge{font-size:12px;font-weight:700;color:var(--blue);
   background:var(--blue-light);padding:5px 9px;border-radius:8px;white-space:nowrap}
 .flex-between{display:flex;align-items:center;justify-content:space-between}
 .divider{height:1px;background:var(--border);margin:12px 0}
 .text-small{font-size:12px;color:var(--text-mid)}
-table{border-collapse:collapse}#print-log-container{display:none}
-#print-log-container h1{font-size:18px;margin-bottom:4px;color:#1a2744}
-#print-log-container .print-meta{font-size:11px;color:#666;margin-bottom:14px}
-#print-log-container table{width:100%;border-collapse:collapse;font-size:11px}
-#print-log-container th,#print-log-container td{border:1px solid #ccc;padding:5px 7px;text-align:left}
-#print-log-container th{background:#f0f2f6}
-@media print{
-  body *{visibility:hidden}
-  #print-log-container,#print-log-container *{visibility:visible}
-  #print-log-container{display:block;position:absolute;left:0;top:0;width:100%}
-}
+table{border-collapse:collapse}
 </style>
 </head>
 <body>
@@ -337,11 +218,11 @@ table{border-collapse:collapse}#print-log-container{display:none}
 <div class="app-header">
   <div><h1>PeptideRx</h1><div class="subtitle">Personal Manager</div></div>
   <div style="display:flex;gap:8px;align-items:center">
-    <button class="btn btn-secondary btn-sm" id="header-add-btn" style="display:none" onclick="openAddModal()">
+    <button class="btn btn-secondary btn-sm" onclick="openAddModal()">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add
     </button>
-    <button class="btn btn-secondary btn-sm" onclick="openSettingsModal()" aria-label="Settings">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    <button class="btn btn-secondary btn-sm" onclick="openSettingsModal()" aria-label="Settings" style="padding:0 10px">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
     </button>
   </div>
 </div>
@@ -373,16 +254,9 @@ table{border-collapse:collapse}#print-log-container{display:none}
     <div class="card-header"><h2>Due Today</h2></div>
     <div class="card-body" id="due-today-list"><div class="empty-state"><div class="icon">💉</div><h3>No doses scheduled</h3><p>Add a peptide to your stack to get started.</p></div></div>
   </div>
-  <div class="nutri-banner" id="nutri-banner" onclick="goToNutrition()">
-    <div class="nb-head">
-      <div>
-        <div class="nb-title">Today's Nutrition</div>
-        <div class="nb-sub">Macros &amp; Water</div>
-      </div>
-      <button class="nb-log-btn" onclick="event.stopPropagation();openLogFoodModal()">+ Log Food/Water</button>
-    </div>
-    <div id="nutri-banner-rows"></div>
-    <div class="nb-foot" id="nutri-banner-foot"></div>
+  <div class="card">
+    <div class="card-header"><h2>Recent Log</h2></div>
+    <div class="card-body" id="recent-log-preview"><div class="empty-state"><div class="icon">📋</div><h3>No entries yet</h3></div></div>
   </div>
 </div>
 
@@ -493,11 +367,11 @@ table{border-collapse:collapse}#print-log-container{display:none}
           <div class="syringe-body">
             <div class="syringe-fill" id="syringe-fill" style="width:0%"></div>
             <div class="syringe-ticks" id="syringe-ticks"></div>
-            <div class="syringe-inline-labels" id="syringe-labels"></div>
             <div class="pull-indicator" id="pull-indicator" style="display:none"><div class="pull-label" id="pull-label"></div></div>
           </div>
           <div class="syringe-needle"></div>
         </div>
+        <div class="syringe-marks" id="syringe-marks-row"><span>30u</span><span>24</span><span>18</span><span>12</span><span>6</span><span>0</span></div>
       </div>
     </div>
   </div>
@@ -512,6 +386,22 @@ table{border-collapse:collapse}#print-log-container{display:none}
         <div class="result-main" id="vlife-days">—</div>
         <div class="result-label">Days per vial</div>
         <div class="result-sub" id="vlife-sub"></div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h2>Quick Reference — Units</h2></div>
+    <div class="card-body">
+      <div style="overflow-x:auto">
+      <table style="width:100%;font-size:12px">
+        <tr style="background:var(--navy);color:white"><th style="padding:8px 6px;text-align:left">Vial</th><th style="padding:8px 6px;text-align:left">BAC Water</th><th style="padding:8px 6px;text-align:left">Conc.</th><th style="padding:8px 6px;text-align:left">10 units =</th></tr>
+        <tr style="background:var(--bg)"><td style="padding:7px 6px">5 mg</td><td>1 ml</td><td>5 mg/ml</td><td><b>500 mcg</b></td></tr>
+        <tr><td style="padding:7px 6px">10 mg</td><td>2 ml</td><td>5 mg/ml</td><td><b>500 mcg</b></td></tr>
+        <tr style="background:var(--bg)"><td style="padding:7px 6px">10 mg</td><td>1 ml</td><td>10 mg/ml</td><td><b>1000 mcg</b></td></tr>
+        <tr><td style="padding:7px 6px">10 mg</td><td>4 ml</td><td>2.5 mg/ml</td><td><b>250 mcg</b></td></tr>
+        <tr style="background:var(--bg)"><td style="padding:7px 6px">20 mg</td><td>2 ml</td><td>10 mg/ml</td><td><b>1000 mcg</b></td></tr>
+        <tr><td style="padding:7px 6px">500 mg</td><td>5 ml</td><td>100 mg/ml</td><td><b>10 mg (NAD+)</b></td></tr>
+      </table>
       </div>
     </div>
   </div>
@@ -536,13 +426,7 @@ table{border-collapse:collapse}#print-log-container{display:none}
         List
       </button>
     </div>
-  </div>
-
-  <!-- What the calendar counts -->
-  <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">
-    <button class="log-filter-btn active" id="lfb-all" onclick="setLogFilter('all',this)">All</button>
-    <button class="log-filter-btn" id="lfb-peptides" onclick="setLogFilter('peptides',this)">💉 Peptides</button>
-    <button class="log-filter-btn" id="lfb-nutrition" onclick="setLogFilter('nutrition',this)">🍽 Food &amp; Water</button>
+    <button class="btn btn-danger btn-sm" onclick="clearLog()">Clear</button>
   </div>
 
   <!-- MONTH VIEW -->
@@ -601,54 +485,7 @@ table{border-collapse:collapse}#print-log-container{display:none}
 
 </div>
 
-<!-- NUTRITION -->
-<div class="screen" id="screen-nutrition">
-  <div class="back-link" onclick="switchTab('dashboard')">&#8249; Dashboard</div>
-  <div class="today-header">
-    <div class="date" id="nutri-date"></div>
-    <div class="greeting" style="margin-bottom:0">Today's Nutrition</div>
-  </div>
-  <div class="card">
-    <div class="card-header"><h2>Today's Progress</h2><button class="btn btn-secondary btn-sm" onclick="openGoalsModal()">Goals</button></div>
-    <div class="card-body" id="nutri-progress-list"></div>
-  </div>
-  <button class="btn btn-primary btn-full" onclick="openLogFoodModal()" style="margin-bottom:12px">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Log Food/Water
-  </button>
-  <div class="card">
-    <div class="card-header"><h2>Water</h2></div>
-    <div class="card-body">
-      <div class="macro-row" id="water-progress-row"></div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px" id="water-quick-buttons"></div>
-    </div>
-  </div>
-  <div class="card">
-    <div class="card-header"><h2>Today's Log</h2></div>
-    <div class="card-body" id="nutri-log-list"><div class="empty-state"><div class="icon">📋</div><h3>Nothing logged today</h3></div></div>
-  </div>
-  <div class="card">
-    <button class="card-header cm-toggle" id="cm-toggle" onclick="toggleMyFoods()" aria-expanded="false" aria-controls="cm-panel">
-      <h2>My Foods <span class="cm-count" id="cm-count"></span></h2>
-      <svg class="cm-chev" id="cm-chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-    </button>
-    <div class="card-body" id="cm-panel" hidden>
-      <div class="ref-search" id="cm-search-wrap" style="margin-bottom:10px">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="text" placeholder="Search saved foods..." id="cm-search-input" oninput="renderCustomMealsList()">
-      </div>
-      <div id="custom-meals-list"></div>
-    </div>
-  </div>
-  <div class="card">
-    <div class="card-header"><h2>History</h2></div>
-    <div class="card-body" id="nutri-history-list"><div class="empty-state"><div class="icon">📅</div><h3>No past days yet</h3><p>Once you've logged for more than a day, they'll show up here.</p></div></div>
-  </div>
 </div>
-
-<!-- MORE -->
-</div>
-
-<div class="tab-spacer"></div>
 
 <!-- TAB BAR -->
 <div class="tab-bar">
@@ -755,7 +592,6 @@ table{border-collapse:collapse}#print-log-container{display:none}
       <div class="sched-tabs">
         <div class="sched-tab active" data-type="daily" onclick="setSchedType('daily',this)">Every Day</div>
         <div class="sched-tab" data-type="weekly" onclick="setSchedType('weekly',this)">Days of Week</div>
-        <div class="sched-tab" data-type="interval" onclick="setSchedType('interval',this)">Every N Days</div>
         <div class="sched-tab" data-type="cycle" onclick="setSchedType('cycle',this)">On/Off Cycle</div>
         <div class="sched-tab" data-type="asneeded" onclick="setSchedType('asneeded',this)">As Needed</div>
       </div>
@@ -770,16 +606,6 @@ table{border-collapse:collapse}#print-log-container{display:none}
           <div class="day-pill" data-day="4" onclick="toggleDay(this)">Th</div>
           <div class="day-pill" data-day="5" onclick="toggleDay(this)">Fr</div>
           <div class="day-pill" data-day="6" onclick="toggleDay(this)">Sa</div>
-        </div>
-      </div>
-      <div id="interval-picker" style="display:none">
-        <div class="form-group">
-          <label class="form-label">Dose Every</label>
-          <div style="display:flex;align-items:center;gap:8px">
-            <input class="form-input" type="number" id="p-interval-days" placeholder="6" min="2" style="max-width:100px">
-            <span style="font-size:14px;font-weight:600;color:var(--text-mid)">days</span>
-          </div>
-          <div class="form-hint" style="margin-top:6px">Doses on the start date, then again every N days after — day 1, day 7, day 13, etc. for "every 6 days."</div>
         </div>
       </div>
       <div id="cycle-picker" style="display:none">
@@ -879,11 +705,11 @@ table{border-collapse:collapse}#print-log-container{display:none}
           <div class="syringe-body">
             <div class="syringe-fill" id="syringe-fill2" style="width:0%"></div>
             <div class="syringe-ticks" id="syringe-ticks2"></div>
-            <div class="syringe-inline-labels" id="syringe-labels2"></div>
             <div class="pull-indicator" id="pull-indicator2" style="display:none"><div class="pull-label" id="pull-label2"></div></div>
           </div>
           <div class="syringe-needle"></div>
         </div>
+        <div class="syringe-marks" id="syringe-marks-row2"><span>30u</span><span>24</span><span>18</span><span>12</span><span>6</span><span>0</span></div>
       </div>
       <div class="text-small" id="syringe-modal-sub" style="text-align:center;margin-top:14px;color:var(--text-mid)"></div>
     </div>
@@ -906,341 +732,12 @@ table{border-collapse:collapse}#print-log-container{display:none}
       <div id="wakelock-status" style="font-size:13px;color:var(--text-secondary,#666);margin-bottom:10px">Off — screen will sleep normally</div>
       <button class="btn btn-primary btn-sm" id="wakelock-btn" onclick="toggleWakeLock()">Keep Screen On</button>
       <div class="form-hint" style="margin-top:8px">Only stays on while this app is the active tab on screen — turns off automatically if you switch apps or lock your phone. Turn it off when you're done so you're not burning battery for no reason.</div>
-
-      <div class="section-label" style="margin:20px 0 8px">Nutrition Reminders</div>
-      <div id="settings-reminders-summary" style="font-size:13px;color:var(--text-mid);margin-bottom:10px"></div>
-      <button class="btn btn-primary btn-sm" onclick="openRemindersFromSettings()">Set Water &amp; Macro Reminders</button>
-      <div class="form-hint" style="margin-top:8px">Push reminders that show where you stand — how much you've had and what's left. The numbers are read off your phone when the reminder fires, so nothing about what you ate is stored on the server.</div>
-
-      <div class="section-label" style="margin:20px 0 8px">Nutrition Goals</div>
-      <div id="settings-goals-summary" style="font-size:13px;color:var(--text-mid);margin-bottom:10px"></div>
-      <button class="btn btn-primary btn-sm" onclick="openGoalsFromSettings()">Set Macro &amp; Water Goals</button>
-      <div class="form-hint" style="margin-top:8px">Choose which macros you're tracking and what you're aiming for each day. These drive the meters on the dashboard's nutrition banner.</div>
-
-      <div class="section-label" style="margin:20px 0 8px">Export Dose Log</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
-        <button class="btn btn-secondary btn-sm" onclick="exportLogCSV(false)">Download CSV</button>
-        <button class="btn btn-secondary btn-sm" onclick="exportLogCSV(true)">Share / Email CSV</button>
-        <button class="btn btn-secondary btn-sm" onclick="exportLogPDF()">Export as PDF</button>
-      </div>
-      <div class="form-hint">CSV opens in Excel, Numbers, or Sheets. PDF opens your device's print dialog — choose "Save to Files" or the Share icon from there to save it or send it by email.</div>
-
-      <div class="section-label" style="margin:20px 0 8px">Export Nutrition Log</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
-        <button class="btn btn-secondary btn-sm" onclick="exportNutriCSV(false)">Download CSV</button>
-        <button class="btn btn-secondary btn-sm" onclick="exportNutriCSV(true)">Share / Email CSV</button>
-      </div>
-      <div class="form-hint">Every food and water entry ever logged, one row each — opens in Excel, Numbers, or Sheets.</div>
-
-      <div class="section-label" style="margin:20px 0 8px">Backup &amp; Restore</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
-        <button class="btn btn-secondary btn-sm" onclick="backupAll(false)">Back Up Everything</button>
-        <button class="btn btn-secondary btn-sm" onclick="backupAll(true)">Share / Email Backup</button>
-      </div>
-      <div class="form-hint">One file with everything — peptides, dose log, food library, nutrition log, goals, settings, reminders. Save it to Files or iCloud. Unlike the CSVs above, this one can be loaded back in.</div>
-      <div id="backup-status" class="form-hint" style="margin-top:6px"></div>
-
-      <input type="file" id="restore-file" accept="application/json,.json" style="display:none" onchange="handleRestoreFile(this)">
-      <button class="btn btn-secondary btn-sm" style="margin-top:12px" onclick="document.getElementById('restore-file').click()">Restore From Backup</button>
-      <div class="form-hint" style="margin-top:8px">Shows you what's in the file and asks before it overwrites anything.</div>
-
-      <div class="section-label" style="margin:20px 0 8px;color:var(--red)">Danger Zone</div>
-      <button class="btn btn-danger btn-sm" onclick="clearLog()">Clear Entire Dose Log</button>
-      <div class="form-hint" style="margin-top:8px">Permanently deletes every logged dose. This cannot be undone — export a copy first if you want to keep a record.</div>
-      <button class="btn btn-danger btn-sm" onclick="clearNutriLog()" style="margin-top:12px">Clear Entire Nutrition Log</button>
-      <div class="form-hint" style="margin-top:8px">Permanently deletes every logged food and water entry. This cannot be undone — export a copy first if you want to keep a record.</div>
-
       <div id="app-version" style="font-size:11px;color:var(--text-soft,#999);margin-top:20px;padding-top:16px;border-top:1px solid var(--border)"></div>
     </div>
   </div>
 </div>
 
-<!-- LOG FOOD MODAL -->
-<div class="modal-overlay" id="log-food-modal">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-header">
-      <h3>Log Food or Water</h3>
-      <button class="modal-close" onclick="closeModal('log-food-modal')">✕</button>
-    </div>
-    <div id="log-session-tray"></div>
-    <div class="modal-body">
-      <div class="section-label" style="margin:0 0 8px">Water</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px" id="log-water-buttons"></div>
-      <div class="form-hint" style="margin-bottom:16px">One tap logs it and closes.</div>
-      <div style="height:1px;background:var(--border);margin:0 0 16px"></div>
-      <div class="section-label" style="margin:0 0 8px">Food</div>
-      <button class="btn btn-secondary btn-full" onclick="openScanModal()" style="margin-bottom:12px">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/></svg> Scan Barcode
-      </button>
-      <div class="ref-search">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="text" placeholder="Search My Foods..." id="food-search-input" oninput="renderFoodPickList()">
-      </div>
-      <div id="food-pick-list" style="max-height:240px;overflow-y:auto;margin-bottom:12px"></div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Servings</label><input class="form-input" type="number" id="food-servings" value="1" step="0.25" min="0.25" oninput="updatePickServingReadout()"></div>
-        <div class="form-group" style="display:flex;align-items:flex-end"><button class="btn btn-primary btn-full" onclick="addSelectedFoodToLog()">Add to Log</button></div>
-      </div>
-      <div class="form-hint" id="pick-serving-readout" style="margin:-6px 0 12px;font-weight:700;color:var(--blue)"></div>
-      <div id="food-lookup-links" style="margin-bottom:4px"></div>
-      <div style="height:1px;background:var(--border);margin:16px 0"></div>
-      <div class="section-label">Or Add a New Food</div>
-      <div id="manual-food-hint"></div>
-      <div class="form-hint" style="margin-bottom:10px">Logs now and saves to My Foods for one-tap logging next time. Typing an existing name updates that entry instead of duplicating it.</div>
-      <div class="form-group"><label class="form-label">Name</label><input class="form-input" type="text" id="manual-food-name" placeholder="e.g. Leftover chili"></div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Calories</label><input class="form-input" type="number" id="manual-food-cal" placeholder="0"></div>
-        <div class="form-group"><label class="form-label">Protein (g)</label><input class="form-input" type="number" id="manual-food-protein" placeholder="0"></div>
-      </div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Carbs (g)</label><input class="form-input" type="number" id="manual-food-carbs" placeholder="0"></div>
-        <div class="form-group"><label class="form-label">Fat (g)</label><input class="form-input" type="number" id="manual-food-fat" placeholder="0"></div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Serving Size — optional</label>
-        <input class="form-input" type="text" id="manual-food-serving" placeholder="e.g. 4 oz, 1 cup, 1 patty (113 g)">
-        <div class="form-hint">What one serving actually is. Barcode scans fill this in when the label has it — then the Servings box tells you how much you really ate.</div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Fluid (fl oz) — optional</label>
-        <input class="form-input" type="number" id="manual-food-fluid" placeholder="0" step="0.5" min="0">
-        <div class="form-hint">For anything you drink — soda, coffee, hot chocolate, milk. Counts toward your water goal on top of the macros above. (A can is 12 oz, a bottle 16.9, a large coffee ~20.)</div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Servings</label>
-        <input class="form-input" type="number" id="manual-food-servings" value="1" step="0.25" min="0.25" oninput="updateServingReadout()">
-        <div class="form-hint">The numbers above are per serving — bump this up if you ate more (e.g. 2.5 for a whole can labeled 2.5 servings).</div>
-        <div class="form-hint" id="manual-serving-readout" style="margin-top:6px;font-weight:700;color:var(--blue)"></div>
-      </div>
-      <button class="btn btn-secondary btn-full" onclick="addManualFoodEntry()">Add Manual Entry</button>
-    </div>
-  </div>
-</div>
-
-<!-- SCAN BARCODE MODAL -->
-<div class="modal-overlay" id="scan-modal">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-header">
-      <h3>Scan Barcode</h3>
-      <button class="modal-close" onclick="closeScanModal()">✕</button>
-    </div>
-    <div class="modal-body">
-      <div id="scan-status" class="form-hint" style="margin-bottom:10px;text-align:center">Point the camera at a barcode</div>
-      <div id="scan-reader" style="width:100%;border-radius:12px;overflow:hidden;background:#000;min-height:240px"></div>
-      <button class="btn btn-secondary btn-full" onclick="closeScanModal()" style="margin-top:14px">Cancel</button>
-    </div>
-  </div>
-</div>
-
-<!-- SCAN RESULT MODAL -->
-<!-- Scan results used to drop into the manual-entry fields at the very bottom of
-     the Log Food sheet, which meant scrolling past everything to see what you
-     just scanned. This puts the result in front of you instead. -->
-<div class="modal-overlay" id="scan-result-modal">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-header">
-      <h3 id="scan-result-title">Scanned</h3>
-      <button class="modal-close" onclick="closeModal('scan-result-modal')">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="scan-hit">
-        <div class="scan-hit-icon" id="scan-hit-icon">🔎</div>
-        <div class="scan-hit-txt" id="scan-hit-note"></div>
-      </div>
-
-      <div class="form-group" style="margin-bottom:12px">
-        <label class="form-label">Name</label>
-        <input class="form-input" type="text" id="sr-name" placeholder="Name this item">
-      </div>
-
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Calories</label><input class="form-input" type="number" id="sr-cal" placeholder="0" oninput="updateScanTotals()"></div>
-        <div class="form-group"><label class="form-label">Protein (g)</label><input class="form-input" type="number" id="sr-protein" placeholder="0" oninput="updateScanTotals()"></div>
-      </div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Carbs (g)</label><input class="form-input" type="number" id="sr-carbs" placeholder="0" oninput="updateScanTotals()"></div>
-        <div class="form-group"><label class="form-label">Fat (g)</label><input class="form-input" type="number" id="sr-fat" placeholder="0" oninput="updateScanTotals()"></div>
-      </div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Serving Size</label><input class="form-input" type="text" id="sr-serving" placeholder="e.g. 12 fl oz" oninput="updateScanTotals()"></div>
-        <div class="form-group"><label class="form-label">Fluid (fl oz)</label><input class="form-input" type="number" id="sr-fluid" placeholder="0" step="0.5" min="0" oninput="updateScanTotals()"></div>
-      </div>
-      <div class="form-group" style="margin-bottom:8px">
-        <label class="form-label">Servings — how many did you have?</label>
-        <input class="form-input" type="number" id="sr-servings" value="1" step="0.25" min="0.25" oninput="updateScanTotals()">
-      </div>
-
-      <div class="scan-total" id="sr-total"></div>
-
-      <button class="btn btn-primary btn-full" onclick="addScannedToLog()">Add to Log</button>
-      <div style="display:flex;gap:8px;margin-top:8px">
-        <button class="btn btn-secondary btn-sm" style="flex:1" onclick="scanAnother()">Scan Another</button>
-        <button class="btn btn-secondary btn-sm" style="flex:1" onclick="closeModal('scan-result-modal')">Cancel</button>
-      </div>
-      <div class="form-hint" style="margin-top:10px">Adding also saves this to My Foods, so next time it's one tap.</div>
-    </div>
-  </div>
-</div>
-
-<!-- EDIT FOOD MODAL (My Foods library — created automatically by logging, edited here) -->
-<div class="modal-overlay" id="custom-meal-modal">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-header">
-      <h3 id="custom-meal-modal-title">Edit Food</h3>
-      <button class="modal-close" onclick="closeModal('custom-meal-modal')">✕</button>
-    </div>
-    <div class="modal-body">
-      <input type="hidden" id="edit-custom-meal-id">
-      <div id="custom-meal-hint"></div>
-      <div class="form-group"><label class="form-label">Name *</label><input class="form-input" type="text" id="cm-name" placeholder="e.g. Greek Yogurt + Protein Powder"></div>
-      <div class="form-group"><label class="form-label">Serving Description</label><input class="form-input" type="text" id="cm-serving" placeholder="e.g. 1 bowl"></div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Calories</label><input class="form-input" type="number" id="cm-cal" placeholder="0"></div>
-        <div class="form-group"><label class="form-label">Protein (g)</label><input class="form-input" type="number" id="cm-protein" placeholder="0"></div>
-      </div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Carbs (g)</label><input class="form-input" type="number" id="cm-carbs" placeholder="0"></div>
-        <div class="form-group"><label class="form-label">Fat (g)</label><input class="form-input" type="number" id="cm-fat" placeholder="0"></div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Fluid (fl oz) — optional</label>
-        <input class="form-input" type="number" id="cm-fluid" placeholder="0" step="0.5" min="0">
-        <div class="form-hint">If this is something you drink, its fluid counts toward your water goal too.</div>
-      </div>
-      <div class="form-hint" style="margin-bottom:10px">These are per-serving numbers — the Servings field when logging multiplies them out.</div>
-      <button class="btn btn-primary btn-full" onclick="saveCustomMeal()">Save Changes</button>
-    </div>
-  </div>
-</div>
-
-<!-- GOALS MODAL -->
-<div class="modal-overlay" id="goals-modal">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-header">
-      <h3>Nutrition Goals</h3>
-      <button class="modal-close" onclick="closeModal('goals-modal')">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="form-hint" style="margin-bottom:14px">Pick which macros you want to track — untracked ones stay hidden from your daily progress.</div>
-
-      <div class="form-group">
-        <div style="display:flex;align-items:center;justify-content:space-between">
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="goal-track-cal"><span class="form-label" style="margin:0">Track Calories</span></label>
-        </div>
-        <input class="form-input" type="number" id="goal-cal" placeholder="2000" style="margin-top:8px">
-      </div>
-      <div class="form-group">
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="goal-track-protein"><span class="form-label" style="margin:0">Track Protein (g)</span></label>
-        <input class="form-input" type="number" id="goal-protein" placeholder="150" style="margin-top:8px">
-      </div>
-      <div class="form-group">
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="goal-track-carbs"><span class="form-label" style="margin:0">Track Carbs (g)</span></label>
-        <input class="form-input" type="number" id="goal-carbs" placeholder="200" style="margin-top:8px">
-      </div>
-      <div class="form-group">
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="goal-track-fat"><span class="form-label" style="margin:0">Track Fat (g)</span></label>
-        <input class="form-input" type="number" id="goal-fat" placeholder="70" style="margin-top:8px">
-      </div>
-      <div style="height:1px;background:var(--border);margin:16px 0"></div>
-      <div class="form-group">
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="goal-track-water"><span class="form-label" style="margin:0">Track Water</span></label>
-        <div class="form-row" style="margin-top:8px">
-          <div class="form-group" style="margin-bottom:0"><input class="form-input" type="number" id="goal-water" placeholder="80"></div>
-          <div class="form-group" style="margin-bottom:0">
-            <select class="form-select" id="goal-water-unit">
-              <option value="oz">oz</option>
-              <option value="ml">ml</option>
-            </select>
-          </div>
-        </div>
-      </div>
-      <button class="btn btn-primary btn-full" onclick="saveGoalsFromModal()">Save Goals</button>
-    </div>
-  </div>
-</div>
-
-<!-- NUTRITION REMINDERS MODAL -->
-<div class="modal-overlay" id="reminders-modal">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-header">
-      <h3>Nutrition Reminders</h3>
-      <button class="modal-close" onclick="closeModal('reminders-modal')">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="form-hint" style="margin-bottom:16px">Reminders show your numbers at a glance. They go quiet once you've hit the goal.</div>
-
-      <div class="section-label" style="margin:0 0 8px">💧 Water</div>
-      <div class="form-group">
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="rem-water-on"><span class="form-label" style="margin:0">Remind me to drink</span></label>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Every</label>
-          <select class="form-select" id="rem-water-interval">
-            <option value="1">1 hour</option>
-            <option value="1.5">1.5 hours</option>
-            <option value="2">2 hours</option>
-            <option value="3">3 hours</option>
-          </select>
-        </div>
-        <div class="form-group"><label class="form-label">Starting</label><input class="form-input" type="time" id="rem-water-start"></div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Goal met by</label>
-        <input class="form-input" type="time" id="rem-water-end">
-        <div class="form-hint">Reminders stop at this time — no 3 a.m. wake-ups. Your daily total should be done by here, so the reminders pace you to finish on time.</div>
-      </div>
-
-      <div style="height:1px;background:var(--border);margin:18px 0"></div>
-
-      <div class="section-label" style="margin:0 0 8px">🍽 Protein / Macros</div>
-      <div class="form-group">
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="rem-macro-on"><span class="form-label" style="margin:0">Protein check-ins</span></label>
-      </div>
-      <div id="rem-macro-times"></div>
-      <button class="btn btn-secondary btn-sm" onclick="addMacroTime()" style="margin-bottom:6px">+ Add a time</button>
-      <div class="form-hint" style="margin-bottom:4px">Breakfast, lunch, dinner — however many you want, at whatever times fit your shift.</div>
-
-      <div style="height:1px;background:var(--border);margin:18px 0"></div>
-
-      <div class="section-label" style="margin:0 0 8px">🌙 End of Day</div>
-      <div class="form-group">
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="rem-eod-on"><span class="form-label" style="margin:0">Summary if I came up short</span></label>
-        <input class="form-input" type="time" id="rem-eod-time" style="margin-top:8px">
-        <div class="form-hint">Covers water and every macro you're tracking — and only mentions the ones you missed. Silent if you hit them all.</div>
-      </div>
-
-      <button class="btn btn-primary btn-full" onclick="saveRemindersFromModal()">Save Reminders</button>
-      <div class="form-hint" style="margin-top:10px">Requires notifications to be enabled above. Times are your phone's local time.</div>
-    </div>
-  </div>
-</div>
-
-<!-- NUTRITION DAY DETAIL MODAL -->
-<div class="modal-overlay" id="nutri-day-modal">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-header">
-      <h3 id="nutri-day-modal-title">Day Detail</h3>
-      <button class="modal-close" onclick="closeModal('nutri-day-modal')">✕</button>
-    </div>
-    <div class="modal-body">
-      <div id="nutri-day-modal-totals" style="margin-bottom:14px"></div>
-      <div id="nutri-day-modal-list"></div>
-    </div>
-  </div>
-</div>
-
-<div id="print-log-container"></div>
-
 <div class="toast" id="toast"></div>
-<div id="edge-probe"></div>
 
 <script>
 
@@ -1261,7 +758,7 @@ if ('serviceWorker' in navigator) {
 // ── App Version ──
 // Bump this string every time you deploy a change — makes it obvious
 // in the app (and in the console) whether a fix actually made it live.
-const APP_VERSION = "v2.13.0 — 2026-08-26 (log sheet stays open with a running Added-this-visit list, per-item undo and a Done button; water still closes. Nutrition screen: Today's Log above My Foods, which is now collapsed, searchable and sorted most-recently-used.)";
+const APP_VERSION = 'v2.4.1 — 2026-10-08 (Fix: doses-per-vial recalculates on dose change)';
 
 // ── Screen Wake Lock ──
 let wakeLock=null;
@@ -1442,52 +939,12 @@ async function syncScheduleToServer(){
   try{
     await fetch(PUSH_SERVER_URL+'/api/schedule',{
       method:'POST',headers:{'Content-Type':'application/json'},
-      // Send the phone's zone here too — the server needs it to fire dose
-      // times on your clock rather than its own (Render runs UTC).
-      body:JSON.stringify({userId,schedule,tz:(Intl.DateTimeFormat().resolvedOptions().timeZone||'')})
+      body:JSON.stringify({userId,schedule})
     });
   }catch(err){
     console.error('[Push] schedule sync failed',err);
   }
 }
-// Render's filesystem is ephemeral — a redeploy or a spin-down can wipe the
-// stored subscriptions and schedules. Re-pushing on every app open means the
-// worst case is "reminders resume next time you open the app" instead of
-// "reminders silently stopped and nobody noticed."
-// Re-register the push subscription silently on open.
-// Learned the hard way 2026-08-23: a Render redeploy wiped the ephemeral disk
-// and took subscriptions.json with it. The server still had schedules, but
-// with no subscription on file every reminder — doses included — silently
-// stopped. Re-pushing the schedule wasn't enough; the SUBSCRIPTION has to go
-// back up too. Permission is already granted at this point, so nothing
-// prompts and the user sees nothing.
-async function resubscribeSilently(){
-  if(PUSH_SERVER_URL.includes('YOUR-APP-NAME'))return;
-  if(!('serviceWorker' in navigator)||!('PushManager' in window))return;
-  if(typeof Notification==='undefined'||Notification.permission!=='granted')return;
-  try{
-    const reg=await navigator.serviceWorker.ready;
-    let sub=await reg.pushManager.getSubscription();
-    if(!sub){
-      // Browser dropped it but permission still stands — re-subscribing here
-      // does not prompt.
-      sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlBase64ToUint8Array(PUSH_PUBLIC_KEY)});
-    }
-    await fetch(PUSH_SERVER_URL+'/api/subscribe',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({userId:getUserId(),subscription:sub,label:getUserId()})
-    });
-  }catch(err){ console.warn('[Push] silent resubscribe failed',err); }
-}
-(function resyncOnOpen(){
-  setTimeout(async ()=>{
-    try{
-      // Subscription first — schedules and reminders are useless without it.
-      await resubscribeSilently();
-      writeTodaySnapshot(); syncRemindersToServer(); syncScheduleToServer();
-    }catch(err){ console.warn('[Reminders] resync failed',err); }
-  },2500);
-})();
 (function initPushStatus(){
   if(!('serviceWorker' in navigator)||!('PushManager' in window)){setPushStatus('Push not supported on this browser');return;}
   Promise.race([
@@ -1564,146 +1021,10 @@ const REF_DATA = [
 ];
 
 
-const SK={p:'prx_p',l:'prx_l',c:'prx_c',s:'prx_s',m:'prx_m',n:'prx_n',g:'prx_g',r:'prx_r'};
+const SK={p:'prx_p',l:'prx_l',c:'prx_c',s:'prx_s'};
 function ld(k){try{return JSON.parse(localStorage.getItem(SK[k]))||[]}catch{return[]}}
 function sv(k,d){try{localStorage.setItem(SK[k],JSON.stringify(d))}catch(e){toast('Storage error')}}
 let peptides=ld('p'),doseLog=ld('l');
-
-// ── Nutrition: personal food library ──
-// No baked-in staple list. Every food comes from the user themselves: type
-// it in once (Log Food → manual entry) or scan its barcode, and it's saved
-// here automatically so it's a one-tap re-log next time. Matching an
-// existing name (case-insensitive) updates that entry instead of making a
-// duplicate, so correcting a number later is just re-entering it.
-// ── Generic reference foods (baked in) ──
-// USDA per-100g figures scaled to a household portion, self-checked against
-// Atwater 4/4/9 math when generated. These are a LOOKUP ONLY — they surface in
-// the Log Food search so "avocado" or "chicken breast" is one tap, but they are
-// NOT part of My Foods. Nothing here enters your library until you actually log
-// it, at which point it's copied in and becomes yours to edit.
-const GENERIC_FOODS=[
-  {name:'Chicken Breast, skinless, cooked',cat:'Protein',servingDesc:'4 oz (113 g)',cal:186,protein:35.0,carbs:0.0,fat:4.1},
-  {name:'Chicken Thigh, skinless, cooked',cat:'Protein',servingDesc:'4 oz (113 g)',cal:202,protein:28.0,carbs:0.0,fat:9.3},
-  {name:'Chicken Drumstick, skinless, cooked',cat:'Protein',servingDesc:'4 oz (113 g)',cal:194,protein:32.0,carbs:0.0,fat:6.4},
-  {name:'Chicken Wings, with skin, cooked',cat:'Protein',servingDesc:'4 oz (113 g)',cal:328,protein:30.5,carbs:0.0,fat:22.0},
-  {name:'Ground Chicken, cooked',cat:'Protein',servingDesc:'4 oz (113 g)',cal:214,protein:26.9,carbs:0.0,fat:12.3},
-  {name:'Turkey Breast, skinless, cooked',cat:'Protein',servingDesc:'4 oz (113 g)',cal:166,protein:34.0,carbs:0.0,fat:2.4},
-  {name:'Ground Turkey 93/7, cooked',cat:'Protein',servingDesc:'4 oz (113 g)',cal:241,protein:31.0,carbs:0.0,fat:12.7},
-  {name:'Ground Beef 80/20, cooked',cat:'Protein',servingDesc:'4 oz (113 g)',cal:307,protein:29.2,carbs:0.0,fat:20.1},
-  {name:'Ground Beef 85/15, cooked',cat:'Protein',servingDesc:'4 oz (113 g)',cal:282,protein:29.4,carbs:0.0,fat:17.4},
-  {name:'Ground Beef 90/10, cooked',cat:'Protein',servingDesc:'4 oz (113 g)',cal:245,protein:29.5,carbs:0.0,fat:13.2},
-  {name:'Ribeye Steak, cooked',cat:'Protein',servingDesc:'4 oz (113 g)',cal:329,protein:28.0,carbs:0.0,fat:23.5},
-  {name:'Sirloin Steak, trimmed, cooked',cat:'Protein',servingDesc:'4 oz (113 g)',cal:227,protein:34.9,carbs:0.0,fat:8.6},
-  {name:'NY Strip Steak, cooked',cat:'Protein',servingDesc:'4 oz (113 g)',cal:253,protein:32.8,carbs:0.0,fat:12.8},
-  {name:'Filet Mignon (tenderloin), cooked',cat:'Protein',servingDesc:'4 oz (113 g)',cal:246,protein:33.9,carbs:0.0,fat:11.5},
-  {name:'Flank Steak, cooked',cat:'Protein',servingDesc:'4 oz (113 g)',cal:227,protein:32.7,carbs:0.0,fat:9.7},
-  {name:'Chuck Roast, cooked',cat:'Protein',servingDesc:'4 oz (113 g)',cal:282,protein:32.8,carbs:0.0,fat:15.8},
-  {name:'Beef Brisket, cooked',cat:'Protein',servingDesc:'4 oz (113 g)',cal:278,protein:32.1,carbs:0.0,fat:15.5},
-  {name:'Pork Chop, boneless, cooked',cat:'Protein',servingDesc:'4 oz (113 g)',cal:261,protein:30.8,carbs:0.0,fat:14.4},
-  {name:'Pork Tenderloin, cooked',cat:'Protein',servingDesc:'4 oz (113 g)',cal:162,protein:29.6,carbs:0.0,fat:4.0},
-  {name:'Pork Shoulder (pulled), cooked',cat:'Protein',servingDesc:'4 oz (113 g)',cal:304,protein:28.0,carbs:0.0,fat:20.5},
-  {name:'Lamb Chop, cooked',cat:'Protein',servingDesc:'4 oz (113 g)',cal:332,protein:28.2,carbs:0.0,fat:23.6},
-  {name:'Bacon, cooked',cat:'Protein',servingDesc:'2 slices (16 g)',cal:87,protein:5.9,carbs:0.2,fat:6.7},
-  {name:'Ham, sliced',cat:'Protein',servingDesc:'3 oz (85 g)',cal:123,protein:17.8,carbs:1.3,fat:4.7},
-  {name:'Italian Sausage, cooked',cat:'Protein',servingDesc:'1 link (85 g)',cal:292,protein:16.2,carbs:3.4,fat:23.2},
-  {name:'Hot Dog, beef',cat:'Protein',servingDesc:'1 hot dog (57 g)',cal:165,protein:6.3,carbs:2.3,fat:14.8},
-  {name:'Salmon, Atlantic farmed, cooked',cat:'Protein',servingDesc:'4 oz (113 g)',cal:233,protein:25.0,carbs:0.0,fat:14.0},
-  {name:'Salmon, sockeye, cooked',cat:'Protein',servingDesc:'4 oz (113 g)',cal:176,protein:29.9,carbs:0.0,fat:5.8},
-  {name:'Tuna, canned in water, drained',cat:'Protein',servingDesc:'1 can drained (113 g)',cal:131,protein:28.8,carbs:0.0,fat:0.9},
-  {name:'Tuna Steak, cooked',cat:'Protein',servingDesc:'4 oz (113 g)',cal:208,protein:33.8,carbs:0.0,fat:7.1},
-  {name:'Tilapia, cooked',cat:'Protein',servingDesc:'4 oz (113 g)',cal:146,protein:29.6,carbs:0.0,fat:3.1},
-  {name:'Cod, cooked',cat:'Protein',servingDesc:'4 oz (113 g)',cal:119,protein:25.8,carbs:0.0,fat:1.0},
-  {name:'Halibut, cooked',cat:'Protein',servingDesc:'4 oz (113 g)',cal:125,protein:25.4,carbs:0.0,fat:1.8},
-  {name:'Shrimp, cooked',cat:'Protein',servingDesc:'4 oz (113 g)',cal:112,protein:23.6,carbs:0.2,fat:1.6},
-  {name:'Sardines, canned in oil',cat:'Protein',servingDesc:'1 can (92 g)',cal:191,protein:22.6,carbs:0.0,fat:10.6},
-  {name:'Egg, whole, large, cooked',cat:'Protein',servingDesc:'1 large egg (50 g)',cal:78,protein:6.3,carbs:0.6,fat:5.3},
-  {name:'Egg White, large',cat:'Protein',servingDesc:'1 white (33 g)',cal:17,protein:3.6,carbs:0.2,fat:0.1},
-  {name:'Milk, whole',cat:'Dairy',servingDesc:'1 cup (244 g)',cal:149,protein:7.8,carbs:11.7,fat:8.1},
-  {name:'Milk, 2%',cat:'Dairy',servingDesc:'1 cup (244 g)',cal:122,protein:8.1,carbs:11.7,fat:4.9},
-  {name:'Milk, skim',cat:'Dairy',servingDesc:'1 cup (244 g)',cal:83,protein:8.3,carbs:12.2,fat:0.5},
-  {name:'Greek Yogurt, plain, nonfat',cat:'Dairy',servingDesc:'6 oz (170 g)',cal:100,protein:17.5,carbs:6.1,fat:0.7},
-  {name:'Greek Yogurt, plain, whole milk',cat:'Dairy',servingDesc:'6 oz (170 g)',cal:165,protein:15.3,carbs:6.6,fat:8.5},
-  {name:'Cottage Cheese, 2%',cat:'Dairy',servingDesc:'1/2 cup (113 g)',cal:95,protein:12.4,carbs:5.4,fat:2.6},
-  {name:'Cottage Cheese, 4%',cat:'Dairy',servingDesc:'1/2 cup (113 g)',cal:111,protein:12.5,carbs:3.8,fat:4.9},
-  {name:'Cheddar Cheese',cat:'Dairy',servingDesc:'1 oz (28 g)',cal:113,protein:6.4,carbs:0.9,fat:9.3},
-  {name:'Mozzarella, part-skim',cat:'Dairy',servingDesc:'1 oz (28 g)',cal:71,protein:6.8,carbs:0.8,fat:4.5},
-  {name:'String Cheese, mozzarella',cat:'Dairy',servingDesc:'1 stick (28 g)',cal:71,protein:6.8,carbs:0.8,fat:4.5},
-  {name:'Swiss Cheese',cat:'Dairy',servingDesc:'1 oz (28 g)',cal:106,protein:7.6,carbs:1.5,fat:7.8},
-  {name:'Parmesan, grated',cat:'Dairy',servingDesc:'1 tbsp (5 g)',cal:21,protein:1.9,carbs:0.2,fat:1.4},
-  {name:'Cream Cheese',cat:'Dairy',servingDesc:'1 oz (28 g)',cal:98,protein:1.7,carbs:1.5,fat:9.5},
-  {name:'Heavy Cream',cat:'Dairy',servingDesc:'1 tbsp (15 g)',cal:51,protein:0.4,carbs:0.4,fat:5.4},
-  {name:'Butter',cat:'Fat/Oil',servingDesc:'1 tbsp (14 g)',cal:100,protein:0.1,carbs:0.0,fat:11.4},
-  {name:'Avocado',cat:'Fruit/Veg',servingDesc:'1 medium (136 g)',cal:218,protein:2.7,carbs:11.6,fat:20.0},
-  {name:'Broccoli, cooked',cat:'Fruit/Veg',servingDesc:'1 cup (156 g)',cal:55,protein:3.7,carbs:11.2,fat:0.6},
-  {name:'Spinach, raw',cat:'Fruit/Veg',servingDesc:'2 cups (60 g)',cal:14,protein:1.7,carbs:2.2,fat:0.2},
-  {name:'Spinach, cooked',cat:'Fruit/Veg',servingDesc:'1 cup (180 g)',cal:41,protein:5.4,carbs:6.8,fat:0.5},
-  {name:'Green Beans, cooked',cat:'Fruit/Veg',servingDesc:'1 cup (125 g)',cal:44,protein:2.4,carbs:9.9,fat:0.4},
-  {name:'Carrots, raw',cat:'Fruit/Veg',servingDesc:'1 cup chopped (128 g)',cal:52,protein:1.2,carbs:12.3,fat:0.3},
-  {name:'Bell Pepper, red, raw',cat:'Fruit/Veg',servingDesc:'1 cup sliced (149 g)',cal:46,protein:1.5,carbs:8.9,fat:0.4},
-  {name:'Zucchini, cooked',cat:'Fruit/Veg',servingDesc:'1 cup (180 g)',cal:31,protein:2.2,carbs:5.6,fat:0.5},
-  {name:'Asparagus, cooked',cat:'Fruit/Veg',servingDesc:'1 cup (180 g)',cal:40,protein:4.3,carbs:7.4,fat:0.4},
-  {name:'Cauliflower, cooked',cat:'Fruit/Veg',servingDesc:'1 cup (155 g)',cal:36,protein:2.8,carbs:6.4,fat:0.8},
-  {name:'Brussels Sprouts, cooked',cat:'Fruit/Veg',servingDesc:'1 cup (156 g)',cal:56,protein:4.1,carbs:11.1,fat:0.8},
-  {name:'Cabbage, cooked',cat:'Fruit/Veg',servingDesc:'1 cup (150 g)',cal:34,protein:2.0,carbs:8.2,fat:0.2},
-  {name:'Kale, cooked',cat:'Fruit/Veg',servingDesc:'1 cup (130 g)',cal:36,protein:2.5,carbs:7.3,fat:0.5},
-  {name:'Mushrooms, cooked',cat:'Fruit/Veg',servingDesc:'1 cup (156 g)',cal:44,protein:3.4,carbs:8.3,fat:0.8},
-  {name:'Onion, raw',cat:'Fruit/Veg',servingDesc:'1 cup chopped (160 g)',cal:64,protein:1.8,carbs:14.9,fat:0.2},
-  {name:'Tomato, raw',cat:'Fruit/Veg',servingDesc:'1 medium (123 g)',cal:22,protein:1.1,carbs:4.8,fat:0.2},
-  {name:'Cucumber, raw',cat:'Fruit/Veg',servingDesc:'1 cup sliced (104 g)',cal:16,protein:0.7,carbs:3.7,fat:0.1},
-  {name:'Romaine Lettuce',cat:'Fruit/Veg',servingDesc:'2 cups (94 g)',cal:16,protein:1.1,carbs:3.1,fat:0.3},
-  {name:'Celery, raw',cat:'Fruit/Veg',servingDesc:'1 cup chopped (101 g)',cal:16,protein:0.7,carbs:3.0,fat:0.2},
-  {name:'Sweet Potato, baked',cat:'Fruit/Veg',servingDesc:'1 medium (130 g)',cal:117,protein:2.6,carbs:26.9,fat:0.3},
-  {name:'Potato, baked with skin',cat:'Fruit/Veg',servingDesc:'1 medium (173 g)',cal:161,protein:4.3,carbs:36.7,fat:0.2},
-  {name:'Corn, cooked',cat:'Fruit/Veg',servingDesc:'1 cup (164 g)',cal:157,protein:5.6,carbs:34.4,fat:2.5},
-  {name:'Green Peas, cooked',cat:'Fruit/Veg',servingDesc:'1 cup (160 g)',cal:134,protein:8.6,carbs:25.0,fat:0.3},
-  {name:'Apple, with skin',cat:'Fruit/Veg',servingDesc:'1 medium (182 g)',cal:95,protein:0.5,carbs:25.1,fat:0.4},
-  {name:'Banana',cat:'Fruit/Veg',servingDesc:'1 medium (118 g)',cal:105,protein:1.3,carbs:26.9,fat:0.4},
-  {name:'Orange',cat:'Fruit/Veg',servingDesc:'1 medium (131 g)',cal:62,protein:1.2,carbs:15.5,fat:0.1},
-  {name:'Strawberries',cat:'Fruit/Veg',servingDesc:'1 cup (152 g)',cal:49,protein:1.1,carbs:11.7,fat:0.5},
-  {name:'Blueberries',cat:'Fruit/Veg',servingDesc:'1 cup (148 g)',cal:84,protein:1.0,carbs:21.5,fat:0.4},
-  {name:'Raspberries',cat:'Fruit/Veg',servingDesc:'1 cup (123 g)',cal:64,protein:1.5,carbs:14.6,fat:0.9},
-  {name:'Grapes',cat:'Fruit/Veg',servingDesc:'1 cup (151 g)',cal:104,protein:1.1,carbs:27.3,fat:0.3},
-  {name:'Watermelon',cat:'Fruit/Veg',servingDesc:'1 cup diced (152 g)',cal:46,protein:0.9,carbs:11.6,fat:0.3},
-  {name:'Pineapple',cat:'Fruit/Veg',servingDesc:'1 cup chunks (165 g)',cal:82,protein:0.8,carbs:21.6,fat:0.2},
-  {name:'Mango',cat:'Fruit/Veg',servingDesc:'1 cup (165 g)',cal:99,protein:1.3,carbs:24.8,fat:0.7},
-  {name:'Peach',cat:'Fruit/Veg',servingDesc:'1 medium (150 g)',cal:58,protein:1.4,carbs:14.2,fat:0.4},
-  {name:'Pear',cat:'Fruit/Veg',servingDesc:'1 medium (178 g)',cal:101,protein:0.7,carbs:27.1,fat:0.2},
-  {name:'Cantaloupe',cat:'Fruit/Veg',servingDesc:'1 cup diced (160 g)',cal:54,protein:1.3,carbs:13.1,fat:0.3},
-  {name:'White Rice, cooked',cat:'Grain/Carb',servingDesc:'1 cup (158 g)',cal:205,protein:4.3,carbs:44.6,fat:0.5},
-  {name:'Brown Rice, cooked',cat:'Grain/Carb',servingDesc:'1 cup (195 g)',cal:240,protein:5.3,carbs:49.9,fat:2.0},
-  {name:'Quinoa, cooked',cat:'Grain/Carb',servingDesc:'1 cup (185 g)',cal:222,protein:8.1,carbs:39.4,fat:3.5},
-  {name:'Oatmeal, cooked',cat:'Grain/Carb',servingDesc:'1 cup (234 g)',cal:166,protein:5.8,carbs:28.1,fat:3.5},
-  {name:'Pasta, cooked',cat:'Grain/Carb',servingDesc:'1 cup (140 g)',cal:221,protein:8.1,carbs:43.3,fat:1.3},
-  {name:'Whole Wheat Bread',cat:'Grain/Carb',servingDesc:'1 slice (28 g)',cal:69,protein:3.6,carbs:11.5,fat:1.0},
-  {name:'White Bread',cat:'Grain/Carb',servingDesc:'1 slice (28 g)',cal:74,protein:2.1,carbs:13.7,fat:0.9},
-  {name:'Bagel, plain',cat:'Grain/Carb',servingDesc:'1 bagel (98 g)',cal:245,protein:9.8,carbs:48.0,fat:1.5},
-  {name:'Flour Tortilla',cat:'Grain/Carb',servingDesc:'1 tortilla (45 g)',cal:138,protein:3.7,carbs:23.1,fat:3.3},
-  {name:'Couscous, cooked',cat:'Grain/Carb',servingDesc:'1 cup (157 g)',cal:176,protein:6.0,carbs:36.4,fat:0.3},
-  {name:'Black Beans, cooked',cat:'Protein',servingDesc:'1 cup (172 g)',cal:227,protein:15.3,carbs:40.8,fat:0.9},
-  {name:'Chickpeas, cooked',cat:'Protein',servingDesc:'1 cup (164 g)',cal:269,protein:14.6,carbs:44.9,fat:4.3},
-  {name:'Lentils, cooked',cat:'Protein',servingDesc:'1 cup (198 g)',cal:230,protein:17.8,carbs:39.8,fat:0.8},
-  {name:'Kidney Beans, cooked',cat:'Protein',servingDesc:'1 cup (177 g)',cal:225,protein:15.4,carbs:40.4,fat:0.9},
-  {name:'Pinto Beans, cooked',cat:'Protein',servingDesc:'1 cup (171 g)',cal:245,protein:15.4,carbs:44.8,fat:1.2},
-  {name:'Edamame, cooked',cat:'Protein',servingDesc:'1 cup (155 g)',cal:188,protein:18.4,carbs:13.8,fat:8.1},
-  {name:'Tofu, firm',cat:'Protein',servingDesc:'1/2 cup (126 g)',cal:181,protein:21.8,carbs:3.5,fat:11.0},
-  {name:'Peanut Butter',cat:'Fat/Oil',servingDesc:'2 tbsp (32 g)',cal:188,protein:8.0,carbs:6.3,fat:16.1},
-  {name:'Almonds',cat:'Fat/Oil',servingDesc:'1 oz (28 g)',cal:162,protein:5.9,carbs:6.0,fat:14.0},
-  {name:'Walnuts',cat:'Fat/Oil',servingDesc:'1 oz (28 g)',cal:183,protein:4.3,carbs:3.8,fat:18.3},
-  {name:'Cashews',cat:'Fat/Oil',servingDesc:'1 oz (28 g)',cal:155,protein:5.1,carbs:8.5,fat:12.3},
-  {name:'Peanuts',cat:'Fat/Oil',servingDesc:'1 oz (28 g)',cal:159,protein:7.2,carbs:4.5,fat:13.8},
-  {name:'Pecans',cat:'Fat/Oil',servingDesc:'1 oz (28 g)',cal:193,protein:2.6,carbs:3.9,fat:20.2},
-  {name:'Sunflower Seeds',cat:'Fat/Oil',servingDesc:'1 oz (28 g)',cal:164,protein:5.8,carbs:5.6,fat:14.4},
-  {name:'Chia Seeds',cat:'Fat/Oil',servingDesc:'1 oz (28 g)',cal:136,protein:4.6,carbs:11.8,fat:8.6},
-  {name:'Olive Oil',cat:'Fat/Oil',servingDesc:'1 tbsp (13.5 g)',cal:119,protein:0.0,carbs:0.0,fat:13.5},
-  {name:'Coconut Oil',cat:'Fat/Oil',servingDesc:'1 tbsp (13.5 g)',cal:116,protein:0.0,carbs:0.0,fat:13.5},
-  {name:'Mayonnaise',cat:'Fat/Oil',servingDesc:'1 tbsp (14 g)',cal:95,protein:0.1,carbs:0.1,fat:10.5},
-];
-
-let customMeals=ld('m'); // the user's self-built food library: {id,name,servingDesc,cal,protein,carbs,fat}
-let nutriLog=ld('n');    // today's + all past food/water entries: {id,date,time,kind:'food'|'water',name,servings,cal,protein,carbs,fat,waterOz}
-function loadGoals(){try{return JSON.parse(localStorage.getItem(SK.g))}catch{return null}}
-function saveGoals(g){try{localStorage.setItem(SK.g,JSON.stringify(g))}catch(e){toast('Storage error')}}
-let nutriGoals=loadGoals()||{trackCal:true,cal:2000,trackProtein:true,protein:150,trackCarbs:false,carbs:200,trackFat:false,fat:70,trackWater:true,water:80,waterUnit:'oz'};
 function todayStr(){
   const d=new Date();
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
@@ -1725,24 +1046,11 @@ function switchTab(name,el){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('screen-'+name).classList.add('active');
-  // Nutrition has no tab of its own any more — it's reached from the
-  // dashboard banner — so fall back to finding the matching tab, and
-  // leave Dashboard lit for screens that aren't in the nav at all.
-  if(el){el.classList.add('active');}
-  else{
-    const tabs=[...document.querySelectorAll('.tab')];
-    const match=tabs.find(t=>(t.getAttribute('onclick')||'').includes("'"+name+"'"));
-    (match||tabs[0]).classList.add('active');
-  }
-  window.scrollTo(0,0);
-  // "+ Add" is for building your stack — it only shows on My Stack now.
-  const addBtn=document.getElementById('header-add-btn');
-  if(addBtn)addBtn.style.display=(name==='stack')?'':'none';
+  el.classList.add('active');
   if(name==='dashboard')renderDashboard();
   if(name==='upcoming')renderUpcoming();
   if(name==='stack')renderStack();
   if(name==='reference')renderReference();
-  if(name==='nutrition')renderNutrition();
   if(name==='log'){
     // Default to month view on first open
     renderLog();
@@ -1766,12 +1074,6 @@ function isDueToday(p){
   const today=new Date();const dow=today.getDay();
   if(type==='daily')return true;
   if(type==='weekly')return(p.schedDays||[]).includes(dow);
-  if(type==='interval'){
-    const start=p.startDate?new Date(p.startDate+'T00:00:00'):new Date();
-    const diff=Math.floor((today-start)/86400000);
-    const n=p.intervalDays||6;
-    return diff>=0&&diff%n===0;
-  }
   if(type==='cycle'){
     const start=p.startDate?new Date(p.startDate+'T00:00:00'):new Date();
     const diff=Math.floor((today-start)/86400000);
@@ -1792,15 +1094,6 @@ function getCycleDay(p){
   const raw=p.cycleOn||5,rawOff=p.cycleOff||2;
   return{pos,cycleOn:on,cycleOff:off,cycle,isOn,
     displayOn:raw,displayOff:rawOff,unit};
-}
-function getIntervalDay(p){
-  if(p.schedType!=='interval')return null;
-  const today=new Date();
-  const start=p.startDate?new Date(p.startDate+'T00:00:00'):new Date();
-  const diff=Math.floor((today-start)/86400000);
-  const n=p.intervalDays||6;
-  const pos=((diff%n)+n)%n;
-  return{pos,n,isDueToday:pos===0};
 }
 function getCurrentDose(p){
   if(!p.titration||!p.titration.length)return p.dose;
@@ -1898,54 +1191,10 @@ function renderDashboard(){
       list.innerHTML=rows.join('');
     }
   }
-  renderNutriBanner();
-}
-
-// Nutrition lives off the dashboard banner now instead of a bottom-nav tab.
-function goToNutrition(){switchTab('nutrition');}
-
-// Per-macro identity colors so four bars can be told apart at a glance on
-// the navy banner; the value text carries the status (green at 90%+, red
-// over goal) using the same thresholds as the full Nutrition screen.
-const NB_COLORS={cal:'#7fb0f0',protein:'#57cbb0',carbs:'#e8b45f',fat:'#ef8f84',water:'#6cc4f5'};
-function nbRow(label,cur,unit,goal,tracked,color){
-  // Untracked (or no goal set) — show the running count with no bar, so all
-  // four macros stay visible even when you're only chasing one or two.
-  if(!tracked||goal<=0){
-    return `<div class="nb-row"><div class="nb-row-top"><span>${label}</span><span class="nb-vals">${cur}${unit}</span></div></div>`;
-  }
-  const pct=Math.min(100,(cur/goal)*100);
-  const over=cur>goal;
-  const state=over?'over':(pct>=90?'good':'');
-  return `<div class="nb-row">
-    <div class="nb-row-top"><span>${label}</span><span class="nb-vals ${state}">${cur}${unit} / ${goal}${unit}</span></div>
-    <div class="nb-bar"><div class="nb-fill" style="width:${pct}%;background:${over?'#ff8a7a':color}"></div></div>
-  </div>`;
-}
-function renderNutriBanner(){
-  const rowsEl=document.getElementById('nutri-banner-rows');
-  if(!rowsEl)return;
-  const entries=todaysNutriEntries();
-  const totals=sumFoodTotals(entries);
-  const rows=[
-    nbRow('Calories',Math.round(totals.cal),'',nutriGoals.cal||0,!!nutriGoals.trackCal,NB_COLORS.cal),
-    nbRow('Protein',round1(totals.protein),'g',nutriGoals.protein||0,!!nutriGoals.trackProtein,NB_COLORS.protein),
-    nbRow('Carbs',round1(totals.carbs),'g',nutriGoals.carbs||0,!!nutriGoals.trackCarbs,NB_COLORS.carbs),
-    nbRow('Fat',round1(totals.fat),'g',nutriGoals.fat||0,!!nutriGoals.trackFat,NB_COLORS.fat),
-  ];
-  const wUnit=nutriGoals.waterUnit||'oz';
-  const plainOz=sumPlainWaterOz(entries), drinkOz=sumDrinkFluidOz(entries);
-  const wCur=Math.round(fromOz(plainOz+drinkOz,wUnit));
-  rows.push(nbRow('Water',wCur,wUnit,nutriGoals.water||0,!!nutriGoals.trackWater,NB_COLORS.water));
-  if(drinkOz>0){
-    rows.push(`<div style="font-size:11px;color:#8aafd4;margin-top:-6px">${Math.round(fromOz(plainOz,wUnit))}${wUnit} water · ${Math.round(fromOz(drinkOz,wUnit))}${wUnit} from drinks</div>`);
-  }
-  rowsEl.innerHTML=rows.join('');
-  const foodCount=entries.filter(e=>e.kind==='food').length;
-  const footEl=document.getElementById('nutri-banner-foot');
-  if(footEl){
-    footEl.innerHTML=`<span>${foodCount?foodCount+' item'+(foodCount===1?'':'s')+' logged today':'Nothing logged yet today'}</span><span>Full nutrition &#8250;</span>`;
-  }
+  const logEl=document.getElementById('recent-log-preview');
+  const recent=[...doseLog].reverse().slice(0,5);
+  if(!recent.length){logEl.innerHTML=`<div class="empty-state"><div class="icon">📋</div><h3>No entries yet</h3></div>`;}
+  else{logEl.innerHTML=recent.map(e=>`<div class="log-item"><div class="log-dot" style="background:${e.color||'var(--blue)'}"></div><div class="log-info"><div class="log-name">${e.name}</div><div class="log-meta">${e.dose} mcg${e.site?' · '+e.site:''}</div></div><div class="log-time">${fmtTime(e.ts)}</div><button class="btn btn-sm" onclick="unlogDose('${e.id}')" style="background:var(--red-light);color:var(--red);margin-left:8px" title="Unlog">✕</button></div>`).join('');}
 }
 function openStatModal(kind){
   const titleEl=document.getElementById('stat-detail-title');
@@ -1963,30 +1212,16 @@ function openStatModal(kind){
     });
     html=due.length?due.map(p=>peptideCardHTML(p,'modal-')).join(''):`<div class="empty-state"><div class="icon">✅</div><h3>Nothing outstanding</h3></div>`;
   }else if(kind==='done'){
-    // A timestamped list of what actually went in today — this replaces the
-    // old "Recent Log" card that used to sit on the dashboard.
-    titleEl.textContent='Logged Today';
-    const today=todayStr();
-    const todays=doseLog.filter(e=>{
-      const d=new Date(e.ts);
-      const key=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-      return key===today;
-    }).sort((a,b)=>new Date(b.ts)-new Date(a.ts));
-    html=todays.length?todays.map(e=>{
-      const missedBadge  = e.missed  ? '<span class="badge badge-red"   style="margin-left:6px">missed</span>'  : '';
-      const skippedBadge = e.skipped ? '<span class="badge badge-amber" style="margin-left:6px">skipped</span>' : '';
-      const lateBadge    = e.late    ? '<span class="badge badge-orange" style="margin-left:6px">late</span>' : '';
-      const dot=e.missed?'var(--red)':e.skipped?'var(--amber,#d97706)':e.late?'var(--orange,#c2540a)':(e.color||'var(--blue)');
-      return `<div class="log-item">
-        <div class="log-dot" style="background:${dot}"></div>
-        <div class="log-info">
-          <div class="log-name">${e.name}${missedBadge}${skippedBadge}${lateBadge}</div>
-          <div class="log-meta">${e.dose} mcg${e.site?' · '+e.site:''}${e.notes?' · '+e.notes:''}</div>
-        </div>
-        <div class="log-time">${new Date(e.ts).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}</div>
-        <button class="btn btn-sm" onclick="unlogDose('${e.id}')" style="background:var(--red-light);color:var(--red);margin-left:8px" title="Unlog">✕</button>
-      </div>`;
-    }).join(''):`<div class="empty-state"><div class="icon">📋</div><h3>Nothing logged yet today</h3><p>Doses you log will show up here with the time you took them.</p></div>`;
+    titleEl.textContent='Done Today';
+    const done=peptides.filter(p=>{
+      if(!isDueToday(p))return false;
+      const freq=p.freq||1;
+      for(let i=0;i<freq;i++){
+        if(todayChecked.includes(p.id+'_'+i))return true;
+      }
+      return false;
+    });
+    html=done.length?done.map(p=>peptideCardHTML(p,'modal-')).join(''):`<div class="empty-state"><div class="icon">📋</div><h3>Nothing logged yet</h3></div>`;
   }else if(kind==='active'){
     titleEl.textContent='Active Peptides';
     const active=peptides.filter(p=>p.active);
@@ -2016,17 +1251,12 @@ function renderSyringeModal(size){
   const dose=getCurrentDose(p);
   const conc=p.vial&&p.bac?(p.vial*1000)/p.bac:null;
   const syMax=syUnitsMax(size);
-  const labels2=document.getElementById('syringe-labels2');
-  const step=markStep(syMax);
-  const totalTicks=syMax/step;
-  const items=[];
-  for(let i=1;i<=totalTicks;i++){
-    const val=i*step;
-    const percent=(val/syMax)*100;
-    const isEdge=i===totalTicks;
-    items.push(`<span style="right:${percent}%${isEdge?';transform:translate(0%,-50%)':''}">${val}</span>`);
-  }
-  if(labels2)labels2.innerHTML=items.join('');
+  const marksRow=document.getElementById('syringe-marks-row2');
+  const step=syMax/5;
+  marksRow.innerHTML=Array.from({length:6},(_,i)=>{
+    const val=Math.round((5-i)*step);
+    return `<span>${i===0?val+'u':val}</span>`;
+  }).join('');
   const ticks2=document.getElementById('syringe-ticks2');
   if(ticks2)ticks2.style.backgroundImage=tickBackground(syMax);
   const fillEl=document.getElementById('syringe-fill2');
@@ -2064,13 +1294,11 @@ function checkMidnightRollover(){
   try{
     const raw=JSON.parse(localStorage.getItem(SK.c));
     if(raw&&raw.date&&raw.date!==todayStr()){
-      // New day — log any unchecked doses as missed, but only for peptides
-      // that were actually due on that previous date (weekly/interval/cycle
-      // schedules must NOT get marked missed on their off days — that was
-      // the bug: this used to just check active+not-as-needed and missed
-      // every single off-day night for those schedules).
-      const prevDate=new Date(raw.date+'T00:00:00');
-      const prevDue=peptides.filter(p=>isDueOnDate(p,prevDate));
+      // New day — log any unchecked doses as missed
+      const prevDue=peptides.filter(p=>{
+        // Reconstruct if they were due on prev date
+        return p.active&&p.schedType!=='asneeded';
+      });
       const prevChecked=raw.ids||[];
       let missedCount=0;
       prevDue.forEach(p=>{
@@ -2095,7 +1323,7 @@ function logAllDue(){
     const freq=p.freq||1;
     for(let i=0;i<freq;i++){
       const cid=p.id+'_'+i;
-      if(!todayChecked.includes(cid)){todayChecked.push(cid);logEntry(p,getCurrentDose(p),'','',false,null,cid);}
+      if(!todayChecked.includes(cid)){todayChecked.push(cid);logEntry(p,getCurrentDose(p),'','',false);}
     }
   });
   saveTodayChecked();renderDashboard();toast('All doses marked done');
@@ -2103,20 +1331,15 @@ function logAllDue(){
 
 function peptideCardHTML(p,idPrefix){
   idPrefix=idPrefix||'';
-  const dose=getCurrentDose(p);const calc=calcUnits(p,dose);const cd=getCycleDay(p);const id=getIntervalDay(p);
+  const dose=getCurrentDose(p);const calc=calcUnits(p,dose);const cd=getCycleDay(p);
   let sd='';
   if(p.schedType==='daily')sd='Every day';
   else if(p.schedType==='weekly')sd=(p.schedDays||[]).map(d=>['Su','Mo','Tu','We','Th','Fr','Sa'][d]).join(', ');
-  else if(p.schedType==='interval')sd=`Every ${p.intervalDays||6} days`;
   else if(p.schedType==='cycle')sd=`${p.cycleOn||5} on / ${p.cycleOff||2} off`;
   else sd='As needed';
   const cycBar=cd?`<div class="cycle-bar-wrap">
     <div class="cycle-bar-label"><span>Day ${cd.pos+1} of ${cd.cycle} (${cd.isOn?'ON':'OFF'})</span><span>${cd.displayOn} ${cd.unit} on / ${cd.displayOff} ${cd.unit} off</span></div>
     <div class="cycle-bar"><div class="cycle-bar-fill ${cd.isOn?'':'off-phase'}" style="width:${(cd.pos/cd.cycle*100).toFixed(1)}%"></div></div>
-  </div>`:'';
-  const intervalBar=id?`<div class="cycle-bar-wrap">
-    <div class="cycle-bar-label"><span>${id.isDueToday?'Due today':'Day '+(id.pos+1)+' of '+id.n+' — '+(id.n-id.pos)+' day'+(id.n-id.pos===1?'':'s')+' to go'}</span><span>Every ${id.n} days</span></div>
-    <div class="cycle-bar"><div class="cycle-bar-fill ${id.isDueToday?'':'off-phase'}" style="width:${(id.pos/id.n*100).toFixed(1)}%"></div></div>
   </div>`:'';
   const titHTML=p.titration&&p.titration.length?`<div class="detail-cell full"><div class="lbl">Titration</div><div class="val">${p.titration.map((s,i)=>`Step ${i+1}: ${s.dose} mcg × ${s.days} days`).join(' → ')}</div></div>`:'';
   const detId=idPrefix+'det-'+p.id;
@@ -2157,7 +1380,6 @@ function peptideCardHTML(p,idPrefix){
         ${p.notes?`<div class="detail-cell full"><div class="lbl">Notes</div><div class="val">${p.notes}</div></div>`:''}
       </div>
       ${cycBar}
-      ${intervalBar}
       <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn btn-primary btn-sm" onclick="closeModal('stat-detail-modal');openLogModal('${p.id}')">Log a Dose</button>
           ${p.dosesPerVial?`<button class="btn btn-amber btn-sm" onclick="closeModal('stat-detail-modal');newVial('${p.id}')">🧪 New Vial</button>`:''}
@@ -2203,1188 +1425,7 @@ function openAddModal(){
   renderTimeInputs();
 }
 function closeModal(id){document.getElementById(id).classList.remove('open')}
-function openSettingsModal(){
-  renderSettingsGoalsSummary();
-  renderSettingsRemindersSummary();
-  document.getElementById('settings-modal').classList.add('open');
-}
-// Nutrition goals moved into Settings when the Nutrition tab came off the
-// bottom nav — the Goals button on the Nutrition screen still works too.
-function renderSettingsGoalsSummary(){
-  const el=document.getElementById('settings-goals-summary');
-  if(!el)return;
-  const bits=[];
-  if(nutriGoals.trackCal&&nutriGoals.cal)bits.push(nutriGoals.cal+' cal');
-  if(nutriGoals.trackProtein&&nutriGoals.protein)bits.push(nutriGoals.protein+'g protein');
-  if(nutriGoals.trackCarbs&&nutriGoals.carbs)bits.push(nutriGoals.carbs+'g carbs');
-  if(nutriGoals.trackFat&&nutriGoals.fat)bits.push(nutriGoals.fat+'g fat');
-  if(nutriGoals.trackWater&&nutriGoals.water)bits.push(nutriGoals.water+(nutriGoals.waterUnit||'oz')+' water');
-  el.textContent=bits.length?'Currently tracking: '+bits.join(' · '):'Nothing tracked yet — no daily targets set.';
-}
-function openGoalsFromSettings(){
-  closeModal('settings-modal');
-  openGoalsModal();
-}
-
-// ══════════════════════════════════════════════════════════════
-// NUTRITION — food log, custom meals, goals, water
-// ══════════════════════════════════════════════════════════════
-function ozToMl(oz){return oz*29.5735}
-function mlToOz(ml){return ml/29.5735}
-function toOz(amount,unit){return unit==='ml'?mlToOz(amount):amount}
-function fromOz(oz,unit){return unit==='ml'?ozToMl(oz):oz}
-function round1(n){return Math.round(n*10)/10}
-function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-
-function todaysNutriEntries(){return nutriLog.filter(e=>e.date===todayStr())}
-function sumFoodTotals(entries){
-  return entries.filter(e=>e.kind==='food').reduce((t,e)=>({
-    cal:t.cal+(e.cal||0),protein:t.protein+(e.protein||0),carbs:t.carbs+(e.carbs||0),fat:t.fat+(e.fat||0)
-  }),{cal:0,protein:0,carbs:0,fat:0});
-}
-// Hydration counts every drink, not just plain water. Maughan's 2016 beverage
-// hydration index found cola, coffee, tea, juice and beer all retained fluid
-// no differently than water at 4h (milk actually did better) — so a soda's
-// fluid belongs in the water total. Its calories still count as food, which is
-// why fluid rides along on the food entry instead of becoming a water entry.
-// Kept as three functions so the UI can show the split: plain water vs drinks.
-function sumPlainWaterOz(entries){return entries.filter(e=>e.kind==='water').reduce((t,e)=>t+(e.amountOz||0),0)}
-function sumDrinkFluidOz(entries){return entries.filter(e=>e.kind==='food').reduce((t,e)=>t+(e.fluidOz||0),0)}
-function sumWaterOz(entries){return sumPlainWaterOz(entries)+sumDrinkFluidOz(entries)}
-
-function renderNutrition(){
-  document.getElementById('nutri-date').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
-  const entries=todaysNutriEntries();
-  const totals=sumFoodTotals(entries);
-  const waterOz=sumWaterOz(entries);
-
-  // Progress rows for whichever macros are toggled on
-  const rows=[];
-  const macroDefs=[
-    ['cal','Calories','trackCal',''],
-    ['protein','Protein','trackProtein','g'],
-    ['carbs','Carbs','trackCarbs','g'],
-    ['fat','Fat','trackFat','g'],
-  ];
-  macroDefs.forEach(([key,label,flag,unit])=>{
-    if(!nutriGoals[flag])return;
-    const goal=nutriGoals[key]||0;
-    const cur=key==='cal'?Math.round(totals.cal):round1(totals[key]);
-    const pct=goal>0?Math.min(100,(cur/goal)*100):0;
-    const over=goal>0&&cur>goal;
-    const barClass=over?'over':(pct>=90?'good':'');
-    rows.push(`<div class="macro-row">
-      <div class="macro-row-top"><span>${label}</span><span class="macro-vals">${cur}${unit} / ${goal}${unit}</span></div>
-      <div class="cycle-bar"><div class="cycle-bar-fill ${barClass}" style="width:${pct}%"></div></div>
-    </div>`);
-  });
-  document.getElementById('nutri-progress-list').innerHTML=rows.length?rows.join(''):
-    '<div class="empty-state"><div class="icon">🎯</div><h3>No goals set</h3><p>Tap Goals above to choose what you want to track.</p></div>';
-
-  // Water card
-  const wUnit=nutriGoals.waterUnit||'oz';
-  const wGoal=nutriGoals.water||0;
-  const wCur=Math.round(fromOz(waterOz,wUnit));
-  const wPct=wGoal>0?Math.min(100,(wCur/wGoal)*100):0;
-  const wOver=wGoal>0&&wCur>wGoal;
-  const plainOz=sumPlainWaterOz(entries), drinkOz=sumDrinkFluidOz(entries);
-  const splitNote=drinkOz>0
-    ? `<div class="form-hint" style="margin-top:5px">${Math.round(fromOz(plainOz,wUnit))}${wUnit} plain water · ${Math.round(fromOz(drinkOz,wUnit))}${wUnit} from drinks</div>` : '';
-  if(nutriGoals.trackWater){
-    document.getElementById('water-progress-row').innerHTML=`
-      <div class="macro-row-top"><span>Water</span><span class="macro-vals">${wCur}${wUnit} / ${wGoal}${wUnit}</span></div>
-      <div class="cycle-bar"><div class="cycle-bar-fill ${wOver?'over':(wPct>=90?'good':'')}" style="width:${wPct}%"></div></div>${splitNote}`;
-  } else {
-    document.getElementById('water-progress-row').innerHTML=`<div class="macro-row-top"><span>Water</span><span class="macro-vals">${wCur}${wUnit} logged today</span></div>${splitNote}`;
-  }
-  const presets=wUnit==='ml'?[250,500,750]:[8,16,20,32];
-  document.getElementById('water-quick-buttons').innerHTML=presets.map(p=>
-    `<button class="btn btn-secondary btn-sm" onclick="addWater(${p},'${wUnit}')">+${p}${wUnit}</button>`
-  ).join('')+`<button class="btn btn-secondary btn-sm" onclick="promptCustomWater()">+ Custom</button>`;
-
-  // Custom meals list
-  renderCustomMealsList();
-
-  // Today's combined log
-  const logList=document.getElementById('nutri-log-list');
-  const sorted=[...entries].sort((a,b)=>(b.ts||0)-(a.ts||0));
-  if(!sorted.length){
-    logList.innerHTML='<div class="empty-state"><div class="icon">📋</div><h3>Nothing logged today</h3></div>';
-  } else {
-    logList.innerHTML=sorted.map(e=>{
-      if(e.kind==='water'){
-        return `<div class="nutri-item">
-          <div class="nutri-item-icon water">💧</div>
-          <div class="nutri-item-info"><div class="nutri-item-name">Water — ${e.displayAmount}${e.displayUnit}</div><div class="nutri-item-detail">${fmtTime(e.ts)}</div></div>
-          <button class="nutri-del-btn" onclick="deleteNutriEntry('${e.id}')">✕</button>
-        </div>`;
-      }
-      return `<div class="nutri-item">
-        <div class="nutri-item-icon">🍽</div>
-        <div class="nutri-item-info"><div class="nutri-item-name">${e.name}</div><div class="nutri-item-detail">${Math.round(e.cal)} cal · ${round1(e.protein)}p / ${round1(e.carbs)}c / ${round1(e.fat)}f${e.fluidOz?` · 💧${round1(e.fluidOz)}oz`:''}${entryAmountText(e)?` · ${entryAmountText(e)}`:''} · ${fmtTime(e.ts)}</div></div>
-        <button class="nutri-del-btn" onclick="deleteNutriEntry('${e.id}')">✕</button>
-      </div>`;
-    }).join('');
-  }
-
-  renderNutriHistory();
-  writeTodaySnapshot();
-  // The dashboard banner reads the same totals, so keep it in step. Without
-  // this, logging food from the dashboard updated the Nutrition screen you
-  // couldn't see while the banner in front of you sat stale.
-  renderNutriBanner();
-}
-
-function deleteNutriEntry(id){
-  nutriLog=nutriLog.filter(e=>e.id!==id);
-  sv('n',nutriLog);
-  renderNutrition();
-  toast('Removed');
-}
-
-function addWater(amount,unit){
-  nutriLog.push({id:'nw_'+Date.now()+Math.random().toString(36).slice(2,7),date:todayStr(),ts:Date.now(),kind:'water',amountOz:toOz(amount,unit),displayAmount:amount,displayUnit:unit});
-  sv('n',nutriLog);
-  renderNutrition();
-  toast('Water logged');
-}
-function promptCustomWater(){
-  const unit=nutriGoals.waterUnit||'oz';
-  const val=prompt(`How much water (${unit})?`);
-  const num=parseFloat(val);
-  if(!val||isNaN(num)||num<=0)return;
-  addWater(num,unit);
-}
-
-function quickLogCustomMeal(id){
-  const m=customMeals.find(x=>x.id===id);
-  if(!m)return;
-  nutriLog.push({id:'nf_'+Date.now()+Math.random().toString(36).slice(2,7),date:todayStr(),ts:Date.now(),kind:'food',name:m.name,servings:1,cal:m.cal,protein:m.protein,carbs:m.carbs,fat:m.fat,fluidOz:m.fluidOz||0,
-    servingDesc:m.servingDesc||'',servingTotal:m.servingDesc||''});
-  sv('n',nutriLog);
-  touchFoodLibrary(m.name);
-  renderNutrition();
-  toast(m.name+' logged');
-}
-
-// ── Log Food modal ──
-let foodPickSelection=null; // the selected entry from customMeals (the user's food library)
-function openLogFoodModal(){
-  resetLogSession();
-  foodPickSelection=null;
-  document.getElementById('food-search-input').value='';
-  document.getElementById('food-servings').value='1';
-  document.getElementById('manual-food-hint').innerHTML='';
-  ['manual-food-name','manual-food-cal','manual-food-protein','manual-food-carbs','manual-food-fat','manual-food-fluid','manual-food-serving'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('manual-food-servings').value='1';
-  document.getElementById('manual-serving-readout').textContent='';
-  document.getElementById('pick-serving-readout').textContent='';
-  renderFoodPickList();
-  renderLookupLinks();
-  renderLogWaterButtons();
-  document.getElementById('log-food-modal').classList.add('open');
-}
-// Water lives in the same sheet as food now — same presets as the Nutrition
-// screen, but one tap logs it and closes so it stays a two-tap job overall.
-function renderLogWaterButtons(){
-  const el=document.getElementById('log-water-buttons');
-  if(!el)return;
-  const unit=nutriGoals.waterUnit||'oz';
-  const presets=unit==='ml'?[250,500,750]:[8,16,20,32];
-  el.innerHTML=presets.map(p=>
-    `<button class="btn btn-secondary btn-sm" onclick="logWaterAndClose(${p},'${unit}')">+${p}${unit}</button>`
-  ).join('')+`<button class="btn btn-secondary btn-sm" onclick="logCustomWaterAndClose()">+ Custom</button>`;
-}
-function logWaterAndClose(amount,unit){
-  addWater(amount,unit);
-  // Water closes on purpose: you log 16oz once, not 8oz twice. If food was
-  // already added this visit, say so on the way out so nothing feels lost.
-  const n=logSessionIds.length;
-  closeModal('log-food-modal');
-  if(n)toast(amount+unit+' water · '+n+' food item'+(n===1?'':'s')+' logged');
-}
-function logCustomWaterAndClose(){
-  const unit=nutriGoals.waterUnit||'oz';
-  const val=prompt(`How much water (${unit})?`);
-  const num=parseFloat(val);
-  if(!val||isNaN(num)||num<=0)return;
-  logWaterAndClose(num,unit);
-}
-
-// ── Barcode scanning (Pass 1.5) ──
-// Uses html5-qrcode, loaded from a CDN on first use (not bundled — this
-// app has no build step). Looks up matches against Open Food Facts, a
-// free public nutrition database, no API key required. Scan results
-// always land in the manual-entry fields for review before logging,
-// never auto-added — OFF data is usually per 100g, not per what you
-// actually ate, so it needs a human eyeball on it first.
-let scannerLibLoading=false;
-let activeScanner=null;
-let scanBusy=false;
-// Scanning always lands in Log Food's manual-entry fields for review — logging
-// from there (addManualFoodEntry) both logs it and saves it to My Foods.
-// ── Scan review sheet ──
-// A scan lands here rather than in the manual-entry fields at the foot of the
-// Log Food sheet: you shouldn't have to scroll past the whole form to find out
-// what you just scanned.
-let lastScanCode='';
-function showScanResult(o){
-  lastScanCode=o.code||'';
-  const set=(id,v)=>{document.getElementById(id).value=(v===0||v)?v:'';};
-  document.getElementById('scan-result-title').textContent=o.found?'Scanned':'Not Found';
-  const icon=document.getElementById('scan-hit-icon');
-  icon.textContent=o.found?'🔎':(o.error?'⚠️':'❓');
-  icon.className='scan-hit-icon'+(o.error?' err':(o.found?'':' miss'));
-  document.getElementById('scan-hit-note').innerHTML=o.note;
-  set('sr-name',o.name||'');
-  set('sr-cal',o.cal); set('sr-protein',o.protein); set('sr-carbs',o.carbs); set('sr-fat',o.fat);
-  set('sr-serving',o.servingDesc||''); set('sr-fluid',o.fluidOz||'');
-  document.getElementById('sr-servings').value='1';
-  updateScanTotals();
-  document.getElementById('scan-result-modal').classList.add('open');
-}
-// Live "here's what actually goes in the log" line, so the servings multiplier
-// is never a guess.
-function updateScanTotals(){
-  const el=document.getElementById('sr-total');
-  if(!el)return;
-  const num=id=>parseFloat(document.getElementById(id).value)||0;
-  const s=parseFloat(document.getElementById('sr-servings').value)||1;
-  const cal=num('sr-cal')*s, p=num('sr-protein')*s, cb=num('sr-carbs')*s, f=num('sr-fat')*s;
-  const fl=num('sr-fluid')*s;
-  const desc=(document.getElementById('sr-serving').value||'').trim();
-  const amount=servingTotalText(desc,s);
-  el.innerHTML=`${Math.round(cal)} cal · ${round1(p)}p / ${round1(cb)}c / ${round1(f)}f`
-    +(fl>0?` · 💧${round1(fl)}oz`:'')
-    +(amount?`<br><span>${s!==1?fmtNum(s)+' servings — ':''}${amount}</span>`:(s!==1?`<br><span>${fmtNum(s)} servings</span>`:''));
-}
-function addScannedToLog(){
-  const name=(document.getElementById('sr-name').value||'').trim();
-  if(!name){toast('Give it a name');return;}
-  const num=id=>parseFloat(document.getElementById(id).value)||0;
-  const s=parseFloat(document.getElementById('sr-servings').value)||1;
-  const cal=num('sr-cal'), p=num('sr-protein'), cb=num('sr-carbs'), f=num('sr-fat'), fl=num('sr-fluid');
-  const desc=(document.getElementById('sr-serving').value||'').trim();
-  const entryId='nf_'+Date.now()+Math.random().toString(36).slice(2,7);
-  nutriLog.push({
-    id:entryId,date:todayStr(),ts:Date.now(),kind:'food',
-    name,servings:s,cal:cal*s,protein:p*s,carbs:cb*s,fat:f*s,fluidOz:fl*s,
-    servingDesc:desc,servingTotal:servingTotalText(desc,s)
-  });
-  sv('n',nutriLog);
-  upsertFoodLibrary(name,cal,p,cb,f,desc,fl);
-  closeModal('scan-result-modal');
-  renderNutrition();
-  noteLogged(entryId);
-  toast(name+' logged & saved to My Foods');
-}
-function scanAnother(){
-  closeModal('scan-result-modal');
-  openScanModal();
-}
-// Open Food Facts gives serving_size as free text ("330 ml", "12 fl oz",
-// "1 can (355ml)"). If it names a liquid measure, prefill the fluid field so
-// drinks credit the water goal without you having to look up the can size.
-// Anything in grams is food, not fluid — left alone.
-// ── Serving size scaling ──
-// Open Food Facts gives serving_size as free text ("4 oz (113 g)", "1 cup",
-// "1 patty"). Rather than trying to understand it, scale EVERY number in the
-// string — "4 oz (113 g)" x2 becomes "8 oz (226 g)". Works for weights,
-// volumes, and countable units alike, and degrades to a plain multiplier for
-// anything unparseable. It's crowdsourced data, so plenty of products have no
-// serving_size at all; everything below no-ops on an empty string.
-function fmtNum(n){
-  const r=Math.round(n*100)/100;
-  return Number.isInteger(r)?String(r):String(Math.round(n*10)/10);
-}
-function scaleServingText(text,servings){
-  if(!text)return '';
-  const s=Number(servings)||1;
-  if(s===1)return text;
-  return String(text).replace(/\d+(?:\.\d+)?/g, m => fmtNum(parseFloat(m)*s));
-}
-// A big weight is easier to picture in pounds — "24 oz" means more as "1.5 lb".
-// Only appended when the scaled total actually crosses the threshold.
-const G_PER_OZ=28.3495, G_PER_LB=453.592;
-function weightHint(scaledText){
-  if(!scaledText)return '';
-  const t=String(scaledText).toLowerCase();
-  if(/\blb\b|\blbs\b|\bpound/.test(t))return ''; // already in pounds
-  let m=t.match(/([\d.]+)\s*(?:fl\.?\s*oz)/);
-  if(m)return ''; // fluid ounces aren't a weight
-  m=t.match(/([\d.]+)\s*oz\b/);
-  if(m){
-    const oz=parseFloat(m[1]);
-    return oz>=16 ? ` ≈ ${fmtNum(oz/16)} lb` : '';
-  }
-  m=t.match(/([\d.]+)\s*(?:g|grams?)\b/);
-  if(m){
-    const g=parseFloat(m[1]);
-    if(g>=G_PER_LB)return ` ≈ ${fmtNum(g/G_PER_LB)} lb`;
-    if(g>=2*G_PER_OZ)return ` ≈ ${fmtNum(g/G_PER_OZ)} oz`;
-    return '';
-  }
-  return '';
-}
-// The full "what did I actually eat" string for N servings of a food.
-function servingTotalText(servingDesc,servings){
-  // Strictly the scaled amount. With no serving size recorded this is empty —
-  // the "2x serving" multiplier is entryAmountText's job, and returning it
-  // here too produced "2x serving (2x serving)".
-  if(!servingDesc)return '';
-  const s=Number(servings)||1;
-  const scaled=scaleServingText(servingDesc,s);
-  return s===1 ? servingDesc : `${scaled}${weightHint(scaled)}`;
-}
-function updateServingReadout(){
-  const el=document.getElementById('manual-serving-readout');
-  if(!el)return;
-  const desc=(document.getElementById('manual-food-serving').value||'').trim();
-  const s=parseFloat(document.getElementById('manual-food-servings').value)||1;
-  el.textContent=(desc&&s!==1)?`${fmtNum(s)} servings = ${servingTotalText(desc,s)}`:'';
-}
-function updatePickServingReadout(){
-  const el=document.getElementById('pick-serving-readout');
-  if(!el)return;
-  const s=parseFloat(document.getElementById('food-servings').value)||1;
-  const desc=foodPickSelection&&foodPickSelection.servingDesc?foodPickSelection.servingDesc:'';
-  el.textContent=(desc&&s!==1)?`${fmtNum(s)} servings = ${servingTotalText(desc,s)}`:'';
-}
-
-// What a logged entry actually amounted to — "2x serving (8 oz ≈ 0.5 lb)".
-// Falls back to the bare multiplier for foods with no serving size recorded.
-function entryAmountText(e){
-  if(e.servingTotal && e.servings && e.servings!==1) return `${fmtNum(e.servings)} servings · ${e.servingTotal}`;
-  if(e.servingTotal && (!e.servings || e.servings===1)) return e.servingTotal;
-  if(e.servings && e.servings!==1) return `${fmtNum(e.servings)}x serving`;
-  return '';
-}
-function parseFluidOz(servingSize){
-  if(!servingSize)return 0;
-  const s=String(servingSize).toLowerCase();
-  let m=s.match(/([\d.]+)\s*fl\.?\s*oz/);
-  if(m)return Math.round(parseFloat(m[1])*10)/10;
-  m=s.match(/([\d.]+)\s*ml\b/);
-  if(m)return Math.round(mlToOz(parseFloat(m[1]))*10)/10;
-  m=s.match(/([\d.]+)\s*(?:l|liters?|litres?)\b/);
-  if(m)return Math.round(mlToOz(parseFloat(m[1])*1000)*10)/10;
-  return 0;
-}
-function loadScannerLib(cb){
-  if(window.Html5Qrcode){cb();return;}
-  if(scannerLibLoading){
-    const check=setInterval(()=>{if(window.Html5Qrcode){clearInterval(check);cb();}},150);
-    return;
-  }
-  scannerLibLoading=true;
-  const s=document.createElement('script');
-  s.src='https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js';
-  s.onload=()=>{scannerLibLoading=false;cb();};
-  s.onerror=()=>{
-    scannerLibLoading=false;
-    toast('Could not load scanner — check your connection');
-    closeScanModal();
-  };
-  document.head.appendChild(s);
-}
-function openScanModal(){
-  scanBusy=false;
-  document.getElementById('scan-status').textContent='Loading scanner…';
-  document.getElementById('scan-modal').classList.add('open');
-  loadScannerLib(startScanner);
-}
-function startScanner(){
-  // modal may have been closed while the library was still loading
-  if(!document.getElementById('scan-modal').classList.contains('open'))return;
-  document.getElementById('scan-status').textContent='Point the camera at a barcode';
-  activeScanner=new Html5Qrcode('scan-reader');
-  const formats=[
-    Html5QrcodeSupportedFormats.EAN_13,Html5QrcodeSupportedFormats.EAN_8,
-    Html5QrcodeSupportedFormats.UPC_A,Html5QrcodeSupportedFormats.UPC_E
-  ];
-  activeScanner.start(
-    {facingMode:'environment'},
-    {fps:10,qrbox:{width:260,height:140},formatsToSupport:formats},
-    (decodedText)=>onBarcodeDecoded(decodedText),
-    ()=>{} // per-frame miss — expected constantly while framing the barcode, ignore
-  ).catch(()=>{
-    document.getElementById('scan-status').textContent='Could not access the camera — check camera permission for this app, or use the fields below instead.';
-  });
-}
-function closeScanModal(){
-  closeModal('scan-modal');
-  if(activeScanner){
-    const s=activeScanner;
-    activeScanner=null;
-    s.stop().then(()=>s.clear()).catch(()=>{});
-  }
-}
-function onBarcodeDecoded(code){
-  if(scanBusy)return;
-  scanBusy=true;
-  document.getElementById('scan-status').textContent='Found it — looking up '+code+'…';
-  if(activeScanner)activeScanner.pause(true);
-  lookupOpenFoodFacts(code);
-}
-async function lookupOpenFoodFacts(code){
-  try{
-    const res=await fetch(`https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(code)}.json?fields=product_name,brands,serving_size,serving_quantity,quantity,nutriments`);
-    const data=await res.json();
-    scanBusy=false;
-    closeScanModal();
-
-    if(!data||data.status!==1||!data.product){
-      showScanResult({
-        found:false,code,
-        name:`Unknown item (UPC ${code})`,
-        note:`Open Food Facts doesn't have this barcode. Type the numbers off the label and it'll be saved for next time.<div class="scan-upc">UPC ${code}</div>`
-      });
-      toast('Not found — enter it below');
-      return;
-    }
-
-    const p=data.product;
-    const n=p.nutriments||{};
-    // Prefer the label's own serving figures; fall back to per-100g, and say
-    // which you're looking at — they are very different numbers.
-    const hasServing=n['energy-kcal_serving']!=null||n.proteins_serving!=null;
-    const cal=hasServing?(n['energy-kcal_serving']||0):(n['energy-kcal_100g']||0);
-    const protein=hasServing?(n.proteins_serving||0):(n.proteins_100g||0);
-    const carbs=hasServing?(n.carbohydrates_serving||0):(n.carbohydrates_100g||0);
-    const fat=hasServing?(n.fat_serving||0):(n.fat_100g||0);
-    const name=p.product_name?(p.brands?`${p.product_name} (${p.brands})`:p.product_name):`Scanned item (UPC ${code})`;
-    const servDesc=(p.serving_size||'').trim();
-    const fluidOz=parseFluidOz(p.serving_size);
-    const basis=hasServing?(servDesc?`per serving (${servDesc})`:'per labeled serving'):'per 100 g';
-
-    showScanResult({
-      found:true,code,name,
-      cal:Math.round(cal),protein:round1(protein),carbs:round1(carbs),fat:round1(fat),
-      servingDesc:servDesc,fluidOz:fluidOz>0?fluidOz:'',
-      note:`<strong>${name}</strong><br>Numbers are ${basis}.`
-        +(hasServing?'':' <strong>Check these</strong> — this product has no per-serving data, so these are per 100 g.')
-        +(fluidOz>0?` Looks like a drink — ${fluidOz} fl oz counted toward water.`:'')
-        +`<div class="scan-upc">UPC ${code}</div>`
-    });
-    toast('Found it — check the numbers');
-  }catch(err){
-    scanBusy=false;
-    closeScanModal();
-    showScanResult({
-      found:false,error:true,code,
-      name:'',
-      note:`Couldn't reach Open Food Facts — check your connection. You can still type it in here, or tap Scan Another to retry.<div class="scan-upc">UPC ${code}</div>`
-    });
-    toast('Lookup failed');
-  }
-}
-function renderFoodPickList(){
-  const q=(document.getElementById('food-search-input').value||'').toLowerCase().trim();
-  const list=document.getElementById('food-pick-list');
-
-  // Same most-recently-used order as My Foods, so what you ate yesterday is
-  // at your thumb instead of whatever you happened to save first.
-  const sortedMine=myFoodsSorted();
-  const mine=(q?sortedMine.filter(f=>f.name.toLowerCase().includes(q)):sortedMine)
-    .map(f=>({...f,_generic:false}));
-  // Generic reference foods only appear once you're actually searching — an
-  // empty box shows My Foods alone, so the library never looks padded out with
-  // 115 things you didn't put there. Anything already in My Foods under the
-  // same name is dropped so you don't see it twice.
-  const owned=new Set(customMeals.map(f=>f.name.trim().toLowerCase()));
-  const generic=q
-    ? GENERIC_FOODS.filter(f=>f.name.toLowerCase().includes(q)&&!owned.has(f.name.trim().toLowerCase()))
-        .map(f=>({...f,_generic:true}))
-    : [];
-  const filtered=[...mine,...generic];
-
-  if(!filtered.length){
-    list.innerHTML=q
-      ?`<div class="empty-state"><div class="icon">🔍</div><h3>No matches</h3><p>Not in your foods or the generic list — look it up below and add it once; it'll be saved after that.</p></div>`
-      :'<div class="empty-state"><div class="icon">🥗</div><h3>Nothing saved yet</h3><p>Search a generic food above, scan a barcode, or add your own below.</p></div>';
-    window._foodPickFiltered=[];
-    renderLookupLinks();
-    return;
-  }
-  let out='', lastGeneric=null;
-  filtered.slice(0,60).forEach((f,i)=>{
-    if(f._generic!==lastGeneric){
-      out+=`<div class="section-label" style="margin:${lastGeneric===null?'0':'12px'} 0 6px">${f._generic?'Generic foods (USDA)':'My Foods'}</div>`;
-      lastGeneric=f._generic;
-    }
-    const selected=foodPickSelection&&foodPickSelection.name===f.name;
-    out+=`<div class="food-pick-row ${selected?'selected':''}" onclick='selectFoodPick(${i})'>
-      <div class="food-pick-info">
-        <div class="food-pick-name">${f.name}${f._generic?' <span class="badge badge-amber" style="font-size:9px">GENERIC</span>':''}</div>
-        <div class="food-pick-sub">${f.servingDesc||'1 serving'} · ${Math.round(f.cal)} cal · ${round1(f.protein)}p / ${round1(f.carbs)}c / ${round1(f.fat)}f</div>
-      </div>
-    </div>`;
-  });
-  list.innerHTML=out;
-  // stash the filtered list for selectFoodPick to index into
-  window._foodPickFiltered=filtered;
-  renderLookupLinks();
-}
-// Escape hatch for anything neither in your foods nor the generic list — a
-// specific cut, a restaurant plate. Opens a real nutrition database with
-// whatever you typed already in the search box; you read off the numbers and
-// enter them once, and My Foods keeps them.
-function renderLookupLinks(){
-  const el=document.getElementById('food-lookup-links');
-  if(!el)return;
-  const raw=(document.getElementById('food-search-input').value||'').trim();
-  const q=encodeURIComponent(raw);
-  el.innerHTML=`<div class="form-hint" style="margin-bottom:6px">Not listed? Look it up${raw?` — searching <strong>${raw}</strong>`:''}, then type the numbers in below:</div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <a class="btn btn-secondary btn-sm" style="text-decoration:none" target="_blank" rel="noopener"
-         href="https://fdc.nal.usda.gov/food-search${raw?`?query=${q}`:''}">USDA FoodData ↗</a>
-      <a class="btn btn-secondary btn-sm" style="text-decoration:none" target="_blank" rel="noopener"
-         href="https://world.openfoodfacts.org/cgi/search.pl?search_terms=${q}&search_simple=1&action=process">Open Food Facts ↗</a>
-    </div>`;
-}
-function selectFoodPick(i){
-  foodPickSelection=window._foodPickFiltered[i];
-  renderFoodPickList();
-  updatePickServingReadout();
-}
-function addSelectedFoodToLog(){
-  if(!foodPickSelection){toast('Pick a food first');return;}
-  const servings=parseFloat(document.getElementById('food-servings').value)||1;
-  const f=foodPickSelection;
-  // Generic reference foods live outside My Foods until you log one — then it's
-  // copied in (per-serving, unscaled) so it's yours to re-log and edit.
-  if(f._generic)upsertFoodLibrary(f.name,f.cal,f.protein,f.carbs,f.fat,f.servingDesc||'',f.fluidOz||0);
-  const entryId='nf_'+Date.now()+Math.random().toString(36).slice(2,7);
-  nutriLog.push({
-    id:entryId,date:todayStr(),ts:Date.now(),kind:'food',
-    name:f.name,servings,
-    cal:f.cal*servings,protein:f.protein*servings,carbs:f.carbs*servings,fat:f.fat*servings,
-    fluidOz:(f.fluidOz||0)*servings,
-    servingDesc:f.servingDesc||'',servingTotal:servingTotalText(f.servingDesc||'',servings)
-  });
-  sv('n',nutriLog);
-  touchFoodLibrary(f.name);
-  renderNutrition();
-  noteLogged(entryId);
-  // Clear the selection so the next item starts from a clean picker
-  foodPickSelection=null;
-  document.getElementById('food-servings').value='1';
-  renderFoodPickList();updatePickServingReadout();
-  toast(f.name+(f._generic?' logged & saved to My Foods':' logged'));
-}
-// ── Log session tray ──────────────────────────────────────────────────
-// The sheet used to close after every single item, which turned a dinner
-// plate into open/log/open/log/open/log. Now it stays put and keeps a
-// running list of what you've added this visit — confirmation you can
-// actually read, plus a record so halfway through a plate you still know
-// whether the rice went in. Each row can be undone; Done closes.
-// Everything is already committed to nutriLog on add, so closing the sheet
-// (or water closing it) never loses anything — the tray is a view, not a
-// buffer.
-let logSessionIds=[];
-function resetLogSession(){logSessionIds=[];renderLogSession();}
-function noteLogged(entryId){
-  if(entryId)logSessionIds.push(entryId);
-  renderLogSession(true);
-}
-function undoSessionEntry(entryId){
-  const e=nutriLog.find(x=>x.id===entryId);
-  nutriLog=nutriLog.filter(x=>x.id!==entryId);
-  sv('n',nutriLog);
-  logSessionIds=logSessionIds.filter(id=>id!==entryId);
-  renderLogSession();
-  renderNutrition();
-  toast((e&&e.name?e.name:'Entry')+' removed');
-}
-function renderLogSession(flash){
-  const tray=document.getElementById('log-session-tray');
-  if(!tray)return;
-  // Read back from nutriLog so an entry deleted elsewhere can't linger here
-  const items=logSessionIds.map(id=>nutriLog.find(x=>x.id===id)).filter(Boolean).reverse();
-  if(!items.length){tray.classList.remove('on');tray.innerHTML='';return;}
-  const t=items.reduce((a,e)=>({
-    cal:a.cal+(e.cal||0),protein:a.protein+(e.protein||0),
-    carbs:a.carbs+(e.carbs||0),fat:a.fat+(e.fat||0),fluidOz:a.fluidOz+(e.fluidOz||0)
-  }),{cal:0,protein:0,carbs:0,fat:0,fluidOz:0});
-  tray.classList.add('on');
-  tray.innerHTML=`
-    <div class="lst-head">
-      <span class="lst-title">Added this visit · ${items.length} item${items.length===1?'':'s'}</span>
-      <span class="lst-total">${round1(t.cal)} cal · ${round1(t.protein)}p</span>
-    </div>
-    <div class="lst-rows">${items.map(e=>`
-      <div class="lst-row">
-        <div class="lst-info">
-          <div class="lst-name">${esc(e.name)}</div>
-          <div class="lst-sub">${e.servings&&e.servings!==1?esc(String(e.servings))+' × · ':''}${round1(e.cal||0)} cal · ${round1(e.protein||0)}p / ${round1(e.carbs||0)}c / ${round1(e.fat||0)}f${e.fluidOz?' · 💧'+round1(e.fluidOz)+'oz':''}</div>
-        </div>
-        <button class="lst-undo" onclick="undoSessionEntry('${e.id}')" aria-label="Undo ${esc(e.name)}">&#10005;</button>
-      </div>`).join('')}</div>
-    <button class="btn btn-primary btn-sm lst-done" onclick="closeModal('log-food-modal')">Done adding food</button>`;
-  if(flash){
-    const first=tray.querySelector('.lst-row');
-    if(first){first.classList.add('lst-flash');setTimeout(()=>first.classList.remove('lst-flash'),520);}
-  }
-}
-// ── My Foods ──────────────────────────────────────────────────────────
-// This is a library, not a daily view: it only grows, and it used to sit
-// ABOVE Today's Log, pushing the one thing you check every day further down
-// the screen with every food you ever saved. It also had no sort at all —
-// pure insertion order, so a steak scanned in June outranked dinner an hour
-// ago. Now it lives below the log, collapsed, most-recently-used first.
-function myFoodsSorted(){
-  return [...customMeals].sort((a,b)=>
-    (b.lastUsed||0)-(a.lastUsed||0) || a.name.localeCompare(b.name));
-}
-function toggleMyFoods(){
-  const btn=document.getElementById('cm-toggle'), panel=document.getElementById('cm-panel');
-  if(!btn||!panel)return;
-  const open=btn.getAttribute('aria-expanded')==='true';
-  btn.setAttribute('aria-expanded',open?'false':'true');
-  panel.hidden=open;
-  if(!open){renderCustomMealsList();const i=document.getElementById('cm-search-input');if(i)i.focus();}
-}
-function renderCustomMealsList(){
-  const cmList=document.getElementById('custom-meals-list');
-  const countEl=document.getElementById('cm-count');
-  if(countEl)countEl.textContent=customMeals.length?`(${customMeals.length})`:'';
-  const wrap=document.getElementById('cm-search-wrap');
-  if(wrap)wrap.style.display=customMeals.length>6?'':'none';
-  if(!cmList)return;
-  if(!customMeals.length){
-    cmList.innerHTML='<div class="empty-state"><div class="icon">🥗</div><h3>No foods saved yet</h3><p>Log something — type it in or scan a barcode — and it lands here automatically for one-tap logging next time.</p></div>';
-    return;
-  }
-  const qEl=document.getElementById('cm-search-input');
-  const q=(qEl&&qEl.value||'').trim().toLowerCase();
-  const list=myFoodsSorted().filter(m=>!q||m.name.toLowerCase().includes(q));
-  if(!list.length){
-    cmList.innerHTML=`<div class="empty-state"><div class="icon">🔍</div><h3>No match</h3><p>Nothing saved matches "${esc(q)}".</p></div>`;
-    return;
-  }
-  cmList.innerHTML=list.map(m=>`
-      <div class="custom-meal-row">
-        <div class="custom-meal-info" onclick="quickLogCustomMeal('${m.id}')">
-          <div class="custom-meal-name">${esc(m.name)}</div>
-          <div class="custom-meal-sub">${esc(m.servingDesc||'1 serving')} · ${Math.round(m.cal)} cal · ${round1(m.protein)}p / ${round1(m.carbs)}c / ${round1(m.fat)}f${m.fluidOz?' · 💧'+round1(m.fluidOz)+'oz':''}</div>
-        </div>
-        <div class="custom-meal-actions">
-          <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();openCustomMealModal('${m.id}')">Edit</button>
-          <button class="nutri-del-btn" onclick="event.stopPropagation();deleteCustomMeal('${m.id}')" aria-label="Delete ${esc(m.name)}">&#10005;</button>
-        </div>
-      </div>`).join('');
-}
-function upsertFoodLibrary(name,cal,protein,carbs,fat,servingDesc,fluidOz){
-  // Every manual entry or scan-and-log saves itself here automatically — no
-  // separate "save as custom meal" step. Matching an existing name (case-
-  // insensitive) updates that entry in place instead of creating a duplicate.
-  const key=name.trim().toLowerCase();
-  const existing=customMeals.find(m=>m.name.trim().toLowerCase()===key);
-  if(existing){
-    existing.cal=cal;existing.protein=protein;existing.carbs=carbs;existing.fat=fat;
-    existing.fluidOz=fluidOz||0;
-    existing.lastUsed=Date.now();
-    if(servingDesc!==undefined)existing.servingDesc=servingDesc||existing.servingDesc||'';
-  } else {
-    customMeals.push({id:'cm_'+Date.now()+Math.random().toString(36).slice(2,7),name,servingDesc:servingDesc||'',cal,protein,carbs,fat,fluidOz:fluidOz||0,lastUsed:Date.now()});
-  }
-  sv('m',customMeals);
-}
-// Re-logging a food you already have shouldn't rewrite its numbers — it only
-// means you ate it again. Bump lastUsed so it floats to the top of My Foods.
-function touchFoodLibrary(name){
-  const key=String(name||'').trim().toLowerCase();
-  const m=customMeals.find(x=>x.name.trim().toLowerCase()===key);
-  if(!m)return;
-  m.lastUsed=Date.now();
-  sv('m',customMeals);
-}
-// Entries saved before lastUsed existed have no timestamp. Rather than dump
-// them all at the bottom in arbitrary order, date them from the most recent
-// time that name appears in the nutrition log. Runs once.
-function backfillFoodLastUsed(){
-  let changed=false;
-  customMeals.forEach(m=>{
-    if(m.lastUsed)return;
-    const key=m.name.trim().toLowerCase();
-    let newest=0;
-    nutriLog.forEach(e=>{
-      if(e.kind!=='food'||!e.name)return;
-      if(e.name.trim().toLowerCase()===key&&(e.ts||0)>newest)newest=e.ts||0;
-    });
-    m.lastUsed=newest||1; // 1 = "used, but before we tracked it": sorts last, stable
-    changed=true;
-  });
-  if(changed)sv('m',customMeals);
-}
-backfillFoodLastUsed();
-function addManualFoodEntry(){
-  const name=(document.getElementById('manual-food-name').value||'').trim();
-  const cal=parseFloat(document.getElementById('manual-food-cal').value)||0;
-  const protein=parseFloat(document.getElementById('manual-food-protein').value)||0;
-  const carbs=parseFloat(document.getElementById('manual-food-carbs').value)||0;
-  const fat=parseFloat(document.getElementById('manual-food-fat').value)||0;
-  const fluid=parseFloat(document.getElementById('manual-food-fluid').value)||0;
-  const servDesc=(document.getElementById('manual-food-serving').value||'').trim();
-  const servings=parseFloat(document.getElementById('manual-food-servings').value)||1;
-  if(!name){toast('Give it a name');return;}
-  const entryId='nf_'+Date.now()+Math.random().toString(36).slice(2,7);
-  nutriLog.push({
-    id:entryId,date:todayStr(),ts:Date.now(),kind:'food',name,servings,
-    cal:cal*servings,protein:protein*servings,carbs:carbs*servings,fat:fat*servings,fluidOz:fluid*servings,
-    servingDesc:servDesc,servingTotal:servingTotalText(servDesc,servings)
-  });
-  sv('n',nutriLog);
-  upsertFoodLibrary(name,cal,protein,carbs,fat,servDesc,fluid);
-  renderNutrition();
-  noteLogged(entryId);
-  toast(name+' logged & saved to My Foods');
-  ['manual-food-name','manual-food-cal','manual-food-protein','manual-food-carbs','manual-food-fat','manual-food-fluid','manual-food-serving'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('manual-food-servings').value='1';
-}
-
-// ── Edit Food modal (My Foods library) ──
-// Library entries are created automatically by logging (manual entry or a
-// scan), never by a standalone "new" flow here — this modal only corrects
-// an existing entry (via the Edit button on its row in My Foods).
-function openCustomMealModal(editId){
-  document.getElementById('edit-custom-meal-id').value=editId||'';
-  const m=editId?customMeals.find(x=>x.id===editId):null;
-  if(m){
-    document.getElementById('cm-name').value=m.name;
-    document.getElementById('cm-serving').value=m.servingDesc||'';
-    document.getElementById('cm-cal').value=m.cal;
-    document.getElementById('cm-protein').value=m.protein;
-    document.getElementById('cm-carbs').value=m.carbs;
-    document.getElementById('cm-fat').value=m.fat;
-    document.getElementById('cm-fluid').value=m.fluidOz||'';
-  } else {
-    ['cm-name','cm-serving','cm-cal','cm-protein','cm-carbs','cm-fat','cm-fluid'].forEach(id=>document.getElementById(id).value='');
-  }
-  document.getElementById('custom-meal-hint').innerHTML='';
-  document.getElementById('custom-meal-modal').classList.add('open');
-}
-function saveCustomMeal(){
-  const id=document.getElementById('edit-custom-meal-id').value;
-  const name=(document.getElementById('cm-name').value||'').trim();
-  if(!name){toast('Name it first');return;}
-  const meal={
-    id:id||('cm_'+Date.now()+Math.random().toString(36).slice(2,7)),
-    name,
-    servingDesc:(document.getElementById('cm-serving').value||'').trim(),
-    cal:parseFloat(document.getElementById('cm-cal').value)||0,
-    protein:parseFloat(document.getElementById('cm-protein').value)||0,
-    carbs:parseFloat(document.getElementById('cm-carbs').value)||0,
-    fat:parseFloat(document.getElementById('cm-fat').value)||0,
-    fluidOz:parseFloat(document.getElementById('cm-fluid').value)||0,
-  };
-  if(id){
-    customMeals=customMeals.map(m=>m.id===id?meal:m);
-  } else {
-    customMeals.push(meal);
-  }
-  sv('m',customMeals);
-  closeModal('custom-meal-modal');
-  renderNutrition();
-  toast('Saved');
-}
-function deleteCustomMeal(id){
-  customMeals=customMeals.filter(m=>m.id!==id);
-  sv('m',customMeals);
-  renderNutrition();
-  toast('Deleted');
-}
-
-
-// ══════════════════════════════════════════════════════════════
-// NUTRITION REMINDERS
-// ══════════════════════════════════════════════════════════════
-// Split of responsibility, on purpose: the push server knows only WHEN to
-// fire — it never sees a gram or an ounce of what you logged. It sends a bare
-// {type:'water'|'macro'|'endofday'} trigger; the service worker wakes up,
-// reads today's numbers out of IndexedDB on THIS phone, and writes the
-// notification text itself. Your food log never leaves the device, and the
-// numbers on the lock screen are true as of the second it fires.
-function loadReminders(){
-  try{const r=JSON.parse(localStorage.getItem(SK.r));if(r)return r;}catch{}
-  return {water:{enabled:false,intervalHours:1.5,startTime:'07:00',endTime:'20:00'},
-          macro:{enabled:false,times:['08:00','12:00','18:00']},
-          endOfDay:{enabled:false,time:'21:00'}};
-}
-let nutriReminders=loadReminders();
-let macroTimeDraft=[];
-
-function openRemindersModal(){
-  const r=nutriReminders;
-  document.getElementById('rem-water-on').checked=!!r.water.enabled;
-  document.getElementById('rem-water-interval').value=String(r.water.intervalHours||1.5);
-  document.getElementById('rem-water-start').value=r.water.startTime||'07:00';
-  document.getElementById('rem-water-end').value=r.water.endTime||'20:00';
-  document.getElementById('rem-macro-on').checked=!!r.macro.enabled;
-  macroTimeDraft=[...(r.macro.times||[])];
-  renderMacroTimes();
-  document.getElementById('rem-eod-on').checked=!!r.endOfDay.enabled;
-  document.getElementById('rem-eod-time').value=r.endOfDay.time||'21:00';
-  document.getElementById('reminders-modal').classList.add('open');
-}
-function openRemindersFromSettings(){closeModal('settings-modal');openRemindersModal();}
-function renderMacroTimes(){
-  const el=document.getElementById('rem-macro-times');
-  if(!el)return;
-  el.innerHTML=macroTimeDraft.map((t,i)=>`
-    <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
-      <input class="form-input" type="time" value="${t}" style="flex:1" onchange="macroTimeDraft[${i}]=this.value">
-      <button class="nutri-del-btn" onclick="removeMacroTime(${i})">✕</button>
-    </div>`).join('')||'<div class="form-hint" style="margin-bottom:8px">No times set yet.</div>';
-}
-function addMacroTime(){macroTimeDraft.push('12:00');renderMacroTimes();}
-function removeMacroTime(i){macroTimeDraft.splice(i,1);renderMacroTimes();}
-function saveRemindersFromModal(){
-  const start=document.getElementById('rem-water-start').value||'07:00';
-  const end=document.getElementById('rem-water-end').value||'20:00';
-  if(end<=start){toast('Water end time has to be after the start');return;}
-  nutriReminders={
-    water:{enabled:document.getElementById('rem-water-on').checked,
-           intervalHours:parseFloat(document.getElementById('rem-water-interval').value)||1.5,
-           startTime:start,endTime:end},
-    macro:{enabled:document.getElementById('rem-macro-on').checked,
-           times:[...macroTimeDraft].filter(Boolean).sort()},
-    endOfDay:{enabled:document.getElementById('rem-eod-on').checked,
-              time:document.getElementById('rem-eod-time').value||'21:00'}
-  };
-  try{localStorage.setItem(SK.r,JSON.stringify(nutriReminders));}catch(e){toast('Storage error');}
-  closeModal('reminders-modal');
-  renderSettingsRemindersSummary();
-  writeTodaySnapshot();
-  syncRemindersToServer();
-  toast('Reminders saved');
-}
-function renderSettingsRemindersSummary(){
-  const el=document.getElementById('settings-reminders-summary');
-  if(!el)return;
-  const r=nutriReminders,bits=[];
-  if(r.water.enabled)bits.push(`Water every ${r.water.intervalHours} hr, ${fmtTimeTo12(r.water.startTime)}–${fmtTimeTo12(r.water.endTime)}`);
-  if(r.macro.enabled&&r.macro.times.length)bits.push(`Protein check ${r.macro.times.map(fmtTimeTo12).join(', ')}`);
-  if(r.endOfDay.enabled)bits.push(`End-of-day at ${fmtTimeTo12(r.endOfDay.time)}`);
-  el.textContent=bits.length?bits.join(' · '):'No reminders set.';
-}
-
-// ── IndexedDB mirror ──
-// Service workers can't read localStorage, so today's numbers get mirrored
-// here for the push handler to pick up. Rewritten on every nutrition change.
-function idbOpen(){
-  return new Promise((resolve,reject)=>{
-    const req=indexedDB.open('peptiderx',1);
-    req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains('today'))db.createObjectStore('today');};
-    req.onsuccess=()=>resolve(req.result);
-    req.onerror=()=>reject(req.error);
-  });
-}
-async function writeTodaySnapshot(){
-  if(!('indexedDB' in window))return;
-  try{
-    const entries=todaysNutriEntries();
-    const t=sumFoodTotals(entries);
-    const wUnit=nutriGoals.waterUnit||'oz';
-    const snap={
-      date:todayStr(),
-      updated:Date.now(),
-      goals:{cal:nutriGoals.trackCal?nutriGoals.cal:0,protein:nutriGoals.trackProtein?nutriGoals.protein:0,
-             carbs:nutriGoals.trackCarbs?nutriGoals.carbs:0,fat:nutriGoals.trackFat?nutriGoals.fat:0,
-             water:nutriGoals.trackWater?nutriGoals.water:0,waterUnit:wUnit},
-      totals:{cal:Math.round(t.cal),protein:round1(t.protein),carbs:round1(t.carbs),fat:round1(t.fat),
-              water:Math.round(fromOz(sumWaterOz(entries),wUnit))},
-      water:{startTime:nutriReminders.water.startTime,endTime:nutriReminders.water.endTime}
-    };
-    const db=await idbOpen();
-    await new Promise((res,rej)=>{
-      const tx=db.transaction('today','readwrite');
-      tx.objectStore('today').put(snap,'snapshot');
-      tx.oncomplete=res;tx.onerror=()=>rej(tx.error);
-    });
-    db.close();
-  }catch(err){console.warn('[Reminders] snapshot write failed',err);}
-}
-
-async function syncRemindersToServer(){
-  if(PUSH_SERVER_URL.includes('YOUR-APP-NAME'))return;
-  try{
-    await fetch(PUSH_SERVER_URL+'/api/nutrition-reminders',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      // Send the phone's IANA timezone with the settings. The server runs on
-      // Render (UTC), so without this a 7am reminder would fire at 2am.
-      body:JSON.stringify({userId:getUserId(),
-        reminders:{...nutriReminders,tz:(Intl.DateTimeFormat().resolvedOptions().timeZone||'')}})
-    });
-  }catch(err){console.error('[Reminders] sync failed',err);}
-}
-
-// ── Goals modal ──
-function openGoalsModal(){
-  document.getElementById('goal-track-cal').checked=!!nutriGoals.trackCal;
-  document.getElementById('goal-cal').value=nutriGoals.cal;
-  document.getElementById('goal-track-protein').checked=!!nutriGoals.trackProtein;
-  document.getElementById('goal-protein').value=nutriGoals.protein;
-  document.getElementById('goal-track-carbs').checked=!!nutriGoals.trackCarbs;
-  document.getElementById('goal-carbs').value=nutriGoals.carbs;
-  document.getElementById('goal-track-fat').checked=!!nutriGoals.trackFat;
-  document.getElementById('goal-fat').value=nutriGoals.fat;
-  document.getElementById('goal-track-water').checked=!!nutriGoals.trackWater;
-  document.getElementById('goal-water').value=nutriGoals.water;
-  document.getElementById('goal-water-unit').value=nutriGoals.waterUnit||'oz';
-  document.getElementById('goals-modal').classList.add('open');
-}
-function saveGoalsFromModal(){
-  nutriGoals={
-    trackCal:document.getElementById('goal-track-cal').checked,
-    cal:parseFloat(document.getElementById('goal-cal').value)||0,
-    trackProtein:document.getElementById('goal-track-protein').checked,
-    protein:parseFloat(document.getElementById('goal-protein').value)||0,
-    trackCarbs:document.getElementById('goal-track-carbs').checked,
-    carbs:parseFloat(document.getElementById('goal-carbs').value)||0,
-    trackFat:document.getElementById('goal-track-fat').checked,
-    fat:parseFloat(document.getElementById('goal-fat').value)||0,
-    trackWater:document.getElementById('goal-track-water').checked,
-    water:parseFloat(document.getElementById('goal-water').value)||0,
-    waterUnit:document.getElementById('goal-water-unit').value,
-  };
-  saveGoals(nutriGoals);
-  closeModal('goals-modal');
-  renderNutrition();
-  renderSettingsGoalsSummary();
-  writeTodaySnapshot();
-  toast('Goals saved');
-}
-
-// ── History (past days) — data is never auto-deleted, same as the dose
-// log; this is just a browsable window into it, grouped by day. ──
-function renderNutriHistory(){
-  const today=todayStr();
-  const byDate={};
-  nutriLog.forEach(e=>{
-    if(e.date===today)return; // today lives in the cards above, not History
-    (byDate[e.date]=byDate[e.date]||[]).push(e);
-  });
-  const dates=Object.keys(byDate).sort((a,b)=>b.localeCompare(a));
-  const list=document.getElementById('nutri-history-list');
-  if(!dates.length){
-    list.innerHTML='<div class="empty-state"><div class="icon">📅</div><h3>No past days yet</h3><p>Once you\'ve logged for more than a day, they\'ll show up here.</p></div>';
-    return;
-  }
-  list.innerHTML=dates.slice(0,90).map(dateStr=>{
-    const entries=byDate[dateStr];
-    const t=sumFoodTotals(entries);
-    const waterOz=sumWaterOz(entries);
-    const wUnit=nutriGoals.waterUnit||'oz';
-    const wAmt=Math.round(fromOz(waterOz,wUnit));
-    const label=new Date(dateStr+'T00:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
-    return `<div class="custom-meal-row" onclick="openNutriDayDetail('${dateStr}')">
-      <div class="custom-meal-info">
-        <div class="custom-meal-name">${label}</div>
-        <div class="custom-meal-sub">${Math.round(t.cal)} cal · ${round1(t.protein)}p / ${round1(t.carbs)}c / ${round1(t.fat)}f${waterOz>0?` · ${wAmt}${wUnit} water`:''}</div>
-      </div>
-      <span style="color:var(--text-soft)">&#8250;</span>
-    </div>`;
-  }).join('');
-}
-function openNutriDayDetail(dateStr){
-  const entries=nutriLog.filter(e=>e.date===dateStr).sort((a,b)=>(b.ts||0)-(a.ts||0));
-  const t=sumFoodTotals(entries);
-  const waterOz=sumWaterOz(entries);
-  const wUnit=nutriGoals.waterUnit||'oz';
-  const label=new Date(dateStr+'T00:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
-  document.getElementById('nutri-day-modal-title').textContent=label;
-  document.getElementById('nutri-day-modal-totals').innerHTML=
-    `<div class="macro-row-top"><span>Totals</span><span class="macro-vals">${Math.round(t.cal)} cal · ${round1(t.protein)}p / ${round1(t.carbs)}c / ${round1(t.fat)}f${waterOz>0?` · ${Math.round(fromOz(waterOz,wUnit))}${wUnit} water`:''}</span></div>`;
-  document.getElementById('nutri-day-modal-list').innerHTML=entries.map(e=>{
-    if(e.kind==='water'){
-      return `<div class="nutri-item">
-        <div class="nutri-item-icon water">💧</div>
-        <div class="nutri-item-info"><div class="nutri-item-name">Water — ${e.displayAmount}${e.displayUnit}</div><div class="nutri-item-detail">${new Date(e.ts).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}</div></div>
-        <button class="nutri-del-btn" onclick="deleteNutriEntryFromHistory('${e.id}','${dateStr}')">✕</button>
-      </div>`;
-    }
-    return `<div class="nutri-item">
-      <div class="nutri-item-icon">🍽</div>
-      <div class="nutri-item-info"><div class="nutri-item-name">${e.name}</div><div class="nutri-item-detail">${Math.round(e.cal)} cal · ${round1(e.protein)}p / ${round1(e.carbs)}c / ${round1(e.fat)}f${e.fluidOz?` · 💧${round1(e.fluidOz)}oz`:''}${entryAmountText(e)?` · ${entryAmountText(e)}`:''} · ${new Date(e.ts).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}</div></div>
-      <button class="nutri-del-btn" onclick="deleteNutriEntryFromHistory('${e.id}','${dateStr}')">✕</button>
-    </div>`;
-  }).join('');
-  document.getElementById('nutri-day-modal').classList.add('open');
-}
-function deleteNutriEntryFromHistory(id,dateStr){
-  nutriLog=nutriLog.filter(e=>e.id!==id);
-  sv('n',nutriLog);
-  renderNutrition();
-  const stillHasEntries=nutriLog.some(e=>e.date===dateStr);
-  if(stillHasEntries){openNutriDayDetail(dateStr);}
-  else{closeModal('nutri-day-modal');}
-  toast('Removed');
-}
-
-// ── Clear & export nutrition log ──
-function clearNutriLog(){
-  if(!confirm('Clear entire nutrition log? This deletes every food and water entry, ever logged.'))return;
-  nutriLog=[];
-  sv('n',nutriLog);
-  renderNutrition();
-  toast('Nutrition log cleared');
-}
-function buildNutriCSV(){
-  const rows=[['Date','Time','Type','Name','Serving Size','Servings','Amount Eaten','Calories','Protein (g)','Carbs (g)','Fat (g)','Fluid (fl oz)','Water Amount','Water Unit']];
-  const sorted=[...nutriLog].sort((a,b)=>(a.ts||0)-(b.ts||0));
-  sorted.forEach(e=>{
-    const d=new Date(e.ts);
-    const dateStr=d.toLocaleDateString('en-US');
-    const timeStr=d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
-    if(e.kind==='water'){
-      rows.push([dateStr,timeStr,'Water','','','','','','','','','',e.displayAmount,e.displayUnit]);
-    } else {
-      rows.push([dateStr,timeStr,'Food',e.name,e.servingDesc||'',e.servings||1,e.servingTotal||'',Math.round(e.cal),round1(e.protein),round1(e.carbs),round1(e.fat),e.fluidOz?round1(e.fluidOz):'','','']);
-    }
-  });
-  return rows.map(r=>r.map(csvEscape).join(',')).join('\r\n');
-}
-async function exportNutriCSV(share){
-  if(!nutriLog.length){toast('No nutrition entries to export');return;}
-  const csv=buildNutriCSV();
-  const filename=`peptiderx-nutrition-${todayStr()}.csv`;
-  const blob=new Blob([csv],{type:'text/csv'});
-  if(share&&navigator.share){
-    try{
-      const file=new File([blob],filename,{type:'text/csv'});
-      if(navigator.canShare&&navigator.canShare({files:[file]})){
-        await navigator.share({files:[file],title:'PeptideRx Nutrition Log'});
-        return;
-      }
-    }catch(err){
-      if(err.name==='AbortError')return;
-    }
-  }
-  downloadBlob(blob,filename);
-  if(share)toast('Sharing not available on this device — downloaded instead. Attach it to your email manually.');
-}
-
-// ── Backup & Restore ────────────────────────────────────────────────────────
-// The CSV exports above are reports: human-readable, lossy, one-way. This is
-// the other thing — a complete, reloadable copy of the app's state. Everything
-// lives under the 'prx_' prefix in localStorage, so we sweep by prefix rather
-// than a hardcoded key list. Anything added later comes along for free instead
-// of being silently left out of the backup.
-const BACKUP_FORMAT = 1;
-
-function collectBackup(){
-  const data={};
-  for(let i=0;i<localStorage.length;i++){
-    const k=localStorage.key(i);
-    if(k&&k.indexOf('prx_')===0)data[k]=localStorage.getItem(k);
-  }
-  return data;
-}
-
-// What's actually IN a backup, in plain language. Used both to stamp the file
-// and to tell you what you're about to restore before it overwrites anything.
-function describeBackup(data){
-  const n=k=>{try{const v=JSON.parse(data[k]);return Array.isArray(v)?v.length:(v?1:0);}catch{return 0}};
-  return {
-    peptides:n('prx_p'), doses:n('prx_l'), foods:n('prx_m'),
-    nutrition:n('prx_n'), goals:data['prx_g']?1:0, reminders:data['prx_r']?1:0,
-    keys:Object.keys(data).length
-  };
-}
-
-function summaryLine(c){
-  const bits=[];
-  if(c.peptides)bits.push(c.peptides+' peptide'+(c.peptides===1?'':'s'));
-  if(c.doses)bits.push(c.doses+' logged dose'+(c.doses===1?'':'s'));
-  if(c.foods)bits.push(c.foods+' food'+(c.foods===1?'':'s')+' in your library');
-  if(c.nutrition)bits.push(c.nutrition+' nutrition entr'+(c.nutrition===1?'y':'ies'));
-  if(c.goals)bits.push('goals');
-  if(c.reminders)bits.push('reminders');
-  return bits.length?bits.join(', '):'no data';
-}
-
-async function backupAll(share){
-  const data=collectBackup();
-  const counts=describeBackup(data);
-  if(!counts.keys){toast('Nothing to back up yet');return;}
-  const payload={
-    app:'PeptideRx', format:BACKUP_FORMAT, version:APP_VERSION.split(' ')[0],
-    created:new Date().toISOString(), contains:counts, data
-  };
-  const filename=`peptiderx-backup-${todayStr()}.json`;
-  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
-  const el=document.getElementById('backup-status');
-  if(el)el.textContent='Last backup: '+summaryLine(counts)+'.';
-  if(share&&navigator.share){
-    try{
-      const file=new File([blob],filename,{type:'application/json'});
-      if(navigator.canShare&&navigator.canShare({files:[file]})){
-        await navigator.share({files:[file],title:'PeptideRx Backup'});
-        return;
-      }
-    }catch(err){ if(err.name==='AbortError')return; }
-  }
-  downloadBlob(blob,filename);
-  toast(share?'Sharing unavailable — downloaded instead':'Backup saved');
-}
-
-function handleRestoreFile(input){
-  const file=input.files&&input.files[0];
-  input.value='';                       // so picking the same file twice still fires
-  if(!file)return;
-  const reader=new FileReader();
-  reader.onerror=()=>toast("Couldn't read that file");
-  reader.onload=()=>{ try{ restoreFromText(String(reader.result)); }
-                      catch(e){ alert("That file couldn't be read as a PeptideRx backup.\n\n"+(e.message||e)); } };
-  reader.readAsText(file);
-}
-
-function restoreFromText(text){
-  let payload;
-  try{ payload=JSON.parse(text); }
-  catch{ throw new Error('It is not valid JSON — is it one of the CSV exports by mistake?'); }
-  if(!payload||typeof payload!=='object')throw new Error('Unexpected file contents.');
-  if(payload.app!=='PeptideRx')throw new Error('This is not a PeptideRx backup file.');
-  const data=payload.data;
-  if(!data||typeof data!=='object')throw new Error('The backup has no data section.');
-
-  const keys=Object.keys(data).filter(k=>k.indexOf('prx_')===0&&typeof data[k]==='string');
-  if(!keys.length)throw new Error('The backup is empty — nothing to restore.');
-
-  // Every value has to survive a JSON round-trip before ANY of it is written.
-  // A half-applied restore is worse than a refused one.
-  for(const k of keys){
-    try{ JSON.parse(data[k]); }
-    catch{ if(k!=='prx_userId'&&k!=='prx_wakelock'&&k!=='prx_migrated_v13')
-             throw new Error('The backup is damaged (bad entry: '+k+'). Nothing was changed.'); }
-  }
-
-  const incoming=describeBackup(data);
-  const current=describeBackup(collectBackup());
-  const when=payload.created?new Date(payload.created).toLocaleString():'unknown date';
-
-  if(!confirm(
-    'Restore this backup?\n\n'+
-    'FROM THE FILE ('+when+'):\n  '+summaryLine(incoming)+'\n\n'+
-    'ON THIS PHONE RIGHT NOW:\n  '+summaryLine(current)+'\n\n'+
-    'The data on this phone will be replaced. This cannot be undone.'
-  ))return;
-
-  // Keep this device's own identity. The push subscription on the server is
-  // keyed to this userId — inheriting the other phone's would silently point
-  // your notifications at their schedule.
-  const myId=localStorage.getItem('prx_userId');
-  for(const k of keys){
-    if(k==='prx_userId')continue;
-    localStorage.setItem(k,data[k]);
-  }
-  if(myId)localStorage.setItem('prx_userId',myId);
-
-  alert('Restored: '+summaryLine(incoming)+'.\n\nThe app will reload now.');
-  location.reload();
-}
-
+function openSettingsModal(){document.getElementById('settings-modal').classList.add('open');}
 function resetForm(){
   ['edit-peptide-id','p-name','p-vial','p-bac','p-dose','p-timing','p-notes'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('p-start-date').value=todayStr();
@@ -3428,7 +1469,6 @@ function openEditModal(id){
   const stEl=document.querySelector(`.sched-tab[data-type="${st}"]`)||document.querySelector('.sched-tab');
   setSchedType(st,stEl);
   if(p.schedType==='weekly'&&p.schedDays){selDays=[...p.schedDays];document.querySelectorAll('#weekly-picker .day-pill').forEach(d=>d.classList.toggle('active',selDays.includes(parseInt(d.dataset.day))));}
-  if(p.schedType==='interval'){document.getElementById('p-interval-days').value=p.intervalDays||'';}
   if(p.schedType==='cycle'){document.getElementById('p-cycle-on').value=p.cycleOn||'';document.getElementById('p-cycle-off').value=p.cycleOff||'';}
   document.getElementById('p-freq').value=p.freq||1;
   // syringe
@@ -3451,7 +1491,6 @@ function setSchedType(type,el){
   curSchedType=type;document.getElementById('p-sched-type').value=type;
   document.querySelectorAll('.sched-tab').forEach(t=>t.classList.remove('active'));if(el)el.classList.add('active');
   document.getElementById('weekly-picker').style.display=type==='weekly'?'block':'none';
-  document.getElementById('interval-picker').style.display=type==='interval'?'block':'none';
   document.getElementById('cycle-picker').style.display=type==='cycle'?'block':'none';
   document.getElementById('start-date-group').style.display=type==='asneeded'?'none':'block';
 }
@@ -3465,20 +1504,20 @@ function savePeptide(){
   const dose=getDoseInputMcg()||0;if(!dose){toast('Dose required');return;}
   const useTit=document.getElementById('titration-toggle').checked;
   const editId=document.getElementById('edit-peptide-id').value;
-  if(curSchedType==='interval'){
-    const iv=parseInt(document.getElementById('p-interval-days').value);
-    if(!iv||iv<1){toast('Enter how many days between doses');return;}
-  }
   const freq=parseInt(document.getElementById('p-freq').value)||1;
   const times=getTimeValues();
   const syEl=document.querySelector('input[name="syringe"]:checked');
   const syringeType=syEl?syEl.value:'0.3';
   const dpvEl=document.getElementById('p-doses-per-vial');
-  const dosesPerVial=parseInt(dpvEl&&dpvEl.value)||null;
+  const vialVal=parseFloat(document.getElementById('p-vial').value)||0;
+  const calcDpv=(vialVal>0&&dose>0)?Math.floor((vialVal*1000)/dose):null;
+  const dosesPerVial=calcDpv||(parseInt(dpvEl&&dpvEl.value)||null);
+  if(dpvEl&&calcDpv)dpvEl.value=calcDpv;
   const cycUnitEl=document.getElementById('cyc-weeks');
   const cycleUnit=cycUnitEl&&cycUnitEl.checked?'weeks':'days';
   const existing=editId?peptides.find(x=>x.id===editId):null;
-  const dosesLeft=existing&&existing.dosesLeft!=null?existing.dosesLeft:(dosesPerVial||null);
+  const doseChanged=existing&&existing.dose!==dose;
+  const dosesLeft=doseChanged?dosesPerVial:(existing&&existing.dosesLeft!=null?existing.dosesLeft:(dosesPerVial||null));
   const p={id:editId||('p_'+Date.now()),name,color:selColor,
     vial:parseFloat(document.getElementById('p-vial').value)||null,
     bac:parseFloat(document.getElementById('p-bac').value)||null,dose,
@@ -3486,7 +1525,6 @@ function savePeptide(){
     timing:document.getElementById('p-timing').value.trim(),
     notes:document.getElementById('p-notes').value.trim(),
     schedType:curSchedType,schedDays:curSchedType==='weekly'?[...selDays]:[],
-    intervalDays:parseInt(document.getElementById('p-interval-days').value)||6,
     cycleOn:parseInt(document.getElementById('p-cycle-on').value)||5,
     cycleOff:parseInt(document.getElementById('p-cycle-off').value)||2,
     cycleUnit,
@@ -3523,15 +1561,11 @@ function updateCycleLabels(){
 }
 
 function syUnitsMax(type){return type==='1.0'?100:type==='0.5'?50:30;}
-function markStep(max){return max<=30?5:10;} // 30u syringe: 5s. 50u/100u syringes: 10s.
 function tickBackground(max){
-  // Major ticks match the labeled step size, minor at every 1 unit
-  // Ticks run right→left to match fill direction (fill anchored right)
-  const step=markStep(max);
-  const majorStep=100/(max/step);
   const minorStep=100/max;
-  return `repeating-linear-gradient(to left, rgba(0,0,0,.7) 0, rgba(0,0,0,.7) 2px, transparent 2px, transparent ${majorStep}%),`+
-         `repeating-linear-gradient(to left, rgba(0,0,0,.2) 0, rgba(0,0,0,.2) 1px, transparent 1px, transparent ${minorStep}%)`;
+  const majorStep=100/(max/5);
+  return `repeating-linear-gradient(to left, rgba(0,0,0,.65) 0, rgba(0,0,0,.65) 1.5px, transparent 1.5px, transparent ${majorStep}%),`+
+         `repeating-linear-gradient(to left, rgba(0,0,0,.3) 0, rgba(0,0,0,.3) 1px, transparent 1px, transparent ${minorStep}%)`;
 }
 function getSyringeMax(fromCalc){
   if(fromCalc){
@@ -3543,18 +1577,13 @@ function getSyringeMax(fromCalc){
 }
 
 function updateSyringeMarks(max){
-  const labels=document.getElementById('syringe-labels');
-  if(!labels)return;
-  const step=markStep(max);
-  const totalTicks=max/step;
-  const items=[];
-  for(let i=1;i<=totalTicks;i++){
-    const val=i*step;
-    const percent=(val/max)*100; // distance from right edge (needle/0 side)
-    const isEdge=i===totalTicks; // outermost label sits at the plunger edge — don't let it clip
-    items.push(`<span style="right:${percent}%${isEdge?';transform:translate(0%,-50%)':''}">${val}</span>`);
-  }
-  labels.innerHTML=items.join('');
+  const row=document.getElementById('syringe-marks-row');
+  if(!row)return;
+  const step=max/5;
+  row.innerHTML=Array.from({length:6},(_,i)=>{
+    const val=Math.round((5-i)*step);
+    return `<span>${i===0?val+'u':val}</span>`;
+  }).join('');
   const ticks=document.getElementById('syringe-ticks');
   if(ticks)ticks.style.backgroundImage=tickBackground(max);
 }
@@ -3651,7 +1680,6 @@ function skipDose(){
     const d=new Date();d.setHours(hh,mm,0,0);
     customTs=d.toISOString();
   }
-  reconcileStaleMissed(checkId);
   doseLog.push({id:'l_'+Date.now()+Math.random(),peptideId:p.id,name:p.name,color:p.color,
     dose:parseFloat(document.getElementById('log-dose').value)||getCurrentDose(p),
     site:'',notes:document.getElementById('log-notes').value||'',
@@ -3661,36 +1689,8 @@ function skipDose(){
   closeModal('log-dose-modal');renderDashboard();toast('Dose skipped');
   syncScheduleToServer();
 }
-// A dose only counts "late" if the peptide has a specific scheduled clock
-// time AND it was logged more than 30 minutes after that time. No time set
-// on the peptide = no late status, just Logged or Missed as before.
-function isLogLate(p,idx,tsIso){
-  const rawTime=p.times&&p.times[idx]?p.times[idx]:null;
-  if(!rawTime)return false;
-  const logDate=new Date(tsIso);
-  const [hh,mm]=rawTime.split(':').map(Number);
-  const scheduled=new Date(logDate.getFullYear(),logDate.getMonth(),logDate.getDate(),hh,mm,0,0);
-  return (logDate-scheduled)>30*60000;
-}
-// If a dose slot already has a stale auto-generated "missed" entry (from a
-// prior midnight rollover) and you go ahead and log it anyway, that old
-// missed record no longer reflects reality — remove it and let the new
-// entry (tagged late) stand in its place instead of leaving both around.
-function reconcileStaleMissed(checkId){
-  if(!checkId)return false;
-  const before=doseLog.length;
-  doseLog=doseLog.filter(e=>!(e.missed&&e.checkId===checkId));
-  return doseLog.length<before;
-}
 function logEntry(p,dose,site,notes,missed,customTs,checkId){
-  const ts=customTs||new Date().toISOString();
-  let late=false;
-  if(!missed&&checkId){
-    const idx=parseInt(checkId.slice((p.id+'_').length),10)||0;
-    late=isLogLate(p,idx,ts);
-    if(reconcileStaleMissed(checkId))late=true; // was marked missed, now actually logged — that's late by definition
-  }
-  doseLog.push({id:'l_'+Date.now()+Math.random(),peptideId:p.id,name:p.name,color:p.color,dose,site,notes,missed:!!missed,late:!!late,ts,checkId:checkId||null});
+  doseLog.push({id:'l_'+Date.now()+Math.random(),peptideId:p.id,name:p.name,color:p.color,dose,site,notes,missed:!!missed,ts:customTs||new Date().toISOString(),checkId:checkId||null});
   sv('l',doseLog);
   // decrement vial tracking
   if(p.dosesLeft!=null){
@@ -3750,20 +1750,6 @@ function unlogDose(entryId){
     }
   }
   renderLog();renderDashboard();
-  // Unlogging from a day detail should redraw that day, not leave it stale.
-  const dd=document.getElementById('log-day-detail');
-  if(dd&&dd.style.display==='block'&&currentDayDetailKey){
-    const k=currentDayDetailKey;
-    const stillHas=(buildLogIndex()[k]||[]).length||nutriLog.some(e=>e.date===k);
-    if(stillHas)openDayDetail(k); else closeDayDetail();
-  }
-  // If the "Logged Today" modal is what you unlogged from, refresh it in
-  // place so the row disappears instead of going stale behind the toast.
-  const statModal=document.getElementById('stat-detail-modal');
-  if(statModal&&statModal.classList.contains('open')&&
-     document.getElementById('stat-detail-title').textContent==='Logged Today'){
-    openStatModal('done');
-  }
   syncScheduleToServer();
   toast('Log entry removed');
 }
@@ -3786,31 +1772,6 @@ function setLogView(view, el) {
   if (view === 'list')  renderLogList();
 }
 
-// ── Log filter: 'all' | 'peptides' | 'nutrition' ──
-// The calendar covers doses and nutrition in one place so a single day can be
-// read across both, but the month badge would be meaningless if a day's dozen
-// food entries buried two doses — so the filter scopes what gets counted.
-let logFilter = 'all';
-function setLogFilter(f, el) {
-  logFilter = f;
-  document.querySelectorAll('.log-filter-btn').forEach(b => b.classList.remove('active'));
-  if (el) el.classList.add('active');
-  // Coming back from a day detail would strand you on a stale day — go back
-  // to whichever calendar view you were in and re-count it.
-  document.getElementById('log-day-detail').style.display = 'none';
-  setLogView(logView, document.getElementById('lvb-' + logView));
-}
-function showDoses(){return logFilter === 'all' || logFilter === 'peptides';}
-function showNutri(){return logFilter === 'all' || logFilter === 'nutrition';}
-
-// Nutrition entries already carry a local 'date' string, so the index is a
-// straight group-by — no timezone re-derivation needed.
-function buildNutriIndex() {
-  const idx = {};
-  nutriLog.forEach(e => { (idx[e.date] = idx[e.date] || []).push(e); });
-  return idx;
-}
-
 // ── Build a date-keyed index of log entries ──
 function buildLogIndex() {
   const idx = {};
@@ -3831,7 +1792,6 @@ function shiftMonth(dir) {
 
 function renderCalMonth() {
   const idx = buildLogIndex();
-  const nidx = buildNutriIndex();
   const today = new Date();
   const yr = calViewDate.getFullYear();
   const mo = calViewDate.getMonth();
@@ -3851,16 +1811,11 @@ function renderCalMonth() {
   // This month
   for (let d = 1; d <= daysInMonth; d++) {
     const key = yr + '-' + String(mo+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
-    const doses   = showDoses() ? (idx[key] || []) : [];
-    const nutri   = showNutri() ? (nidx[key] || []) : [];
-    const total   = doses.length + nutri.length;
-    const missed  = doses.filter(e => e.missed).length;
-    const late    = doses.filter(e => e.late).length;
+    const entries = idx[key] || [];
+    const total   = entries.length;
+    const missed  = entries.filter(e => e.missed).length;
     const isToday = today.getFullYear()===yr && today.getMonth()===mo && today.getDate()===d;
-    // Missed/late is a dosing signal, so it only colors the badge when doses
-    // are in view; a nutrition-only badge is just "you logged this day".
-    const badgeClass = missed>0 ? 'has-missed' : late>0 ? 'has-late' : (doses.length ? '' : 'nutri');
-    const badge   = total ? `<div class="cal-badge ${badgeClass}">${total}</div>` : '';
+    const badge   = total ? `<div class="cal-badge ${missed>0?'has-missed':''}">${total}</div>` : '';
     cells += `<div class="cal-day${isToday?' today':''}" onclick="openDayDetail('${key}')">
       <div class="cal-day-num">${d}</div>${badge}
     </div>`;
@@ -3882,7 +1837,6 @@ function shiftWeek(dir) {
 
 function renderCalWeek() {
   const idx = buildLogIndex();
-  const nidx = buildNutriIndex();
   const today = new Date();
   // Find Sunday of the week containing calViewDate
   const dow = calViewDate.getDay();
@@ -3900,20 +1854,11 @@ function renderCalWeek() {
   for (let i = 0; i < 7; i++) {
     const day = new Date(sunday); day.setDate(sunday.getDate() + i);
     const key = day.getFullYear() + '-' + String(day.getMonth()+1).padStart(2,'0') + '-' + String(day.getDate()).padStart(2,'0');
-    const doses = showDoses() ? (idx[key] || []) : [];
-    const nutri = showNutri() ? (nidx[key] || []) : [];
+    const entries = idx[key] || [];
     const isToday = today.toDateString() === day.toDateString();
-    const doseChips = doses.map(e => `<div class="week-dose-chip${e.missed?' missed':e.late?' late':''}">${e.name}${e.missed?' ✕':e.late?' ⏱':''}</div>`).join('');
-    // Food/water would swamp the row at one chip per item, so they collapse
-    // into summary chips — tap through for the itemized day.
-    const foods = nutri.filter(e=>e.kind==='food');
-    const wOz   = sumWaterOz(nutri);
-    const wUnit = nutriGoals.waterUnit||'oz';
-    let nutriChips = '';
-    if (foods.length) nutriChips += `<div class="week-dose-chip">🍽 ${foods.length} item${foods.length===1?'':'s'} · ${Math.round(sumFoodTotals(nutri).cal)} cal</div>`;
-    if (wOz > 0)      nutriChips += `<div class="week-dose-chip">💧 ${Math.round(fromOz(wOz,wUnit))}${wUnit}</div>`;
-    const entries = [...doses, ...nutri];
-    const chips = (doseChips + nutriChips) || '<div style="font-size:12px;color:var(--text-soft)">—</div>';
+    const chips = entries.length
+      ? entries.map(e => `<div class="week-dose-chip${e.missed?' missed':''}">${e.name}${e.missed?' ✕':''}</div>`).join('')
+      : '<div style="font-size:12px;color:var(--text-soft)">—</div>';
     rows += `<div class="week-day-row" onclick="${entries.length?`openDayDetail('${key}')`:''}" style="${entries.length?'cursor:pointer':''}">
       <div class="week-day-label${isToday?' today':''}">
         <span style="font-size:10px;font-weight:700;color:var(--text-soft)">${dayNames[i]}</span>
@@ -3926,12 +1871,10 @@ function renderCalWeek() {
 }
 
 // ── Day detail ──
-let currentDayDetailKey = null;
 function openDayDetail(key) {
   prevLogView = logView;
-  currentDayDetailKey = key;
   const idx = buildLogIndex();
-  const entries = showDoses() ? (idx[key] || []) : [];
+  const entries = idx[key] || [];
   // Parse date for label
   const [yr, mo, d] = key.split('-').map(Number);
   const dayNames   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
@@ -3940,68 +1883,26 @@ function openDayDetail(key) {
   document.getElementById('day-detail-label').textContent =
     dayNames[dayDate.getDay()] + ', ' + monthNames[mo-1] + ' ' + d + ', ' + yr;
 
-  // One day, read across both: peptides on top, then water, then food.
-  const nutriAll = showNutri() ? (buildNutriIndex()[key] || []) : [];
-  const waters   = nutriAll.filter(e=>e.kind==='water');
-  const foods    = nutriAll.filter(e=>e.kind==='food');
-  const fmtT = ts => new Date(ts).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
-
   let inner = '';
-  if (!entries.length && !nutriAll.length) {
-    const what = logFilter==='peptides' ? 'No doses recorded on this day.'
-               : logFilter==='nutrition' ? 'No food or water recorded on this day.'
-               : 'Nothing recorded on this day.';
-    inner = `<div class="empty-state"><div class="icon">💤</div><h3>Nothing logged</h3><p>${what}</p></div>`;
+  if (!entries.length) {
+    inner = '<div class="empty-state"><div class="icon">💤</div><h3>Nothing logged</h3><p>No doses recorded on this day.</p></div>';
   } else {
-    if (entries.length) {
-      const missedN = entries.filter(e=>e.missed).length;
-      inner += `<div class="log-section-head"><span>💉 PEPTIDES</span><span class="log-section-sum">${entries.length} entr${entries.length===1?'y':'ies'}${missedN?' · '+missedN+' missed':''}</span></div>`;
-      [...entries].sort((a,b) => new Date(a.ts) - new Date(b.ts)).forEach(e => {
-        const missedBadge  = e.missed  ? '<span class="badge badge-red"  style="margin-left:6px">missed</span>'  : '';
-        const skippedBadge = e.skipped ? '<span class="badge badge-amber" style="margin-left:6px">skipped</span>' : '';
-        const lateBadge    = e.late    ? '<span class="badge badge-orange" style="margin-left:6px">late</span>' : '';
-        inner += `<div class="log-item">
-          <div class="log-dot" style="background:${e.missed?'var(--red)':e.skipped?'var(--amber,#d97706)':e.late?'var(--orange,#c2540a)':e.color||'var(--blue)'}"></div>
-          <div class="log-info">
-            <div class="log-name">${e.name}${missedBadge}${skippedBadge}${lateBadge}</div>
-            <div class="log-meta">${e.dose} mcg${e.site?' · '+e.site:''}${e.notes?' · '+e.notes:''}</div>
-          </div>
-          <div class="log-time">${fmtT(e.ts)}</div>
-          <button class="btn btn-sm" onclick="unlogDose('${e.id}')" style="background:var(--red-light);color:var(--red);margin-left:8px" title="Unlog">✕</button>
-        </div>`;
-      });
-    }
-    const drinkOzDay = sumDrinkFluidOz(foods);
-    if (waters.length || drinkOzDay > 0) {
-      const wUnit = nutriGoals.waterUnit||'oz';
-      const plainDay = sumPlainWaterOz(waters);
-      const totDay = Math.round(fromOz(plainDay+drinkOzDay,wUnit));
-      const sub = drinkOzDay>0 ? ` (${Math.round(fromOz(plainDay,wUnit))} water · ${Math.round(fromOz(drinkOzDay,wUnit))} drinks)` : '';
-      inner += `<div class="log-section-head"><span>💧 WATER</span><span class="log-section-sum">${totDay}${wUnit} total${sub}</span></div>`;
-      [...waters].sort((a,b)=>(a.ts||0)-(b.ts||0)).forEach(e => {
-        inner += `<div class="log-item">
-          <div class="log-dot" style="background:#6cc4f5"></div>
-          <div class="log-info"><div class="log-name">Water — ${e.displayAmount}${e.displayUnit}</div></div>
-          <div class="log-time">${fmtT(e.ts)}</div>
-          <button class="btn btn-sm" onclick="deleteNutriFromLogDay('${e.id}','${key}')" style="background:var(--red-light);color:var(--red);margin-left:8px" title="Remove">✕</button>
-        </div>`;
-      });
-    }
-    if (foods.length) {
-      const t = sumFoodTotals(foods);
-      inner += `<div class="log-section-head"><span>🍽 FOOD</span><span class="log-section-sum">${Math.round(t.cal)} cal · ${round1(t.protein)}p / ${round1(t.carbs)}c / ${round1(t.fat)}f</span></div>`;
-      [...foods].sort((a,b)=>(a.ts||0)-(b.ts||0)).forEach(e => {
-        inner += `<div class="log-item">
-          <div class="log-dot" style="background:#57cbb0"></div>
-          <div class="log-info">
-            <div class="log-name">${e.name}</div>
-            <div class="log-meta">${Math.round(e.cal)} cal · ${round1(e.protein)}p / ${round1(e.carbs)}c / ${round1(e.fat)}f${e.fluidOz?' · 💧'+round1(e.fluidOz)+'oz':''}${entryAmountText(e)?' · '+entryAmountText(e):''}</div>
-          </div>
-          <div class="log-time">${fmtT(e.ts)}</div>
-          <button class="btn btn-sm" onclick="deleteNutriFromLogDay('${e.id}','${key}')" style="background:var(--red-light);color:var(--red);margin-left:8px" title="Remove">✕</button>
-        </div>`;
-      });
-    }
+    // Sort by time
+    const sorted = [...entries].sort((a,b) => new Date(a.ts) - new Date(b.ts));
+    sorted.forEach(e => {
+      const t = new Date(e.ts);
+      const missedBadge  = e.missed  ? '<span class="badge badge-red"  style="margin-left:6px">missed</span>'  : '';
+      const skippedBadge = e.skipped ? '<span class="badge badge-amber" style="margin-left:6px">skipped</span>' : '';
+      inner += `<div class="log-item">
+        <div class="log-dot" style="background:${e.missed?'var(--red)':e.skipped?'var(--amber,#d97706)':e.color||'var(--blue)'}"></div>
+        <div class="log-info">
+          <div class="log-name">${e.name}${missedBadge}${skippedBadge}</div>
+          <div class="log-meta">${e.dose} mcg${e.site?' · '+e.site:''}${e.notes?' · '+e.notes:''}</div>
+        </div>
+        <div class="log-time">${t.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}</div>
+        <button class="btn btn-sm" onclick="unlogDose('${e.id}')" style="background:var(--red-light);color:var(--red);margin-left:8px" title="Unlog">✕</button>
+      </div>`;
+    });
   }
   document.getElementById('day-detail-list').innerHTML = inner;
 
@@ -4012,20 +1913,7 @@ function openDayDetail(key) {
   document.getElementById('log-day-detail').style.display = 'block';
 }
 
-// Removing a food/water entry from the Log's day view — keeps the day open
-// (unless it's now empty) and re-syncs the Nutrition screen and banner.
-function deleteNutriFromLogDay(id, key) {
-  nutriLog = nutriLog.filter(e => e.id !== id);
-  sv('n', nutriLog);
-  renderNutrition();
-  const stillHas = (buildLogIndex()[key] || []).length || nutriLog.some(e => e.date === key);
-  if (stillHas) openDayDetail(key);
-  else closeDayDetail();
-  toast('Removed');
-}
-
 function closeDayDetail() {
-  currentDayDetailKey = null;
   document.getElementById('log-day-detail').style.display = 'none';
   setLogView(prevLogView, document.getElementById('lvb-' + prevLogView));
 }
@@ -4033,70 +1921,34 @@ function closeDayDetail() {
 // ── List view (original) ──
 function renderLogList() {
   const el = document.getElementById('full-log-list');
-  // One merged stream, newest first, grouped by day and honoring the filter.
-  const items = [];
-  if (showDoses()) doseLog.forEach(e => items.push({kind:'dose', ts:e.ts, e}));
-  if (showNutri()) nutriLog.forEach(e => items.push({kind:e.kind, ts:e.ts, e}));
-  if (!items.length) {
-    const msg = logFilter==='peptides' ? 'Mark doses as done from the Dashboard.'
-              : logFilter==='nutrition' ? 'Log food or water from the dashboard banner.'
-              : 'Nothing logged yet.';
-    el.innerHTML = `<div class="empty-state"><div class="icon">📋</div><h3>Nothing logged yet</h3><p>${msg}</p></div>`;
+  if (!doseLog.length) {
+    el.innerHTML = `<div class="empty-state"><div class="icon">📋</div><h3>No doses logged yet</h3><p>Mark doses as done from the Dashboard.</p></div>`;
     return;
   }
-  items.sort((a,b) => new Date(b.ts) - new Date(a.ts));
+  const sorted = [...doseLog].reverse();
   let lastDate = '', out = '';
-  items.forEach(it => {
-    const e = it.e;
-    const d  = new Date(it.ts);
+  sorted.forEach(e => {
+    const d  = new Date(e.ts);
     const ds = d.toLocaleDateString('en-US', {weekday:'long', month:'long', day:'numeric'});
     if (ds !== lastDate) {
       if (lastDate) out += '</div>';
       out += `<div class="section-label" style="margin-top:14px">${ds}</div><div>`;
       lastDate = ds;
     }
-    const time = d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
-    if (it.kind === 'water') {
-      out += `<div class="log-item">
-        <div class="log-dot" style="background:#6cc4f5"></div>
-        <div class="log-info"><div class="log-name">Water — ${e.displayAmount}${e.displayUnit}</div></div>
-        <div class="log-time">${time}</div>
-        <button class="btn btn-sm" onclick="deleteNutriFromList('${e.id}')" style="background:var(--red-light);color:var(--red);margin-left:8px" title="Remove">✕</button>
-      </div>`;
-    } else if (it.kind === 'food') {
-      out += `<div class="log-item">
-        <div class="log-dot" style="background:#57cbb0"></div>
-        <div class="log-info">
-          <div class="log-name">${e.name}</div>
-          <div class="log-meta">${Math.round(e.cal)} cal · ${round1(e.protein)}p / ${round1(e.carbs)}c / ${round1(e.fat)}f${e.fluidOz?' · 💧'+round1(e.fluidOz)+'oz':''}${entryAmountText(e)?' · '+entryAmountText(e):''}</div>
-        </div>
-        <div class="log-time">${time}</div>
-        <button class="btn btn-sm" onclick="deleteNutriFromList('${e.id}')" style="background:var(--red-light);color:var(--red);margin-left:8px" title="Remove">✕</button>
-      </div>`;
-    } else {
-      const missedBadge  = e.missed  ? '<span class="badge badge-red"  style="margin-left:6px">missed</span>'  : '';
-      const skippedBadge = e.skipped ? '<span class="badge badge-amber" style="margin-left:6px">skipped</span>' : '';
-      const lateBadge    = e.late    ? '<span class="badge badge-orange" style="margin-left:6px">late</span>' : '';
-      out += `<div class="log-item">
-        <div class="log-dot" style="background:${e.missed?'var(--red)':e.skipped?'var(--amber,#d97706)':e.late?'var(--orange,#c2540a)':e.color||'var(--blue)'}"></div>
-        <div class="log-info">
-          <div class="log-name">${e.name}${missedBadge}${skippedBadge}${lateBadge}</div>
-          <div class="log-meta">${e.dose} mcg${e.site?' · '+e.site:''}${e.notes?' · '+e.notes:''}</div>
-        </div>
-        <div class="log-time">${time}</div>
-        <button class="btn btn-sm" onclick="unlogDose('${e.id}')" style="background:var(--red-light);color:var(--red);margin-left:8px" title="Unlog">✕</button>
-      </div>`;
-    }
+    const missedBadge  = e.missed  ? '<span class="badge badge-red"  style="margin-left:6px">missed</span>'  : '';
+    const skippedBadge = e.skipped ? '<span class="badge badge-amber" style="margin-left:6px">skipped</span>' : '';
+    out += `<div class="log-item">
+      <div class="log-dot" style="background:${e.missed?'var(--red)':e.skipped?'var(--amber,#d97706)':e.color||'var(--blue)'}"></div>
+      <div class="log-info">
+        <div class="log-name">${e.name}${missedBadge}${skippedBadge}</div>
+        <div class="log-meta">${e.dose} mcg${e.site?' · '+e.site:''}${e.notes?' · '+e.notes:''}</div>
+      </div>
+      <div class="log-time">${d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}</div>
+      <button class="btn btn-sm" onclick="unlogDose('${e.id}')" style="background:var(--red-light);color:var(--red);margin-left:8px" title="Unlog">✕</button>
+    </div>`;
   });
   if (lastDate) out += '</div>';
   el.innerHTML = out;
-}
-function deleteNutriFromList(id) {
-  nutriLog = nutriLog.filter(e => e.id !== id);
-  sv('n', nutriLog);
-  renderNutrition();
-  renderLogList();
-  toast('Removed');
 }
 
 // Keep renderLog as alias (called from other places)
@@ -4106,73 +1958,6 @@ function renderLog() {
   else renderLogList();
 }
 function clearLog(){if(!confirm('Clear entire log?'))return;doseLog=[];sv('l',doseLog);renderLog();renderDashboard();toast('Log cleared');}
-
-// ── Export Log ──
-function csvEscape(val){
-  if(val==null)return '';
-  const s=String(val);
-  if(s.includes(',')||s.includes('"')||s.includes('\n')){
-    return '"'+s.replace(/"/g,'""')+'"';
-  }
-  return s;
-}
-function buildLogCSV(){
-  const rows=[['Date','Time','Peptide','Dose (mcg)','Site','Status','Notes']];
-  const sorted=[...doseLog].sort((a,b)=>new Date(a.ts)-new Date(b.ts));
-  sorted.forEach(e=>{
-    const d=new Date(e.ts);
-    const dateStr=d.toLocaleDateString('en-US');
-    const timeStr=d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
-    const status=e.missed?'Missed':e.skipped?'Skipped':e.late?'Late':'Logged';
-    rows.push([dateStr,timeStr,e.name,e.dose,e.site||'',status,e.notes||'']);
-  });
-  return rows.map(r=>r.map(csvEscape).join(',')).join('\r\n');
-}
-function downloadBlob(blob,filename){
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url;a.download=filename;
-  document.body.appendChild(a);a.click();
-  document.body.removeChild(a);
-  setTimeout(()=>URL.revokeObjectURL(url),1000);
-}
-async function exportLogCSV(share){
-  if(!doseLog.length){toast('No log entries to export');return;}
-  const csv=buildLogCSV();
-  const filename=`peptiderx-log-${todayStr()}.csv`;
-  const blob=new Blob([csv],{type:'text/csv'});
-  if(share&&navigator.share){
-    try{
-      const file=new File([blob],filename,{type:'text/csv'});
-      if(navigator.canShare&&navigator.canShare({files:[file]})){
-        await navigator.share({files:[file],title:'PeptideRx Dose Log'});
-        return;
-      }
-    }catch(err){
-      if(err.name==='AbortError')return; // user backed out of the share sheet — not an error
-      // fall through to plain download below
-    }
-  }
-  downloadBlob(blob,filename);
-  if(share)toast('Sharing not available on this device — downloaded instead. Attach it to your email manually.');
-}
-function exportLogPDF(){
-  if(!doseLog.length){toast('No log entries to export');return;}
-  const sorted=[...doseLog].sort((a,b)=>new Date(a.ts)-new Date(b.ts));
-  const rows=sorted.map(e=>{
-    const d=new Date(e.ts);
-    const status=e.missed?'Missed':e.skipped?'Skipped':e.late?'Late':'Logged';
-    return `<tr><td>${d.toLocaleDateString('en-US')}</td><td>${d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}</td><td>${e.name}</td><td>${e.dose} mcg</td><td>${e.site||'—'}</td><td>${status}</td><td>${(e.notes||'').replace(/</g,'&lt;')}</td></tr>`;
-  }).join('');
-  const container=document.getElementById('print-log-container');
-  container.innerHTML=`<h1>PeptideRx Dose Log</h1>
-    <div class="print-meta">Exported ${new Date().toLocaleString('en-US')} — ${sorted.length} entries</div>
-    <table>
-      <thead><tr><th>Date</th><th>Time</th><th>Peptide</th><th>Dose</th><th>Site</th><th>Status</th><th>Notes</th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table>`;
-  window.print();
-}
 
 function calcRecon(){
   const v=parseFloat(document.getElementById('calc-vial').value),b=parseFloat(document.getElementById('calc-bac').value),d=parseFloat(document.getElementById('calc-dose').value);
@@ -4194,10 +1979,7 @@ function calcRecon(){
     const pct=Math.min((u/syMax)*100,100);
     document.getElementById('syringe-fill').style.width=pct+'%';
     const ind=document.getElementById('pull-indicator');
-    // Fill anchored right, grows left. Indicator at left edge of fill.
-    ind.style.display='block';
-    ind.style.left='auto';
-    ind.style.right=`calc(${pct}% - 1px)`;
+    ind.style.display='block';ind.style.right=`calc(${pct}% - 1px)`;
     document.getElementById('pull-label').textContent=u+'u';
   }else{document.getElementById('calc-units').textContent='—';document.getElementById('calc-ml').textContent='Enter desired dose';re.style.display='block';sw.style.display='none';}
 }
@@ -4239,53 +2021,18 @@ function quickAdd(name){openAddModal();document.getElementById('p-name').value=n
 
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
 
-// ── Viewport lock ──
-function lockShellHeight(){
-  const h=window.innerHeight||(window.visualViewport&&window.visualViewport.height)||0;
-  if(h>0)document.documentElement.style.setProperty('--app-h',Math.round(h)+'px');
-
-  // iOS standalone quirk: the layout viewport used for position:fixed is short
-  // by the status-bar inset, but the page canvas still paints the full screen.
-  // So bottom:0 lands ~59px above the real bottom edge. Measure the deficit and
-  // push fixed-to-bottom UI down by exactly that much.
-  let drop=0;
-  try{
-    const standalone=window.navigator.standalone===true||matchMedia('(display-mode: standalone)').matches;
-    const portrait=h>window.innerWidth;
-    if(standalone&&portrait&&screen&&screen.height>h){
-      const d=screen.height-h;
-      if(d>0&&d<=80)drop=d;           // status-bar sized only; anything bigger is not this bug
-    }
-  }catch(e){}
-  document.documentElement.style.setProperty('--vp-drop',Math.round(drop)+'px');
-}
-lockShellHeight();
-window.addEventListener('resize',lockShellHeight);
-window.addEventListener('orientationchange',()=>{setTimeout(lockShellHeight,120);setTimeout(lockShellHeight,400);});
-window.addEventListener('pageshow',lockShellHeight);
-// Standalone PWAs can report a stale height on the very first paint.
-setTimeout(lockShellHeight,60);
-setTimeout(lockShellHeight,300);
-
 // ── Init ──
 // ── Upcoming Schedule ──
 let upcomingDaysAhead = 1;
 
 function isDueOnDate(p, targetDate) {
   if (!p.active) return false;
-  const targetLocalStr = targetDate.getFullYear()+'-'+String(targetDate.getMonth()+1).padStart(2,'0')+'-'+String(targetDate.getDate()).padStart(2,'0');
-  if (p.startDate && p.startDate > targetLocalStr) return false;
+  if (p.startDate && p.startDate > targetDate.toISOString().split('T')[0]) return false;
   const type = p.schedType || 'daily';
   if (type === 'asneeded') return false;
   const dow = targetDate.getDay();
   if (type === 'daily') return true;
   if (type === 'weekly') return (p.schedDays || []).includes(dow);
-  if (type === 'interval') {
-    const start = p.startDate ? new Date(p.startDate + 'T00:00:00') : new Date();
-    const diff = Math.floor((targetDate - start) / 86400000);
-    const n = p.intervalDays || 6;
-    return diff >= 0 && diff % n === 0;
-  }
   if (type === 'cycle') {
     const start = p.startDate ? new Date(p.startDate + 'T00:00:00') : new Date();
     const diff = Math.floor((targetDate - start) / 86400000);
@@ -4386,29 +2133,7 @@ if(localStorage.getItem('prx_wakelock')==='1'){
 syncScheduleToServer();
 console.log('[PeptideRx] '+APP_VERSION);
 const versionEl=document.getElementById('app-version');
-if(versionEl){
-  const dims=()=>{
-    const bar=document.querySelector('.tab-bar'), br=bar?bar.getBoundingClientRect():null;
-    const vv=window.visualViewport;
-    const sb=getComputedStyle(document.documentElement).getPropertyValue('--safe-bottom').trim()||'0px';
-    return `A win.innerHeight ${window.innerHeight} · screen ${screen.height}`
-      +`\nB docEl.clientHeight ${document.documentElement.clientHeight} · body.rect ${document.body.getBoundingClientRect().height.toFixed(0)}`
-      +`\nC visualViewport ${vv?vv.height.toFixed(0)+' @off '+vv.offsetTop.toFixed(0):'n/a'}`
-      +`\nD tabbar top ${br?br.top.toFixed(0):'?'} bottom ${br?br.bottom.toFixed(0):'?'} h ${br?br.height.toFixed(0):'?'}`
-      +`\nE GAP below bar = ${br?(window.innerHeight-br.bottom).toFixed(0):'?'} px`
-      +`\nF safe-bottom ${sb} · vp-drop ${getComputedStyle(document.documentElement).getPropertyValue('--vp-drop').trim()||'0px'} · standalone ${(window.navigator.standalone||matchMedia('(display-mode: standalone)').matches)?'yes':'no'}`;
-  };
-  const paint=()=>{versionEl.textContent=APP_VERSION+'\n'+dims();};
-  versionEl.style.whiteSpace='pre-line';
-  paint();
-  setTimeout(paint,500);
-  // tap the version text to flash a magenta bar at the true viewport bottom
-  versionEl.style.cursor='pointer';
-  versionEl.addEventListener('click',()=>{
-    document.getElementById('edge-probe').classList.toggle('on');
-    paint();
-  });
-}
+if(versionEl)versionEl.textContent=APP_VERSION;
 
 </script>
 </body>
