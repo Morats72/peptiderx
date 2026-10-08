@@ -26,7 +26,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',sans-
 .app-header h1{font-size:20px;font-weight:700;color:var(--white);letter-spacing:-.3px}
 .app-header .subtitle{font-size:11px;color:#8aafd4;letter-spacing:.5px;text-transform:uppercase}
 .screens{flex:1;overflow:hidden;position:relative}
-.screen{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 16px calc(var(--tab-h) + var(--tab-pad) + 16px);display:none}
+.screen{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 16px 24px;display:none}
 .screen.active{display:block}
 .tab-bar{position:fixed;left:0;right:0;bottom:0;height:calc(var(--tab-h) + var(--tab-pad));background:var(--white);border-top:1px solid var(--border);display:flex;z-index:100;padding-bottom:var(--tab-pad)}
 .tab-spacer{flex-shrink:0;height:calc(var(--tab-h) + var(--tab-pad))}
@@ -1261,7 +1261,7 @@ if ('serviceWorker' in navigator) {
 // ── App Version ──
 // Bump this string every time you deploy a change — makes it obvious
 // in the app (and in the console) whether a fix actually made it live.
-const APP_VERSION = "v2.13.1 — 2026-10-08 (Fix: doses-per-vial recalculates on dose edit; Fix: bottom content no longer hidden behind tab bar)";
+const APP_VERSION = "v2.13.0 — 2026-08-26 (log sheet stays open with a running Added-this-visit list, per-item undo and a Done button; water still closes. Nutrition screen: Today's Log above My Foods, which is now collapsed, searchable and sorted most-recently-used.)";
 
 // ── Screen Wake Lock ──
 let wakeLock=null;
@@ -3474,15 +3474,11 @@ function savePeptide(){
   const syEl=document.querySelector('input[name="syringe"]:checked');
   const syringeType=syEl?syEl.value:'0.3';
   const dpvEl=document.getElementById('p-doses-per-vial');
-  const vialVal=parseFloat(document.getElementById('p-vial').value)||0;
-  const calcDpv=(vialVal>0&&dose>0)?Math.floor((vialVal*1000)/dose):null;
-  const dosesPerVial=calcDpv||(parseInt(dpvEl&&dpvEl.value)||null);
-  if(dpvEl&&calcDpv)dpvEl.value=calcDpv;
+  const dosesPerVial=parseInt(dpvEl&&dpvEl.value)||null;
   const cycUnitEl=document.getElementById('cyc-weeks');
   const cycleUnit=cycUnitEl&&cycUnitEl.checked?'weeks':'days';
   const existing=editId?peptides.find(x=>x.id===editId):null;
-  const doseChanged=existing&&existing.dose!==dose;
-  const dosesLeft=doseChanged?dosesPerVial:(existing&&existing.dosesLeft!=null?existing.dosesLeft:(dosesPerVial||null));
+  const dosesLeft=existing&&existing.dosesLeft!=null?existing.dosesLeft:(dosesPerVial||null);
   const p={id:editId||('p_'+Date.now()),name,color:selColor,
     vial:parseFloat(document.getElementById('p-vial').value)||null,
     bac:parseFloat(document.getElementById('p-bac').value)||null,dose,
