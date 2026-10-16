@@ -325,6 +325,31 @@ table{border-collapse:collapse}#print-log-container{display:none}
   #print-log-container,#print-log-container *{visibility:visible}
   #print-log-container{display:block;position:absolute;left:0;top:0;width:100%}
 }
+/* ── Inventory sub-screen ── */
+.inv-section-head{font-size:11px;font-weight:700;color:var(--text-soft);text-transform:uppercase;letter-spacing:.6px;padding:4px 0 8px;margin-top:4px;display:flex;align-items:center;justify-content:space-between}
+.inv-row{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--border)}
+.inv-row:last-child{border-bottom:none}
+.inv-row-icon{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.inv-row-body{flex:1;min-width:0}
+.inv-row-name{font-size:14px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.inv-row-sub{font-size:11px;color:var(--text-soft);margin-top:2px}
+.inv-row-actions{display:flex;gap:6px;flex-shrink:0}
+.inv-btn{padding:5px 10px;border-radius:8px;font-size:12px;font-weight:600;border:none;cursor:pointer}
+.inv-btn-blue{background:var(--blue-light);color:var(--blue)}
+.inv-btn-amber{background:var(--amber-light,#fef3c7);color:var(--amber,#d97706)}
+.inv-btn-red{background:var(--red-light,#fee2e2);color:var(--red,#dc2626)}
+.inv-btn-green{background:var(--green-light,#dcfce7);color:var(--green,#16a34a)}
+.inv-badge{display:inline-block;padding:2px 7px;border-radius:6px;font-size:11px;font-weight:700}
+.inv-badge-ok{background:var(--green-light,#dcfce7);color:var(--green,#16a34a)}
+.inv-badge-warn{background:var(--amber-light,#fef3c7);color:var(--amber,#d97706)}
+.inv-badge-alert{background:var(--red-light,#fee2e2);color:var(--red,#dc2626)}
+.inv-bac-meter{display:flex;align-items:center;gap:8px;padding:8px 0}
+.inv-bac-bar{flex:1;height:8px;border-radius:4px;background:var(--border);overflow:hidden}
+.inv-bac-fill{height:100%;border-radius:4px;background:var(--blue);transition:width .3s}
+.wish-priority{font-size:10px;font-weight:700;padding:2px 6px;border-radius:5px;text-transform:uppercase;letter-spacing:.3px}
+.wish-p-high{background:#fee2e2;color:#dc2626}
+.wish-p-mid{background:#fef3c7;color:#d97706}
+.wish-p-low{background:#dce8f7;color:#2e4a8c}
 </style>
 </head>
 <body>
@@ -425,8 +450,160 @@ table{border-collapse:collapse}#print-log-container{display:none}
 
 <!-- MY STACK -->
 <div class="screen" id="screen-stack">
+  <button class="btn" style="width:100%;margin-bottom:14px;background:var(--navy);color:#fff;justify-content:center;gap:8px" onclick="switchTab('inventory')">🗄️ View Inventory &amp; Wish List</button>
   <div class="section-label">Active Peptides</div>
   <div id="stack-list"><div class="empty-state"><div class="icon">🧪</div><h3>Your stack is empty</h3><p>Tap <strong>Add</strong> to add your first peptide.</p></div></div>
+</div>
+
+<!-- INVENTORY sub-screen -->
+<div class="screen" id="screen-inventory">
+  <div class="back-link" onclick="switchTab('stack')">&#8249; My Stack</div>
+
+  <!-- FREEZER -->
+  <div class="card" style="margin-top:8px">
+    <div class="card-header" style="display:flex;align-items:center;justify-content:space-between">
+      <h2>🧊 Freezer Stock</h2>
+      <button class="inv-btn inv-btn-blue" onclick="openInvModal('freezer')">+ Add</button>
+    </div>
+    <div class="card-body" id="inv-freezer-list"><div class="empty-state" style="padding:16px"><p>No freezer stock recorded.</p></div></div>
+  </div>
+
+  <!-- FRIDGE -->
+  <div class="card">
+    <div class="card-header" style="display:flex;align-items:center;justify-content:space-between">
+      <h2>🧪 Fridge — In Use</h2>
+      <button class="inv-btn inv-btn-blue" onclick="openInvModal('fridge')">+ Add</button>
+    </div>
+    <div class="card-body" id="inv-fridge-list"><div class="empty-state" style="padding:16px"><p>No reconstituted vials recorded.</p></div></div>
+  </div>
+
+  <!-- BAC WATER -->
+  <div class="card">
+    <div class="card-header" style="display:flex;align-items:center;justify-content:space-between">
+      <h2>💧 BAC Water</h2>
+      <button class="inv-btn inv-btn-blue" onclick="openBacModal()">Edit</button>
+    </div>
+    <div class="card-body" id="inv-bac-display"><p style="color:var(--text-soft);font-size:13px;padding:4px 0">Not configured.</p></div>
+  </div>
+
+  <!-- WISH LIST -->
+  <div class="card">
+    <div class="card-header" style="display:flex;align-items:center;justify-content:space-between">
+      <h2>📋 Wish List</h2>
+      <button class="inv-btn inv-btn-blue" onclick="openInvModal('wish')">+ Add</button>
+    </div>
+    <div class="card-body" id="inv-wish-list"><div class="empty-state" style="padding:16px"><p>Nothing on the wish list yet.</p></div></div>
+  </div>
+</div>
+
+<!-- VIAL COMPLETE MODAL -->
+<div class="modal-overlay" id="vial-complete-modal" onclick="if(event.target===this)closeModal('vial-complete-modal')">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>🧪 Vial Complete</h2>
+      <button class="modal-close" onclick="closeModal('vial-complete-modal')">×</button>
+    </div>
+    <div class="modal-body">
+      <p id="vial-complete-msg" style="font-size:15px;line-height:1.5;color:var(--text)"></p>
+      <p id="vial-complete-stock-msg" style="font-size:13px;color:var(--text-soft);margin-top:8px"></p>
+    </div>
+    <div class="modal-footer" id="vial-complete-actions"></div>
+  </div>
+</div>
+
+<!-- INVENTORY ADD MODAL -->
+<div class="modal-overlay" id="inv-add-modal" onclick="if(event.target===this)closeModal('inv-add-modal')">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="inv-modal-title">Add to Freezer</h2>
+      <button class="modal-close" onclick="closeModal('inv-add-modal')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="inv-modal-mode" value="freezer">
+      <input type="hidden" id="inv-modal-edit-id" value="">
+
+      <!-- Freezer & Fridge fields -->
+      <div id="inv-fields-peptide">
+        <div class="form-group">
+          <label class="form-label">Peptide Name</label>
+          <input class="form-input" type="text" id="inv-name" placeholder="e.g. BPC-157" autocomplete="off" list="inv-name-suggestions" oninput="invNameHint(this.value)">
+          <datalist id="inv-name-suggestions"></datalist>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Vial Count</label>
+          <input class="form-input" type="number" id="inv-qty" min="1" value="1" placeholder="# of vials">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Vial Size (mg)</label>
+          <input class="form-input" type="number" id="inv-vial-mg" step="0.5" placeholder="e.g. 5">
+        </div>
+        <div class="form-group" id="inv-field-bac-used" style="display:none">
+          <label class="form-label">BAC Water Used per Vial (ml)</label>
+          <input class="form-input" type="number" id="inv-bac-used" step="0.5" placeholder="e.g. 2">
+        </div>
+        <div class="form-group" id="inv-field-mixed-date" style="display:none">
+          <label class="form-label">Date Reconstituted</label>
+          <input class="form-input" type="date" id="inv-mixed-date">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notes (optional)</label>
+          <input class="form-input" type="text" id="inv-notes" placeholder="Lot #, source, etc.">
+        </div>
+      </div>
+
+      <!-- Wish list fields -->
+      <div id="inv-fields-wish" style="display:none">
+        <div class="form-group">
+          <label class="form-label">Peptide / Compound</label>
+          <input class="form-input" type="text" id="wish-name" placeholder="e.g. Selank" autocomplete="off" list="inv-name-suggestions">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Priority</label>
+          <select class="form-input" id="wish-priority">
+            <option value="high">🔴 Priority — Want ASAP</option>
+            <option value="mid" selected>🟡 Want to Try</option>
+            <option value="low">🔵 Nice to Have</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Reason / Notes</label>
+          <input class="form-input" type="text" id="wish-notes" placeholder="Why you want it, dose info, etc.">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-blue" onclick="saveInvItem()">Save</button>
+      <button class="btn" onclick="closeModal('inv-add-modal')" style="background:var(--bg);color:var(--text-mid)">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- BAC WATER MODAL -->
+<div class="modal-overlay" id="bac-modal" onclick="if(event.target===this)closeModal('bac-modal')">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>💧 BAC Water Stock</h2>
+      <button class="modal-close" onclick="closeModal('bac-modal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Sealed Bottles on Hand</label>
+        <input class="form-input" type="number" id="bac-sealed" min="0" value="0" placeholder="# unopened bottles">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Open Bottle — ml Remaining (estimate)</label>
+        <input class="form-input" type="number" id="bac-open-ml" min="0" step="5" placeholder="e.g. 25">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Open Bottle — Expiration Date</label>
+        <input class="form-input" type="date" id="bac-exp-date">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-blue" onclick="saveBacStock()">Save</button>
+      <button class="btn" onclick="closeModal('bac-modal')" style="background:var(--bg);color:var(--text-mid)">Cancel</button>
+    </div>
+  </div>
 </div>
 
 <!-- REFERENCE -->
@@ -689,6 +866,14 @@ table{border-collapse:collapse}#print-log-container{display:none}
     </div>
     <div class="modal-body">
       <input type="hidden" id="edit-peptide-id">
+      <input type="hidden" id="p-freezer-source-id" value="">
+      <div class="form-group" id="freezer-pull-group" style="display:none">
+        <label class="form-label">🧊 Pull from Freezer Stock</label>
+        <select class="form-input" id="p-freezer-select" onchange="applyFreezerSelection(this.value)">
+          <option value="">— Enter manually —</option>
+        </select>
+        <div style="font-size:11px;color:var(--text-soft);margin-top:4px">Selecting a freezer item fills the name &amp; vial size, and moves it to the fridge when you save.</div>
+      </div>
       <div class="form-group"><label class="form-label">Peptide Name *</label><input class="form-input" type="text" id="p-name" placeholder="e.g. BPC-157"></div>
       <div class="form-group">
         <label class="form-label">Color Tag</label>
@@ -1262,7 +1447,7 @@ if ('serviceWorker' in navigator) {
 // ── App Version ──
 // Bump this string every time you deploy a change — makes it obvious
 // in the app (and in the console) whether a fix actually made it live.
-const APP_VERSION = "v2.14.2 — 2026-10-08 (Reference: 88 compounds — 26 added incl. Semaglutide, Oxytocin, Amlexanox, 14 bioregulators; 10 new sources merged; conflict flags; Bioregulators filter; search matches aliases)";
+const APP_VERSION = "v2.15.0 — 2026-10-16 (Inventory: freezer/fridge tracking, BAC water, wish list; vial-complete modal; doses-per-vial recalc fix)";
 
 // ── Screen Wake Lock ──
 let wakeLock=null;
@@ -1770,6 +1955,7 @@ function switchTab(name,el){
   if(name==='stack')renderStack();
   if(name==='reference')renderReference();
   if(name==='nutrition')renderNutrition();
+  if(name==='inventory')renderInventory();
   if(name==='log'){
     // Default to month view on first open
     renderLog();
@@ -2225,9 +2411,39 @@ function getDoseInputMcg(){
 function openAddModal(){
   resetForm();
   document.getElementById('modal-title').textContent='Add Peptide';
+  document.getElementById('p-freezer-source-id').value='';
+  // Populate freezer dropdown
+  const inv=ldInv();
+  const sel=document.getElementById('p-freezer-select');
+  const grp=document.getElementById('freezer-pull-group');
+  if(sel&&grp){
+    sel.innerHTML='<option value="">— Enter manually —</option>';
+    if(inv.freezer&&inv.freezer.length){
+      inv.freezer.forEach(f=>{
+        const opt=document.createElement('option');
+        opt.value=f.id;
+        opt.textContent=`${f.name}${f.vialMg?' ('+f.vialMg+'mg)':''} × ${f.qty||1}`;
+        sel.appendChild(opt);
+      });
+      grp.style.display='';
+    } else {
+      grp.style.display='none';
+    }
+  }
   document.getElementById('add-peptide-modal').classList.add('open');
   document.getElementById('p-start-date').value=todayStr();
   renderTimeInputs();
+}
+
+function applyFreezerSelection(freezerId){
+  document.getElementById('p-freezer-source-id').value=freezerId||'';
+  if(!freezerId)return;
+  const inv=ldInv();
+  const item=inv.freezer.find(f=>f.id===freezerId);
+  if(!item)return;
+  document.getElementById('p-name').value=item.name;
+  const vialEl=document.getElementById('p-vial');
+  if(vialEl&&item.vialMg)vialEl.value=item.vialMg;
 }
 function closeModal(id){document.getElementById(id).classList.remove('open')}
 function openSettingsModal(){
@@ -3440,6 +3656,9 @@ function resetForm(){
 function openEditModal(id){
   const p=peptides.find(x=>x.id===id);if(!p)return;
   resetForm();
+  // Hide freezer pull when editing
+  const grp=document.getElementById('freezer-pull-group');if(grp)grp.style.display='none';
+  document.getElementById('p-freezer-source-id').value='';
   document.getElementById('modal-title').textContent='Edit Peptide';
   document.getElementById('edit-peptide-id').value=p.id;
   document.getElementById('p-name').value=p.name;
@@ -3526,7 +3745,25 @@ function savePeptide(){
     active:existing?existing.active:true,
     status:existing?(existing.status||'active'):'active'};
   if(editId){peptides=peptides.map(x=>x.id===editId?p:x);toast('Updated');}
-  else{peptides.push(p);toast('Added to stack');}
+  else{
+    peptides.push(p);
+    // If a freezer item was selected, move it to fridge automatically
+    const srcId=document.getElementById('p-freezer-source-id').value;
+    if(srcId){
+      const inv=ldInv();
+      const fzItem=inv.freezer.find(f=>f.id===srcId);
+      if(fzItem){
+        // Decrement or remove from freezer
+        if((fzItem.qty||1)<=1)inv.freezer=inv.freezer.filter(f=>f.id!==srcId);
+        else inv.freezer=inv.freezer.map(f=>f.id===srcId?{...f,qty:f.qty-1}:f);
+        // Add to fridge as reconstituted today
+        inv.fridge.push({id:'f_'+Date.now(),name:fzItem.name,qty:1,
+          vialMg:fzItem.vialMg,mixedDate:todayStr(),bacUsed:null,notes:'Auto-moved on stack add'});
+        svInv(inv);
+        toast('Added to stack — moved from freezer to fridge 🧪');
+      } else { toast('Added to stack'); }
+    } else { toast('Added to stack'); }
+  }
   sv('p',peptides);closeModal('add-peptide-modal');renderStack();renderDashboard();
   syncScheduleToServer();
 }
@@ -3729,15 +3966,7 @@ function logEntry(p,dose,site,notes,missed,customTs,checkId){
     peptides=peptides.map(x=>x.id===p.id?p:x);
     sv('p',peptides);
     if(p.dosesLeft===0){
-      setTimeout(()=>{
-        if(confirm(`🧪 ${p.name} vial is empty — start a new vial?\n\nTap OK to reset the dose counter.`)){
-          p.dosesLeft=p.dosesPerVial||null;
-          peptides=peptides.map(x=>x.id===p.id?p:x);
-          sv('p',peptides);
-          toast(p.name+' vial reset ✓');
-          renderStack();
-        }
-      },300);
+      setTimeout(()=>showVialCompleteModal(p.id),300);
     }
   }
 }
@@ -4415,6 +4644,326 @@ if(localStorage.getItem('prx_wakelock')==='1'){
   toggleWakeLock();
 }
 syncScheduleToServer();
+// ═══════════════════════════════════════════════════════
+// INVENTORY — storage helpers
+// ═══════════════════════════════════════════════════════
+const INV_KEY='prx_inv';
+function ldInv(){
+  try{return JSON.parse(localStorage.getItem(INV_KEY))||{freezer:[],fridge:[],bacwater:{},wishlist:[]};}
+  catch{return{freezer:[],fridge:[],bacwater:{},wishlist:[]};}
+}
+function svInv(d){try{localStorage.setItem(INV_KEY,JSON.stringify(d));}catch(e){toast('Storage error');}}
+
+// ── Vial-complete modal (replaces native confirm) ────────
+function showVialCompleteModal(pepId){
+  const p=peptides.find(x=>x.id===pepId);if(!p)return;
+  const inv=ldInv();
+  const fridgeItems=inv.fridge.filter(f=>f.name.toLowerCase()===p.name.toLowerCase());
+  const fridgeCount=fridgeItems.reduce((s,f)=>s+(f.qty||1),0);
+  const freezerItems=inv.freezer.filter(f=>f.name.toLowerCase()===p.name.toLowerCase());
+  const freezerCount=freezerItems.reduce((s,f)=>s+(f.qty||1),0);
+
+  const msg=document.getElementById('vial-complete-msg');
+  const stockMsg=document.getElementById('vial-complete-stock-msg');
+  const actions=document.getElementById('vial-complete-actions');
+
+  msg.textContent=`${p.name} vial is empty. Start a new one?`;
+
+  if(fridgeCount>0){
+    stockMsg.textContent=`Fridge stock: ${fridgeCount} vial${fridgeCount>1?'s':''} available.`;
+    actions.innerHTML=`
+      <button class="btn btn-blue" onclick="confirmNewVialFromFridge('${pepId}')">✅ Yes — Use Fridge Stock</button>
+      <button class="btn" onclick="closeModal('vial-complete-modal')" style="background:var(--bg);color:var(--text-mid)">Not Yet</button>`;
+  } else if(freezerCount>0){
+    stockMsg.innerHTML=`<span style="color:var(--amber,#d97706)">⚠️ Fridge empty — ${freezerCount} vial${freezerCount>1?'s':''} in freezer. Move one to fridge first.</span>`;
+    actions.innerHTML=`
+      <button class="btn btn-blue" onclick="confirmNewVialFromFreezer('${pepId}')">Move from Freezer &amp; Start</button>
+      <button class="btn" onclick="closeModal('vial-complete-modal')" style="background:var(--bg);color:var(--text-mid)">Not Yet</button>`;
+  } else {
+    stockMsg.innerHTML=`<span style="color:var(--red,#dc2626)">🚨 No stock on hand — time to reorder!</span>`;
+    actions.innerHTML=`
+      <button class="btn btn-blue" onclick="newVial('${pepId}');closeModal('vial-complete-modal')">Reset Counter Anyway</button>
+      <button class="btn" onclick="closeModal('vial-complete-modal')" style="background:var(--bg);color:var(--text-mid)">Dismiss</button>`;
+  }
+  document.getElementById('vial-complete-modal').classList.add('open');
+}
+
+function confirmNewVialFromFridge(pepId){
+  const p=peptides.find(x=>x.id===pepId);if(!p)return;
+  const inv=ldInv();
+  // Decrement fridge stock for matching peptide
+  let decremented=false;
+  inv.fridge=inv.fridge.map(f=>{
+    if(!decremented&&f.name.toLowerCase()===p.name.toLowerCase()){
+      decremented=true;
+      if((f.qty||1)<=1)return null; // remove
+      return{...f,qty:(f.qty||1)-1};
+    }
+    return f;
+  }).filter(Boolean);
+  svInv(inv);
+  closeModal('vial-complete-modal');
+  newVial(pepId);
+  toast(`${p.name} — fridge vial started 🧪`);
+}
+
+function confirmNewVialFromFreezer(pepId){
+  const p=peptides.find(x=>x.id===pepId);if(!p)return;
+  const inv=ldInv();
+  // Move one from freezer: decrement freezer, add to fridge as reconstituted today
+  let moved=false;
+  let movedItem=null;
+  inv.freezer=inv.freezer.map(f=>{
+    if(!moved&&f.name.toLowerCase()===p.name.toLowerCase()){
+      moved=true;movedItem=f;
+      if((f.qty||1)<=1)return null;
+      return{...f,qty:(f.qty||1)-1};
+    }
+    return f;
+  }).filter(Boolean);
+  if(moved){
+    inv.fridge.push({id:'f_'+Date.now(),name:p.name,qty:1,
+      vialMg:movedItem?movedItem.vialMg:null,
+      mixedDate:new Date().toISOString().split('T')[0],
+      bacUsed:movedItem?movedItem.bacUsed:null,notes:''});
+    svInv(inv);
+  }
+  closeModal('vial-complete-modal');
+  newVial(pepId);
+  toast(`${p.name} — moved from freezer, new vial started 🧪`);
+}
+
+// ── Render inventory screen ─────────────────────────────
+function renderInventory(){
+  renderInvFreezer();
+  renderInvFridge();
+  renderInvBac();
+  renderInvWish();
+}
+
+function daysSince(dateStr){
+  if(!dateStr)return null;
+  const diff=Date.now()-new Date(dateStr).getTime();
+  return Math.floor(diff/(1000*60*60*24));
+}
+
+function renderInvFreezer(){
+  const inv=ldInv();
+  const el=document.getElementById('inv-freezer-list');if(!el)return;
+  if(!inv.freezer.length){
+    el.innerHTML='<div class="empty-state" style="padding:16px"><p>No freezer stock recorded.</p></div>';return;
+  }
+  el.innerHTML=inv.freezer.map(f=>`
+    <div class="inv-row">
+      <div class="inv-row-icon" style="background:var(--blue-light,#dbeafe)">🧊</div>
+      <div class="inv-row-body">
+        <div class="inv-row-name">${f.name}${f.vialMg?` <span style="font-weight:400;color:var(--text-soft)">(${f.vialMg}mg)</span>`:''}</div>
+        <div class="inv-row-sub">Qty: ${f.qty||1}${f.notes?' · '+f.notes:''}</div>
+      </div>
+      <div class="inv-row-actions">
+        <button class="inv-btn inv-btn-green" onclick="moveToFridge('${f.id}')">→ Fridge</button>
+        <button class="inv-btn inv-btn-red" onclick="deleteInvItem('freezer','${f.id}')">✕</button>
+      </div>
+    </div>`).join('');
+}
+
+function renderInvFridge(){
+  const inv=ldInv();
+  const el=document.getElementById('inv-fridge-list');if(!el)return;
+  if(!inv.fridge.length){
+    el.innerHTML='<div class="empty-state" style="padding:16px"><p>No reconstituted vials recorded.</p></div>';return;
+  }
+  el.innerHTML=inv.fridge.map(f=>{
+    const days=daysSince(f.mixedDate);
+    let badge='';
+    if(days!=null){
+      if(days<=14)badge=`<span class="inv-badge inv-badge-ok">${days}d</span>`;
+      else if(days<=21)badge=`<span class="inv-badge inv-badge-warn">${days}d ⚠️</span>`;
+      else badge=`<span class="inv-badge inv-badge-alert">${days}d 🚨</span>`;
+    }
+    return `<div class="inv-row">
+      <div class="inv-row-icon" style="background:var(--green-light,#dcfce7)">🧪</div>
+      <div class="inv-row-body">
+        <div class="inv-row-name">${f.name}${f.vialMg?` <span style="font-weight:400;color:var(--text-soft)">(${f.vialMg}mg)</span>`:''} ${badge}</div>
+        <div class="inv-row-sub">Qty: ${f.qty||1}${f.mixedDate?' · Mixed: '+f.mixedDate:''}${f.notes?' · '+f.notes:''}</div>
+      </div>
+      <div class="inv-row-actions">
+        <button class="inv-btn inv-btn-red" onclick="deleteInvItem('fridge','${f.id}')">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderInvBac(){
+  const inv=ldInv();
+  const el=document.getElementById('inv-bac-display');if(!el)return;
+  const b=inv.bacwater||{};
+  if(!b.sealed&&!b.openMl&&!b.expDate){
+    el.innerHTML='<p style="color:var(--text-soft);font-size:13px;padding:4px 0">Not configured.</p>';return;
+  }
+  const maxMl=30;
+  const pct=b.openMl?Math.min(100,Math.round((b.openMl/maxMl)*100)):0;
+  const expDays=b.expDate?Math.ceil((new Date(b.expDate)-Date.now())/(1000*60*60*24)):null;
+  const expBadge=expDays==null?'':expDays<0?`<span class="inv-badge inv-badge-alert">EXPIRED</span>`:
+    expDays<=7?`<span class="inv-badge inv-badge-warn">Exp in ${expDays}d</span>`:
+    `<span class="inv-badge inv-badge-ok">Exp in ${expDays}d</span>`;
+  el.innerHTML=`
+    <div style="display:flex;gap:24px;flex-wrap:wrap;padding:4px 0">
+      <div><div style="font-size:11px;color:var(--text-soft);margin-bottom:2px">SEALED</div>
+        <div style="font-size:22px;font-weight:700;color:var(--blue)">${b.sealed||0}</div>
+        <div style="font-size:11px;color:var(--text-soft)">bottles</div></div>
+      <div style="flex:1;min-width:120px">
+        <div style="font-size:11px;color:var(--text-soft);margin-bottom:4px">OPEN BOTTLE ${expBadge}</div>
+        <div class="inv-bac-meter">
+          <div class="inv-bac-bar"><div class="inv-bac-fill" style="width:${pct}%"></div></div>
+          <span style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap">${b.openMl||0} ml</span>
+        </div>
+        ${b.expDate?`<div style="font-size:11px;color:var(--text-soft)">Exp: ${b.expDate}</div>`:''}
+      </div>
+    </div>`;
+}
+
+function renderInvWish(){
+  const inv=ldInv();
+  const el=document.getElementById('inv-wish-list');if(!el)return;
+  if(!inv.wishlist.length){
+    el.innerHTML='<div class="empty-state" style="padding:16px"><p>Nothing on the wish list yet.</p></div>';return;
+  }
+  const order={high:0,mid:1,low:2};
+  const sorted=[...inv.wishlist].sort((a,b)=>(order[a.priority]||1)-(order[b.priority]||1));
+  el.innerHTML=sorted.map(w=>{
+    const labels={high:'Priority',mid:'Want to Try',low:'Nice to Have'};
+    const cls={high:'wish-p-high',mid:'wish-p-mid',low:'wish-p-low'};
+    return `<div class="inv-row">
+      <div class="inv-row-icon" style="background:var(--border)">📋</div>
+      <div class="inv-row-body">
+        <div class="inv-row-name">${w.name} <span class="wish-priority ${cls[w.priority]||'wish-p-mid'}">${labels[w.priority]||w.priority}</span></div>
+        ${w.notes?`<div class="inv-row-sub">${w.notes}</div>`:''}
+      </div>
+      <div class="inv-row-actions">
+        <button class="inv-btn inv-btn-red" onclick="deleteInvItem('wish','${w.id}')">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Modal open/save helpers ────────────────────────────
+function invNameHint(val){
+  // When the typed value exactly matches a stack peptide, auto-fill vial size
+  const match=(peptides||[]).find(p=>p.name.toLowerCase()===val.toLowerCase());
+  if(match&&match.vial){
+    const mgEl=document.getElementById('inv-vial-mg');
+    if(mgEl&&!mgEl.value)mgEl.value=match.vial;
+  }
+}
+
+function openInvModal(mode, editId=''){
+  document.getElementById('inv-modal-mode').value=mode;
+  document.getElementById('inv-modal-edit-id').value=editId;
+  const isPeptide=(mode==='freezer'||mode==='fridge');
+  document.getElementById('inv-fields-peptide').style.display=isPeptide?'':'none';
+  document.getElementById('inv-fields-wish').style.display=mode==='wish'?'':'none';
+  document.getElementById('inv-field-bac-used').style.display=mode==='fridge'?'':'none';
+  document.getElementById('inv-field-mixed-date').style.display=mode==='fridge'?'':'none';
+  const titles={freezer:'Add to Freezer',fridge:'Add to Fridge',wish:'Add to Wish List'};
+  document.getElementById('inv-modal-title').textContent=titles[mode]||'Add Item';
+  // Populate datalist from active peptide stack (unique names, sorted)
+  const dl=document.getElementById('inv-name-suggestions');
+  if(dl){
+    const names=[...new Set((peptides||[]).map(p=>p.name).filter(Boolean))].sort();
+    dl.innerHTML=names.map(n=>`<option value="${n.replace(/"/g,'&quot;')}">`).join('');
+  }
+  // Clear fields
+  ['inv-name','inv-qty','inv-vial-mg','inv-bac-used','inv-notes','wish-name','wish-notes'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.value=id==='inv-qty'?'1':'';
+  });
+  document.getElementById('inv-mixed-date').value=new Date().toISOString().split('T')[0];
+  document.getElementById('wish-priority').value='mid';
+  document.getElementById('inv-add-modal').classList.add('open');
+}
+
+function openBacModal(){
+  const inv=ldInv();
+  const b=inv.bacwater||{};
+  document.getElementById('bac-sealed').value=b.sealed||0;
+  document.getElementById('bac-open-ml').value=b.openMl||'';
+  document.getElementById('bac-exp-date').value=b.expDate||'';
+  document.getElementById('bac-modal').classList.add('open');
+}
+
+function saveBacStock(){
+  const inv=ldInv();
+  inv.bacwater={
+    sealed:parseInt(document.getElementById('bac-sealed').value)||0,
+    openMl:parseFloat(document.getElementById('bac-open-ml').value)||0,
+    expDate:document.getElementById('bac-exp-date').value||''
+  };
+  svInv(inv);
+  closeModal('bac-modal');
+  renderInvBac();
+  toast('BAC water updated ✓');
+}
+
+function saveInvItem(){
+  const mode=document.getElementById('inv-modal-mode').value;
+  const inv=ldInv();
+  if(mode==='freezer'||mode==='fridge'){
+    const name=document.getElementById('inv-name').value.trim();
+    if(!name){toast('Name required');return;}
+    const item={id:(mode==='freezer'?'fz_':'f_')+Date.now(),
+      name,
+      qty:parseInt(document.getElementById('inv-qty').value)||1,
+      vialMg:parseFloat(document.getElementById('inv-vial-mg').value)||null,
+      notes:document.getElementById('inv-notes').value.trim()
+    };
+    if(mode==='fridge'){
+      item.bacUsed=parseFloat(document.getElementById('inv-bac-used').value)||null;
+      item.mixedDate=document.getElementById('inv-mixed-date').value||new Date().toISOString().split('T')[0];
+    }
+    inv[mode==='freezer'?'freezer':'fridge'].push(item);
+    svInv(inv);
+    closeModal('inv-add-modal');
+    if(mode==='freezer')renderInvFreezer();else renderInvFridge();
+    toast(`Added to ${mode} ✓`);
+  } else if(mode==='wish'){
+    const name=document.getElementById('wish-name').value.trim();
+    if(!name){toast('Name required');return;}
+    inv.wishlist.push({id:'w_'+Date.now(),name,
+      priority:document.getElementById('wish-priority').value,
+      notes:document.getElementById('wish-notes').value.trim()});
+    svInv(inv);
+    closeModal('inv-add-modal');
+    renderInvWish();
+    toast('Added to wish list ✓');
+  }
+}
+
+function deleteInvItem(section,id){
+  const inv=ldInv();
+  if(section==='freezer')inv.freezer=inv.freezer.filter(x=>x.id!==id);
+  else if(section==='fridge')inv.fridge=inv.fridge.filter(x=>x.id!==id);
+  else if(section==='wish')inv.wishlist=inv.wishlist.filter(x=>x.id!==id);
+  svInv(inv);
+  if(section==='freezer')renderInvFreezer();
+  else if(section==='fridge')renderInvFridge();
+  else renderInvWish();
+  toast('Removed ✓');
+}
+
+function moveToFridge(freezerId){
+  const inv=ldInv();
+  const item=inv.freezer.find(x=>x.id===freezerId);if(!item)return;
+  // Decrement freezer
+  if((item.qty||1)<=1)inv.freezer=inv.freezer.filter(x=>x.id!==freezerId);
+  else inv.freezer=inv.freezer.map(x=>x.id===freezerId?{...x,qty:x.qty-1}:x);
+  // Add to fridge
+  inv.fridge.push({id:'f_'+Date.now(),name:item.name,qty:1,vialMg:item.vialMg,
+    mixedDate:new Date().toISOString().split('T')[0],bacUsed:null,notes:''});
+  svInv(inv);
+  renderInvFreezer();renderInvFridge();
+  toast(`${item.name} moved to fridge — ready to reconstitute 🧪`);
+}
+
 console.log('[PeptideRx] '+APP_VERSION);
 const versionEl=document.getElementById('app-version');
 if(versionEl){
