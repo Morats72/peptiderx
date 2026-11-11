@@ -350,6 +350,21 @@ table{border-collapse:collapse}#print-log-container{display:none}
 .wish-p-high{background:#fee2e2;color:#dc2626}
 .wish-p-mid{background:#fef3c7;color:#d97706}
 .wish-p-low{background:#dce8f7;color:#2e4a8c}
+
+.stack-guide-card{background:var(--surface);border-radius:12px;padding:14px 16px;margin-bottom:14px;border:1.5px solid var(--border);display:none}
+.stack-guide-card.visible{display:block}
+.stack-guide-header{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.stack-guide-icon{font-size:20px}
+.stack-guide-title{font-size:14px;font-weight:700;color:var(--text)}
+.stack-guide-dismiss{margin-left:auto;font-size:11px;color:var(--text-soft);cursor:pointer;padding:2px 8px;border-radius:10px;border:1px solid var(--border);background:var(--bg)}
+.stack-guide-dismiss:hover{background:var(--border)}
+.stack-step{margin-bottom:8px;padding:8px 10px;border-radius:8px;border-left:3px solid var(--blue)}
+.stack-step-label{font-size:11px;font-weight:700;color:var(--text-mid);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
+.stack-step-compounds{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px}
+.stack-compound-btn{font-size:11px;font-weight:600;padding:3px 10px;border-radius:12px;border:1.5px solid var(--blue);color:var(--blue);background:transparent;cursor:pointer;transition:all .15s}
+.stack-compound-btn:hover{background:var(--blue);color:var(--white)}
+.stack-step-note{font-size:11px;color:var(--text-soft);line-height:1.4}
+
 </style>
 </head>
 <body>
@@ -628,6 +643,8 @@ table{border-collapse:collapse}#print-log-container{display:none}
     <span class="cat-pill" onclick="filterCat('gut',this)">GI/Gut</span>
     <span class="cat-pill" onclick="filterCat('bioregulator',this)">Bioregulators</span>
   </div>
+
+  <div class="stack-guide-card" id="stack-guide-card"></div>
   <div id="reference-list"></div>
 </div>
 
@@ -1447,7 +1464,7 @@ if ('serviceWorker' in navigator) {
 // ── App Version ──
 // Bump this string every time you deploy a change — makes it obvious
 // in the app (and in the console) whether a fix actually made it live.
-const APP_VERSION = "v2.23.0 — 2026-11-10 (14 new compounds: AHK-Cu, BAM15, Enclomiphene, Fladrafinil, JBSNF-88, LIPO-C, Mazdutide, MK-777, NMN, Orforglipron, Phenibut, SR-9011, Tadalafil, Telmisartan; KLOW dosing update)";
+const APP_VERSION = "v2.24.0 — 2026-11-10 (Stack Guide: category pills now show stacking ladder with compound jump links)";
 
 // ── Screen Wake Lock ──
 let wakeLock=null;
@@ -1770,6 +1787,8 @@ const REF_DATA = [
   {name:'SLU-PP-332',cats:['fat','mito'],overview:'Not a peptide — experimental PPAR-delta agonist that activates brown adipose tissue (non-shivering thermogenesis) in preclinical models. Human dosing is extrapolated from rodent data. Caution with any cardiovascular condition or arrhythmia history — can raise heart rate 5–10 bpm.<br><br>⚠️ <b>SOURCE TYPO FLAG:</b> Veller\'s own \'Quick Summary\' for SLU-PP-332 says \'start at 50 mg/day; work up to 100 mg/day\' — that line was copy-pasted from his 5-Amino-1MQ page. His dosing table for SLU-PP-332 says 250 mcg/day. The summary is 200x the table. Use the table (micrograms).',doses:[['Route','Oral'],['Research protocol','250 mcg/day'],['Aggressive research','500–750 mcg/day, 2–3x daily spread'],['Timing','Take earlier in the day to avoid disrupting sleep'],['Stacks with','AOD-9604, MOTS-C, 5-Amino-1MQ']]},
   {name:'SS-31',cats:['mito','heal','longev'],overview:'Elamipretide. Stabilizes cardiolipin in inner mitochondrial membrane. Enhances ETC efficiency at Complex I/IV. Reduces ROS, improves ATP, protects heart/brain/kidneys from age-related decline.<br><br>⚠️ ADDED Oct 2026: TPR now contradicts itself the same way — 0.5–1.5 mg/day in its SS-31 chapter (2–4 mg \'high dose\'), but 10 mg and 20 mg daily in its Longevity stacks, 7–40x its own chapter. The 2024 women\'s sheet used 5 mg twice weekly (10 mg/week) where the 2025 sheet uses 500 mcg 5 days a week (2.5 mg/week). Timing also conflicts: TPR says before bed, Veller says morning.',doses:[['Route','SubQ or IM injection'],['Standard','500 mcg – 5 mg daily (Veller/Protide)'],['Alt','4 mg daily for 10–20 days (Scendere)'],['BAC water','2 ml per 10 mg vial → 500 mcg = 10 units'],['Timing','AM or pre-training'],['Cycle','4–8 weeks; follow with MOTS-C for optimal sequence'],['Stacks with','MOTS-C (follow SS-31 with MOTS-C), NAD+, 5-Amino-1MQ, Methylene Blue'],['Peptide Report','<span style="display:block;text-align:left">Chapter: 0.5–1.5 mg SC per day, before bed, 8 weeks on/8 off; high-dose 2–4 mg daily; alternate 3 mg every third day. But the same book\'s Longevity stacks list 10 mg daily (Premium) and 20 mg daily (Enhanced).</span>'],['Women\'s sheet \'24','<span style="display:block;text-align:left">Women\'s sheet: 10 mg vial, 1 mL BAC, 5 mg dose (50 units), AM, 2 days per week, 8 weeks on/8 off.</span>']]},
   {name:'Tadalafil',cats:['sex','cardio','vasc'],aka:'Cialis; PDE5 inhibitor',overview:'<b>Tadalafil</b> (Cialis) is a selective PDE5 inhibitor with the longest half-life (~36 hours) in its class, making it uniquely suited for daily micro-dosing and vascular optimization beyond erectile function. Mechanism: inhibits PDE5 → preserves cGMP → sustained nitric oxide-driven vasodilation → improved blood flow in heart, brain, muscle, and kidneys. Extended research: reduces arterial stiffness, improves microcirculatory flow, enhances mitochondrial O2 efficiency, upregulates endothelial progenitor cells, modulates glucose uptake and insulin sensitivity, and may protect against cardiac hypertrophy. Daily low-dose use (2.5–5 mg): endothelial health, blood pressure support, exercise recovery, BPH. On-demand use (10–20 mg): erectile function, lasts 24–36 hours. Off-label: pulmonary hypertension, altitude sickness, athletic blood flow optimization. Side effects: headache, flushing, back pain, nasal congestion. <b>Contraindicated with nitrates</b> (severe hypotension risk). <i>FDA approved for ED, BPH, and pulmonary arterial hypertension. Prescription required.</i>',doses:[['Daily low-dose (endothelial health / BPH)','2.5–5 mg oral once daily'],['On-demand (ED)','10–20 mg oral 30–60 min before activity; lasts 24–36 hours'],['Pulmonary hypertension','40 mg/day (20 mg twice daily)'],['Half-life','~36 hours'],['Avoid','All nitrate medications (severe hypotension)'],['Route','Oral tablet']]},
+  {name:'Wolverine 1 Blend',cats:['heal','injury','repair'],aka:'Wolverine 1; BPC-157 + TB-500 blend',overview:'<b>Wolverine 1</b> is a 2-peptide recovery blend (BPC-157 + TB-500) — the foundational "Wolverine" formula from Greenwich Rx, designed for tissue repair and healing without the anti-inflammatory KPV component. BPC-157: accelerates tendon, ligament, muscle, and gut healing via upregulation of growth factors (VEGF, EGF) and nitric oxide pathways. TB-500 (Thymosin Beta-4): promotes cell migration, angiogenesis, and actin polymerization for repair of muscle, connective tissue, and nerve. The two peptides are synergistic: BPC-157 drives local repair signaling while TB-500 mobilizes systemic repair cells to the injury site. Indicated for acute injuries, post-surgical recovery, or chronic tendon/ligament issues without a primary inflammatory component. Compare to <b>Wolverine 2</b> (adds KPV for gut/systemic inflammation) and <b>KLOW</b> (adds GHK-Cu for skin/collagen remodeling on top of that). Cycle: 90 days on / 30 days off (Greenwich Rx standard). <i>Research compound blend — compounded by Greenwich Rx. Not FDA approved.</i>',doses:[['Standard dose','Follow provider titration protocol (Greenwich Rx 5 mL vial)'],['Week 1–2','Low titration dose — typically 10 units SubQ 1x/day'],['Week 3–4','Mid titration — 20 units SubQ 1x/day'],['Week 5+','Maintenance — 30 units SubQ 1x/day (or per provider)'],['Cycle','90 days on / 30 days off'],['Route','SubQ injection'],['Contains','BPC-157 + TB-500 (Thymosin Beta-4)']]},
+  {name:'Wolverine 2 Blend',cats:['heal','injury','inflam'],aka:'Wolverine 2; BPC-157 + KPV + TB-500 blend',overview:'<b>Wolverine 2</b> is a 3-peptide recovery blend (BPC-157 + KPV + TB-500) from Greenwich Rx — Wolverine 1 plus <b>KPV</b> (Lys-Pro-Val), a potent anti-inflammatory tripeptide derived from alpha-MSH. KPV addition: directly inhibits NF-κB inflammatory signaling, reduces intestinal inflammation (IBD, Crohn\'s, colitis), and blunts systemic cytokine storms. Use Wolverine 2 over Wolverine 1 when inflammation is a primary driver: inflammatory bowel issues, autoimmune-driven tissue damage, post-infection recovery, or injuries with significant swelling and cytokine involvement. BPC-157 handles growth factor signaling and gut lining repair; TB-500 drives systemic cell migration and angiogenesis; KPV suppresses the inflammatory cascade that slows healing. Compare to <b>KLOW</b> (adds GHK-Cu for collagen/skin remodeling on top of Wolverine 2). Cycle: 90 days on / 30 days off (Greenwich Rx standard). <i>Research compound blend — compounded by Greenwich Rx. Not FDA approved.</i>',doses:[['Standard dose','Follow provider titration protocol (Greenwich Rx 5 mL vial)'],['Week 1–2','Low titration dose — typically 10 units SubQ 1x/day'],['Week 3–4','Mid titration — 20 units SubQ 1x/day'],['Week 5+','Maintenance — 30 units SubQ 1x/day (or per provider)'],['Cycle','90 days on / 30 days off'],['Route','SubQ injection'],['Contains','BPC-157 + KPV + TB-500 (Thymosin Beta-4)'],['Upgrade from Wolverine 1','Adds KPV for NF-κB anti-inflammatory action']]},
   {name:'TB-500 / Thymosin Beta-4',cats:['heal','longev','immune'],overview:'TB-500 is the active fragment (Frag 17-23) of Thymosin Beta-4. Systemic healing — actin regulation, angiogenesis, tissue regeneration. Complement to BPC-157: BPC=local/targeted, TB-500=systemic. The gold standard recovery stack is BPC-157 + TB-500.<br><br>⚠️ <b>WEEKLY-TOTAL FLAG (Oct 2026):</b> JCS/2025 women\'s sheet 3.5 mg/week (500 mcg daily); BGP 4–5 mg; TPR chapter 5–7.5 mg; 2024 women\'s sheet 7 mg (2 mg every other day); Veller 2–10 mg; YPT loading 10–20 mg. TPR\'s stack tables (2.5/5/7.5 mg \'2x/week\') would be 5–15 mg/week if read per injection, against its own chapter\'s 5–7.5 mg weekly total. Compare sources by milligrams per WEEK, not per shot.',doses:[['Route','SubQ or IM injection'],['Loading','5–10 mg twice weekly for 4–6 weeks (YPT)'],['Maintenance','2–5 mg 1–2x/week'],['Daily protocol','500 mcg daily (Ultimate CS) — 10 mg/2 ml BAC = 10 units'],['Veller','<span style="display:block;text-align:left">Injury/rehab: 2–2.5 mg/week to start, 5 mg/week common, max 10 mg/week, split 2–3x weekly. Maintenance: 1 mg/week, 2–3 mg/week common, max 5. (Corrected Oct 2026 — the 500 mcg daily figure is the cheat sheet\'s, not Veller\'s.)</span>'],['Scendere','750 mcg–1 mg daily up to 3 months'],['Jay Campbell','2.0–2.5 mg every other day'],['BAC water','2 ml per 10 mg vial → 500 mcg = 10 units'],['Cycle','4–6 week loading → taper to maintenance'],['Stacks with','BPC-157 (gold standard combo), GHK-Cu, KPV (KLOW blend)'],['Peptide Report','<span style="display:block;text-align:left">5–7.5 mg weekly for larger users (2.5–5 mg for smaller), divided into 2 or 3 injections; loading 4–6 weeks at full dose; maintenance 2.5–5 mg weekly. Its stack tables list 2.5, 5 and 7.5 mg \'2x/week.\'</span>'],['Beginner\'s Guide','<span style="display:block;text-align:left">Loading: 2.0–2.5 mg 2x/week for 4 weeks. Maintenance: 2.0 mg once a week. 6–8 weeks. Avoid with active cancer (promotes cell migration).</span>'],['Women\'s sheet \'24','<span style="display:block;text-align:left">Women\'s sheet: 10 mg vial, 3 mL BAC, 2 mg dose (60 units), AM, every other day, 8 weeks on/8 off.</span>']]},
   {name:'Telmisartan',cats:['cardio','hormone','vasc'],aka:'Micardis; ARB; angiotensin receptor blocker',overview:'<b>Telmisartan</b> is an angiotensin II receptor blocker (ARB) used clinically for hypertension, heart failure, and cardiorenal protection. Mechanism: blocks AT1 receptor → prevents angiotensin II-induced vasoconstriction → arterial dilation, reduced cardiac workload. Also mildly blocks aldosterone → less sodium/water retention. Performance use: counteracts steroid/peptide-induced blood pressure elevation, reduces water retention, may modestly increase muscle blood flow and exercise recovery. Anti-aging interest: PPAR-γ partial agonism (mild insulin sensitization, anti-inflammatory). Clinical dose: 20–80 mg oral once daily. Side effects: hypotension (especially first dose), hyperkalemia, rare angioedema. <b>Avoid with ACE inhibitors</b> (dual RAAS blockade increases adverse risk). Contraindicated in pregnancy (teratogenic), bilateral renal artery stenosis. <i>FDA approved for hypertension and cardiovascular risk reduction. Prescription required.</i>',doses:[['Hypertension (starting)','20–40 mg oral once daily'],['Maintenance/max','40–80 mg oral once daily'],['Performance use','20–40 mg/day to manage anabolic-agent BP elevation'],['Half-life','~24 hours (once-daily dosing)'],['Monitor','Blood pressure, potassium, renal function'],['Route','Oral tablet']]},
   {name:'Tesamorelin',cats:['fat','muscle','gh','cog'],overview:'FDA-approved GHRH 1-44 analog (Egrifta). Selectively targets visceral adipose tissue. Preserves lean mass. Neuroprotective via IGF-1 pathways — cognitive clarity documented especially 50+. Do not stack with other GH compounds without monitoring IGF-1.<br><br>⚠️ <b>PROTOCOL CONFLICT (Oct 2026):</b> monthly load differs 4x. RM pulse (2 mg x 5 nights, one week a month) = 10 mg/month. Continuous 1 mg 5-on/2-off (TPR, JCS) = ~22 mg/month. Continuous 2 mg 5 days/week (BGP, clinical dose) = ~43 mg/month. RM\'s reasoning is that continuous dosing downregulates the receptor and raises insulin resistance; TPR\'s answer to the same worry is 10–12 weeks on/8 off. TIMING: TPR says bedtime only and calls morning dosing a mistake; Veller says morning; Jay Campbell uses both.<br><br>⚠️ <b>PUSHBACK ON TPR:</b> it says to \'inject directly into the visceral fat zone\' for \'true spot reduction.\' An insulin needle reaches subcutaneous fat only. Visceral fat sits behind the abdominal wall, and Tesamorelin works systemically through the pituitary — injection site does not aim it. UNITS: 1 mg is 20 units from a 10 mg/2 mL vial but 40 units from a 5 mg/2 mL vial (both women\'s sheets are internally correct; they use different vials). Tesamorelin is on the BAC guide\'s may-precipitate list — see the handling page in the reference PDF.',doses:[['Route','SubQ abdomen'],['Standard','1 mg/day 6 of 7 days (Tailor Made) | 1 mg/day (Dr. Seeds, Veller)'],['Advanced','1 mg AM + 1 mg PM (Jay Campbell)'],['Studies','2 mg/day'],['BAC water','2 ml per 10 mg vial → 1 mg = 20 units'],['Timing','Before bed; empty stomach 2–3 hrs after last meal'],['Cycle','60 days max / equal time off (Scendere) | 8–12 weeks (Protide)'],['FLAG','Do NOT stack with other potent GH secretagogues without monitoring IGF-1. Monitor IGF-1 at 4–8 weeks.'],['Stacks with','Ipamorelin (1 mg Tes bedtime + 200 mcg Ipa AM — Jay Campbell classic stack)'],['Peptide Report','<span style="display:block;text-align:left">1 mg SC daily, before bed and at least 90 minutes after the last meal, 5 days on/2 off; 10–12 weeks on, 8 weeks off (\'mandatory\'). Can share a syringe with 100 mcg Ipamorelin. Its fat-loss stacks list 2 mg daily.</span>'],['Beginner\'s Guide','<span style="display:block;text-align:left">2 mg/day, 5 days/week, SC before bed, 8–12 weeks. Do not combine with synthetic GH.</span>'],['Veller Reta Guide','<span style="display:block;text-align:left">In Veller\'s Retatrutide stack: 1 mg daily, PM before bed or AM fasted, no food 1–2 hours before; cycle every 12–16 weeks.</span>'],['Pulse (Radiant Med.)','<span style="display:block;text-align:left">2 mg at bedtime Monday-Friday during week 1 of the month ONLY, then 3 weeks off; run 2 months, then re-check IGF-1 before repeating. 10 mg vial + 2.0 mL BAC = 5 mg/mL, so 2 mg = 40 units; one vial = one pulse week. Inject 2–3 hours after the last meal; on a GLP-1, eat a light low-carb dinner on pulse days.</span>'],['Women\'s sheet \'24','<span style="display:block;text-align:left">Women\'s sheet: 5 mg vial, 2 mL BAC, 1 mg dose (40 units), AM/PM, 5 days on/2 off, 8 weeks on/8 off.</span>'],['Diluent note','<span style="display:block;text-align:left">On the BAC guide\'s list of peptides that may precipitate in benzyl alcohol (it suggests sterile water with an acetic-acid buffer). Every dosing source here still mixes it with BAC water. Unresolved — go by the vendor\'s instructions.</span>'],['Caution (Radiant Med.)','<span style="display:block;text-align:left">Contraindicated with active malignancy, diabetic retinopathy, carpal tunnel syndrome, pregnancy. Hold if IGF-1 exceeds the upper limit of normal. Expect hand/ankle edema by day 4–5 at 2 mg; cut to 1 mg if it limits activity.</span>']]},
@@ -1788,6 +1807,149 @@ const REF_DATA = [
   {name:'Vitamin B12',cats:['mito'],overview:'Methylcobalamin (injectable) — not a peptide. Essential for red-blood-cell formation, nerve myelination, and the mitochondrial methylation cycle. Fixture of energy/recovery stacks. IM preferred for full absorption; dose in the morning — can disrupt sleep if taken late.',doses:[['Route','IM injection'],['Energy/mood','0.25–0.5 ml, up to 1 ml, max 1 ml, 1–3x/week'],['Deficiency correction','0.5–1 ml daily short-term'],['Stacks with','NAD+, Carnitine, Semax/Selank']]},
   {name:'Zhenoluten',cats:['bioregulator','sex'],aka:'natural ovarian peptide complex  oral',overview:'<i>Natural ovarian peptide complex (oral).</i> An oral supplement of ovarian peptides, described for hormonal balance, cycle regulation, fertility support and menopausal symptoms.',doses:[['Peptide Dictionary','No dose given — oral capsule product only.'],['Note','<span style="display:block;text-align:left">NO PROTOCOL IN ANY SOURCE. A \'natural\' (tissue-extract) oral product, not an injectable.</span>']]}
 ];
+
+
+const STACK_GUIDES = {
+  heal: {
+    title: 'Healing & Repair Stack Ladder',
+    icon: '🩹',
+    color: '#e8f5e9',
+    colorDark: '#1b2e1c',
+    accent: '#2e7d32',
+    steps: [
+      { label: 'Foundation', compounds: ['BPC-157','TB-500 / Thymosin Beta-4'], note: 'Core tissue repair — tendon, ligament, muscle. Start here.' },
+      { label: 'Step up: add inflammation control', compounds: ['Wolverine 2 Blend','KPV'], note: 'Add KPV when gut or systemic inflammation is a factor. Wolverine 2 is the pre-blended version.' },
+      { label: 'Step up: add collagen & skin remodeling', compounds: ['KLOW Blend','GHK-Cu'], note: 'Full quad stack. Adds GHK-Cu for collagen synthesis and wound closure on top of Wolverine 2.' },
+      { label: 'Boost: GH-driven collagen synthesis', compounds: ['Tesamorelin','CJC-1295 (No DAC) + Ipamorelin'], note: 'GH/IGF-1 spike drives systemic collagen production — synergistic with all repair peptides.' },
+      { label: 'Boost: mitochondrial unlock (stalled healing)', compounds: ['SS-31','MOTS-C'], note: 'If healing has plateaued, mitochondrial support can restore cellular energy for repair machinery.' },
+      { label: 'Immune modulation add-on', compounds: ['Thymosin Alpha-1'], note: 'Immune regulation — useful post-infection or when immune response is dragging recovery.' },
+    ]
+  },
+  fat: {
+    title: 'Fat Loss Stack Ladder',
+    icon: '🔥',
+    color: '#fff3e0',
+    colorDark: '#2e1f0a',
+    accent: '#e65100',
+    steps: [
+      { label: 'Foundation: GLP-1 receptor agonists', compounds: ['Semaglutide','Tirzepatide','Liraglutide'], note: 'First-line peptide fat loss — appetite suppression, glucose control, sustained weight loss.' },
+      { label: 'Next-gen GLP-1 options', compounds: ['Mazdutide','Orforglipron'], note: 'Mazdutide adds glucagon receptor for extra energy expenditure. Orforglipron is oral (no injection).' },
+      { label: 'GH fragment fat targeting', compounds: ['AOD-9604','Tesamorelin'], note: 'AOD targets visceral/stubborn fat without GH side effects. Tesamorelin reduces visceral fat via GH.' },
+      { label: 'Metabolic amplifiers', compounds: ['5-Amino-1MQ','MOTS-C','BAM15'], note: '5-Amino-1MQ blocks NNMT to restore NAD+/fat oxidation. MOTS-C is a mitokine that improves metabolic flexibility. BAM15 is a mitochondrial uncoupler (research only — handle with care).' },
+      { label: 'Lipotropic injection support', compounds: ['LIPO-C/B12'], note: 'MIC+B12 injection — supports liver fat export and metabolic rate. Adjunct, not standalone.' },
+      { label: 'Circadian & metabolic reset', compounds: ['SR-9011'], note: 'Rev-ErbA agonist — improves fat oxidation and circadian alignment. Animal data only.' },
+    ]
+  },
+  muscle: {
+    title: 'Muscle & Recomposition Stack Ladder',
+    icon: '💪',
+    color: '#e3f2fd',
+    colorDark: '#0d1f30',
+    accent: '#1565c0',
+    steps: [
+      { label: 'Foundation: GH secretagogues', compounds: ['MK-677 (Ibutamoren)','Ipamorelin'], note: 'Stimulate pulsatile GH release for anabolism, recovery, and sleep quality.' },
+      { label: 'Next-gen GH secretagogue', compounds: ['MK-777'], note: '~92% better GHS-R1a binding than MK-677. Less hunger, cleaner GH profile, 8-10h half-life.' },
+      { label: 'GHRH + GHRP combo', compounds: ['CJC-1295 (No DAC) + Ipamorelin','Tesamorelin/Ipamorelin Blend'], note: 'GHRH + GHRP together produce synergistic GH pulse. Standard performance protocol.' },
+      { label: 'IGF-1 direct stimulation', compounds: ['MGF','Follistatin 344'], note: 'MGF drives satellite cell activation at the injury site. Follistatin blocks myostatin to unlock muscle growth ceiling.' },
+      { label: 'Metabolic amplifiers', compounds: ['MOTS-C','JBSNF-88'], note: 'MOTS-C improves glucose uptake in muscle and activates AMPK. JBSNF-88 activates muscle stem cells via NAD+ pathway.' },
+      { label: 'Recovery support', compounds: ['BPC-157','Wolverine 1 Blend'], note: 'Accelerate repair between sessions — especially for tendons and connective tissue under load.' },
+    ]
+  },
+  gh: {
+    title: 'GH Optimization Stack',
+    icon: '📈',
+    color: '#f3e5f5',
+    colorDark: '#1f0d2a',
+    accent: '#6a1b9a',
+    steps: [
+      { label: 'GHRH (pulse initiator)', compounds: ['CJC-1295','Tesamorelin','Sermorelin'], note: 'GHRH analogs trigger the GH pulse from the pituitary. Stack with a GHRP for synergistic effect.' },
+      { label: 'GHRP (pulse amplifier)', compounds: ['Ipamorelin','MK-677 (Ibutamoren)'], note: 'GHRPs amplify the GH pulse. Ipamorelin is clean (no cortisol/prolactin spike). MK-677 is oral.' },
+      { label: 'Next-gen oral option', compounds: ['MK-777'], note: 'Stronger than MK-677, 8-10h half-life, less hunger side effect.' },
+      { label: 'IGF-1 downstream support', compounds: ['MGF','Follistatin 344'], note: 'Target IGF-1 signaling directly at muscle tissue for localized anabolic effect.' },
+    ]
+  },
+  neuro: {
+    title: 'Cognitive / Neuro Stack',
+    icon: '🧠',
+    color: '#e8eaf6',
+    colorDark: '#0d1020',
+    accent: '#283593',
+    steps: [
+      { label: 'Foundation: nootropic peptides', compounds: ['Semax','Selank'], note: 'Semax boosts BDNF/NGF for neuroplasticity and focus. Selank is anxiolytic + immunomodulatory.' },
+      { label: 'Neuroprotection', compounds: ['Cerebrolysin','PE-22-28'], note: 'Cerebrolysin is a broad neurotrophic blend. PE-22-28 is a TREK-1 inhibitor with antidepressant-like effects.' },
+      { label: 'Wakefulness / focus', compounds: ['Fladrafinil'], note: 'Eugeroic — dopamine reuptake inhibitor. 3-4x more potent than modafinil per mg. Strict cycling required.' },
+      { label: 'NAD+ / mitochondrial support', compounds: ['NMN','NAD+'], note: 'NAD+ is foundational to neuronal energy metabolism, DNA repair, and sirtuin activation.' },
+      { label: 'Sleep quality (recovery)', compounds: ['DSIP','Epitalon'], note: 'DSIP promotes delta-wave sleep. Epitalon resets circadian melatonin output via pineal gland.' },
+    ]
+  },
+  gut: {
+    title: 'GI / Gut Healing Stack',
+    icon: '🫁',
+    color: '#e0f7fa',
+    colorDark: '#091f22',
+    accent: '#00695c',
+    steps: [
+      { label: 'Foundation: gut repair', compounds: ['BPC-157','KPV'], note: 'BPC-157 heals gut lining (IBD, leaky gut, NSAID damage). KPV is a potent intestinal anti-inflammatory via NF-κB.' },
+      { label: 'Blended option', compounds: ['Wolverine 2 Blend','KLOW Blend'], note: 'Wolverine 2 and KLOW both include KPV + BPC-157 — convenient pre-blended gut + systemic repair.' },
+      { label: 'Immune regulation', compounds: ['Thymosin Alpha-1','LL-37'], note: 'TA-1 modulates mucosal immunity. LL-37 has antimicrobial activity in the gut.' },
+      { label: 'Systemic anti-inflammatory', compounds: ['ARA-290'], note: 'Non-erythropoietic EPO analog — reduces systemic inflammation without hematopoietic effects.' },
+    ]
+  },
+  immune: {
+    title: 'Immune Support Stack',
+    icon: '🛡️',
+    color: '#f9fbe7',
+    colorDark: '#1e210a',
+    accent: '#558b2f',
+    steps: [
+      { label: 'Foundation', compounds: ['Thymosin Alpha-1'], note: 'Gold standard immune modulator — thymus-derived peptide that activates T-cell maturation.' },
+      { label: 'Mucosal / antimicrobial', compounds: ['LL-37','KPV'], note: 'LL-37 is a cathelicidin with broad antimicrobial activity. KPV suppresses inflammatory cytokines.' },
+      { label: 'Bioregulator support', compounds: ['Thymulin','Thymagen (Thymogen)','Thymalin'], note: 'Short thymic peptides that restore age-related immune decline. Often cycled 2x/year.' },
+      { label: 'Mitochondrial / NAD+ support', compounds: ['SS-31','NMN'], note: 'Immune cells are metabolically demanding — mitochondrial support improves immune cell function.' },
+    ]
+  },
+  sex: {
+    title: 'Sexual Health & Hormone Stack',
+    icon: '⚡',
+    color: '#fce4ec',
+    colorDark: '#2a0a12',
+    accent: '#ad1457',
+    steps: [
+      { label: 'Libido / arousal (central)', compounds: ['Bremelanotide (PT-141)','Kisspeptin-10'], note: 'PT-141 activates melanocortin receptors in the brain for desire and arousal. Kisspeptin drives GnRH and LH.' },
+      { label: 'Erectile / vascular function', compounds: ['Tadalafil'], note: 'PDE5 inhibitor — 36h half-life, daily low-dose for endothelial health or on-demand for ED.' },
+      { label: 'Testosterone restoration (men)', compounds: ['Enclomiphene'], note: 'SERM — restores endogenous T via LH/FSH without suppressing testicular function. Fertility-preserving.' },
+      { label: 'Hormone optimization', compounds: ['Oxytocin'], note: 'Bonding, trust, sexual satisfaction. Intranasal or SubQ.' },
+    ]
+  },
+  sleep: {
+    title: 'Sleep & Recovery Stack',
+    icon: '🌙',
+    color: '#ede7f6',
+    colorDark: '#120a22',
+    accent: '#4527a0',
+    steps: [
+      { label: 'Foundation: sleep-specific peptides', compounds: ['DSIP','Epitalon'], note: 'DSIP promotes slow-wave delta sleep. Epitalon resets pineal melatonin cycles — especially for shift workers.' },
+      { label: 'GH secretagogues for deep sleep', compounds: ['Ipamorelin','MK-677 (Ibutamoren)','MK-777'], note: 'GH secretagogues enhance deep REM and slow-wave sleep — where tissue repair and GH pulse happen.' },
+      { label: 'Circadian alignment', compounds: ['SR-9011'], note: 'Rev-ErbA agonist — recalibrates circadian clock. Research only, animal data.' },
+      { label: 'Anxiolytic support', compounds: ['Selank','Phenibut'], note: 'Selank for mild anxiety-related insomnia (safe daily use). Phenibut for acute use only — max 2x/week, high dependence risk.' },
+    ]
+  },
+  antiage: {
+    title: 'Longevity / Anti-Aging Stack',
+    icon: '⏳',
+    color: '#fff8e1',
+    colorDark: '#261e00',
+    accent: '#f57f17',
+    steps: [
+      { label: 'Telomere & circadian reset', compounds: ['Epitalon'], note: 'Upregulates telomerase, resets pineal melatonin secretion. Most studied longevity peptide.' },
+      { label: 'NAD+ restoration', compounds: ['NMN','NAD+','NAD+/Carnitine Amino Blend'], note: 'NAD+ declines ~50% by age 50. NMN is the fastest-absorbing precursor.' },
+      { label: 'Mitochondrial protection', compounds: ['SS-31','MOTS-C'], note: 'SS-31 preserves mitochondrial membrane integrity. MOTS-C is a mitokine that activates AMPK.' },
+      { label: 'Senolytic / cellular cleanup', compounds: ['FOXO4-DRI'], note: 'Induces apoptosis in senescent cells — clears "zombie cells" that drive aging inflammation.' },
+      { label: 'Bioregulators (organ-specific)', compounds: ['Epitalon','Cardiogen','Chonluten','Cortagen'], note: 'Short peptide bioregulators restore tissue-specific gene expression in aging organs.' },
+    ]
+  },
+};
+
 
 
 const SK={p:'prx_p',l:'prx_l',c:'prx_c',s:'prx_s',m:'prx_m',n:'prx_n',g:'prx_g',r:'prx_r'};
@@ -4508,7 +4670,49 @@ function scrollToRefTop(){
   if(el)el.scrollTo({top:0,behavior:'smooth'});
 }
 function toggleRef(id){const e=document.getElementById(id);if(e)e.classList.toggle('open');}
-function filterCat(cat,el){curCat=cat;document.querySelectorAll('.cat-pill').forEach(p=>p.classList.remove('active'));el.classList.add('active');renderReference();}
+function filterCat(cat,el){
+  curCat=cat;
+  document.querySelectorAll('.cat-pill').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  renderReference();
+  showStackGuide(cat);
+}
+function showStackGuide(cat){
+  const card=document.getElementById('stack-guide-card');
+  const guide=STACK_GUIDES[cat];
+  if(!guide){card.classList.remove('visible');return;}
+  card.innerHTML=`<div class="stack-guide-header">
+    <span class="stack-guide-icon">${guide.icon}</span>
+    <span class="stack-guide-title">${guide.title}</span>
+    <button class="stack-guide-dismiss" onclick="dismissGuide()">✕ dismiss</button>
+  </div>
+  ${guide.steps.map((s,i)=>`<div class="stack-step" style="border-left-color:${guide.accent}">
+    <div class="stack-step-label">${s.label}</div>
+    <div class="stack-step-compounds">${s.compounds.map(c=>`<button class="stack-compound-btn" onclick="jumpToCompound('${c.replace(/'/g,"\'")}')">${c}</button>`).join('')}</div>
+    <div class="stack-step-note">${s.note}</div>
+  </div>`).join('')}`;
+  card.classList.add('visible');
+}
+function dismissGuide(){document.getElementById('stack-guide-card').classList.remove('visible');}
+function jumpToCompound(name){
+  // Switch to 'all' filter and search for the compound
+  const searchEl=document.getElementById('ref-search-input');
+  searchEl.value=name;
+  curCat='all';
+  document.querySelectorAll('.cat-pill').forEach(p=>p.classList.remove('active'));
+  document.querySelector('.cat-pill').classList.add('active'); // 'All' pill
+  renderReference();
+  // Scroll to reference tab if not already there
+  setTimeout(()=>{
+    const items=document.querySelectorAll('.ref-item');
+    if(items.length>0){
+      items[0].scrollIntoView({behavior:'smooth',block:'start'});
+      // Auto-open the first result
+      const body=items[0].querySelector('[id^="rb"]');
+      if(body&&body.style.display!=='block'){body.style.display='block';}
+    }
+  },150);
+}
 function quickAdd(name){openAddModal();document.getElementById('p-name').value=name;toast('Fill in your dosing details');}
 
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
