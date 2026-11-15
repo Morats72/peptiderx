@@ -570,7 +570,7 @@ table{border-collapse:collapse}#print-log-container{display:none}
       <div id="inv-fields-wish" style="display:none">
         <div class="form-group">
           <label class="form-label">Peptide / Compound</label>
-          <input class="form-input" type="text" id="wish-name" placeholder="e.g. Selank" autocomplete="off" list="inv-name-suggestions">
+          <input class="form-input" type="text" id="wish-name" placeholder="e.g. Selank" autocomplete="off" list="inv-name-suggestions" oninput="wishNameHint(this.value)">
         </div>
         <div class="form-group">
           <label class="form-label">Priority</label>
@@ -579,6 +579,11 @@ table{border-collapse:collapse}#print-log-container{display:none}
             <option value="mid" selected>🟡 Want to Try</option>
             <option value="low">🔵 Nice to Have</option>
           </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Lumarix Price <span style="font-weight:400;color:var(--text-soft)">(optional — retail $)</span></label>
+          <input class="form-input" type="number" step="0.01" id="wish-price" placeholder="e.g. 79.99" oninput="previewWishPrice()" style="width:140px">
+          <div id="wish-price-preview" style="display:none;margin-top:6px;padding:7px 10px;background:var(--bg);border-radius:8px;font-size:12px;border:1px solid var(--border)"></div>
         </div>
         <div class="form-group">
           <label class="form-label">Reason / Notes</label>
@@ -750,6 +755,96 @@ table{border-collapse:collapse}#print-log-container{display:none}
         <div id="blend-schedule" style="margin-top:12px"></div>
         <div id="blend-compounds" style="margin-top:10px;padding:10px;background:var(--bg);border-radius:8px;font-size:12px;color:var(--text-mid)"></div>
       </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><h2>Protocol Calculator</h2><div style="font-size:11px;color:var(--text-soft);font-weight:400;margin-top:2px">Any compound · any schedule</div></div>
+    <div class="card-body">
+
+      <div class="form-group">
+        <label class="form-label">🔍 Quick-fill from Lumarix Catalog</label>
+        <select class="form-input" id="proto-lumarix" onchange="lumarixFill(this.value)" style="color:var(--text-mid)">
+          <option value="">— Select compound to auto-fill vial mg + BAC water —</option>
+        </select>
+        <div id="proto-lumarix-price" style="display:none;margin-top:6px;padding:8px 10px;background:var(--bg);border-radius:8px;font-size:12px;border:1px solid var(--border)"></div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Compound Name <span style="font-weight:400;color:var(--text-soft)">(optional label)</span></label>
+        <input class="form-input" type="text" id="proto-name" placeholder="e.g. 5-Amino-1MQ" oninput="calcProto()">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Vial Size (mg)</label><input class="form-input" type="number" id="proto-vial-mg" placeholder="50" oninput="calcProto()"></div>
+        <div class="form-group"><label class="form-label">BAC Water (mL)</label><input class="form-input" type="number" id="proto-bac" placeholder="2" step="0.5" oninput="calcProto()"></div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Dose per Injection</label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input class="form-input" type="number" id="proto-dose" placeholder="1" step="0.1" oninput="calcProto()" style="flex:2">
+          <div style="display:flex;gap:6px;flex:1">
+            <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:9px 6px;border:1.5px solid var(--border);border-radius:10px;cursor:pointer;font-size:13px;font-weight:600">
+              <input type="radio" name="proto-unit" value="mg" checked onchange="calcProto()" style="accent-color:var(--blue)"> mg
+            </label>
+            <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:9px 6px;border:1.5px solid var(--border);border-radius:10px;cursor:pointer;font-size:13px;font-weight:600">
+              <input type="radio" name="proto-unit" value="mcg" onchange="calcProto()" style="accent-color:var(--blue)"> mcg
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Schedule</label>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1.5px solid var(--border);border-radius:10px;cursor:pointer;font-size:13px;font-weight:600">
+            <input type="radio" name="proto-sched" value="daily" checked onchange="calcProto()" style="accent-color:var(--blue)"> Daily
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1.5px solid var(--border);border-radius:10px;cursor:pointer;font-size:13px;font-weight:600">
+            <input type="radio" name="proto-sched" value="5on2off" onchange="calcProto()" style="accent-color:var(--blue)"> 5 on / 2 off
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1.5px solid var(--border);border-radius:10px;cursor:pointer;font-size:13px;font-weight:600">
+            <input type="radio" name="proto-sched" value="eod" onchange="calcProto()" style="accent-color:var(--blue)"> Every other day
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1.5px solid var(--border);border-radius:10px;cursor:pointer;font-size:13px;font-weight:600">
+            <input type="radio" name="proto-sched" value="3week" onchange="calcProto()" style="accent-color:var(--blue)"> 3×/week
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1.5px solid var(--border);border-radius:10px;cursor:pointer;font-size:13px;font-weight:600">
+            <input type="radio" name="proto-sched" value="custom" onchange="calcProto()" style="accent-color:var(--blue)"> Custom
+          </label>
+        </div>
+        <div id="proto-custom-row" style="display:none;margin-top:8px">
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Days ON per week</label><input class="form-input" type="number" id="proto-days-on" placeholder="5" min="1" max="7" oninput="calcProto()"></div>
+            <div class="form-group"><label class="form-label">Days OFF per week</label><input class="form-input" type="number" id="proto-days-off" placeholder="2" min="0" max="6" oninput="calcProto()"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Cycle Length (weeks)</label>
+        <input class="form-input" type="number" id="proto-weeks" placeholder="8" oninput="calcProto()">
+      </div>
+
+      <div id="proto-result" style="display:none">
+        <div style="height:1px;background:var(--border);margin:4px 0 14px"></div>
+        <div id="proto-name-display" style="font-size:13px;font-weight:700;color:var(--blue);margin-bottom:10px"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+          <div class="calc-result" style="padding:10px 12px">
+            <div class="result-main" id="proto-vials-out">—</div>
+            <div class="result-label">Vials needed</div>
+            <div class="result-sub" id="proto-vials-sub"></div>
+          </div>
+          <div class="calc-result" style="padding:10px 12px">
+            <div class="result-main" id="proto-injections-out">—</div>
+            <div class="result-label">Total injections</div>
+            <div class="result-sub" id="proto-inj-sub"></div>
+          </div>
+        </div>
+        <div id="proto-breakdown" style="background:var(--bg);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--text-mid);line-height:1.8"></div>
+      </div>
+
     </div>
   </div>
 
@@ -1507,7 +1602,7 @@ if ('serviceWorker' in navigator) {
 // ── App Version ──
 // Bump this string every time you deploy a change — makes it obvious
 // in the app (and in the console) whether a fix actually made it live.
-const APP_VERSION = "v2.25.2 — 2026-11-14 (fix compound count placeholder; structural integrity verified)";
+const APP_VERSION = "v2.27.0 — 2026-11-14 (Lumarix catalog: Protocol Calculator auto-fill + wishlist fire service pricing)";
 
 // ── Screen Wake Lock ──
 let wakeLock=null;
@@ -1831,7 +1926,6 @@ const REF_DATA = [
   {name:'SS-31',cats:['mito','heal','longev'],overview:'Elamipretide. Stabilizes cardiolipin in inner mitochondrial membrane. Enhances ETC efficiency at Complex I/IV. Reduces ROS, improves ATP, protects heart/brain/kidneys from age-related decline.<br><br>⚠️ ADDED Oct 2026: TPR now contradicts itself the same way — 0.5–1.5 mg/day in its SS-31 chapter (2–4 mg \'high dose\'), but 10 mg and 20 mg daily in its Longevity stacks, 7–40x its own chapter. The 2024 women\'s sheet used 5 mg twice weekly (10 mg/week) where the 2025 sheet uses 500 mcg 5 days a week (2.5 mg/week). Timing also conflicts: TPR says before bed, Veller says morning.',doses:[['Route','SubQ or IM injection'],['Standard','500 mcg – 5 mg daily (Veller/Protide)'],['Alt','4 mg daily for 10–20 days (Scendere)'],['BAC water','2 ml per 10 mg vial → 500 mcg = 10 units'],['Timing','AM or pre-training'],['Cycle','4–8 weeks; follow with MOTS-C for optimal sequence'],['Stacks with','MOTS-C (follow SS-31 with MOTS-C), NAD+, 5-Amino-1MQ, Methylene Blue'],['Peptide Report','<span style="display:block;text-align:left">Chapter: 0.5–1.5 mg SC per day, before bed, 8 weeks on/8 off; high-dose 2–4 mg daily; alternate 3 mg every third day. But the same book\'s Longevity stacks list 10 mg daily (Premium) and 20 mg daily (Enhanced).</span>'],['Women\'s sheet \'24','<span style="display:block;text-align:left">Women\'s sheet: 10 mg vial, 1 mL BAC, 5 mg dose (50 units), AM, 2 days per week, 8 weeks on/8 off.</span>']]},
   {name:'Tadalafil',cats:['sex','cardio','vasc'],aka:'Cialis; PDE5 inhibitor',overview:'<b>Tadalafil</b> (Cialis) is a selective PDE5 inhibitor with the longest half-life (~36 hours) in its class, making it uniquely suited for daily micro-dosing and vascular optimization beyond erectile function. Mechanism: inhibits PDE5 → preserves cGMP → sustained nitric oxide-driven vasodilation → improved blood flow in heart, brain, muscle, and kidneys. Extended research: reduces arterial stiffness, improves microcirculatory flow, enhances mitochondrial O2 efficiency, upregulates endothelial progenitor cells, modulates glucose uptake and insulin sensitivity, and may protect against cardiac hypertrophy. Daily low-dose use (2.5–5 mg): endothelial health, blood pressure support, exercise recovery, BPH. On-demand use (10–20 mg): erectile function, lasts 24–36 hours. Off-label: pulmonary hypertension, altitude sickness, athletic blood flow optimization. Side effects: headache, flushing, back pain, nasal congestion. <b>Contraindicated with nitrates</b> (severe hypotension risk). <i>FDA approved for ED, BPH, and pulmonary arterial hypertension. Prescription required.</i>',doses:[['Daily low-dose (endothelial health / BPH)','2.5–5 mg oral once daily'],['On-demand (ED)','10–20 mg oral 30–60 min before activity; lasts 24–36 hours'],['Pulmonary hypertension','40 mg/day (20 mg twice daily)'],['Half-life','~36 hours'],['Avoid','All nitrate medications (severe hypotension)'],['Route','Oral tablet']]},
   {name:'Wolverine 1 Blend',cats:['heal','injury','repair'],aka:'Wolverine 1; BPC-157 + TB-500 blend',overview:'<b>Wolverine 1</b> is a 2-peptide recovery blend (BPC-157 + TB-500) — the foundational "Wolverine" formula from Greenwich Rx, designed for tissue repair and healing without the anti-inflammatory KPV component. BPC-157: accelerates tendon, ligament, muscle, and gut healing via upregulation of growth factors (VEGF, EGF) and nitric oxide pathways. TB-500 (Thymosin Beta-4): promotes cell migration, angiogenesis, and actin polymerization for repair of muscle, connective tissue, and nerve. The two peptides are synergistic: BPC-157 drives local repair signaling while TB-500 mobilizes systemic repair cells to the injury site. Indicated for acute injuries, post-surgical recovery, or chronic tendon/ligament issues without a primary inflammatory component. Compare to <b>Wolverine 2</b> (adds KPV for gut/systemic inflammation) and <b>KLOW</b> (adds GHK-Cu for skin/collagen remodeling on top of that). Cycle: 90 days on / 30 days off (Greenwich Rx standard). <i>Research compound blend — compounded by Greenwich Rx. Not FDA approved.</i>',doses:[['Standard dose','Follow provider titration protocol (Greenwich Rx 5 mL vial)'],['Week 1–2','Low titration dose — typically 10 units SubQ 1x/day'],['Week 3–4','Mid titration — 20 units SubQ 1x/day'],['Week 5+','Maintenance — 30 units SubQ 1x/day (or per provider)'],['Cycle','90 days on / 30 days off'],['Route','SubQ injection'],['Contains','BPC-157 + TB-500 (Thymosin Beta-4)']]},
-  {name:'Wolverine 2 Blend',cats:['heal','injury','inflam'],aka:'Wolverine 2; BPC-157 + KPV + TB-500 blend',overview:'<b>Wolverine 2</b> is a 3-peptide recovery blend (BPC-157 + KPV + TB-500) from Greenwich Rx — Wolverine 1 plus <b>KPV</b> (Lys-Pro-Val), a potent anti-inflammatory tripeptide derived from alpha-MSH. KPV addition: directly inhibits NF-κB inflammatory signaling, reduces intestinal inflammation (IBD, Crohn\'s, colitis), and blunts systemic cytokine storms. Use Wolverine 2 over Wolverine 1 when inflammation is a primary driver: inflammatory bowel issues, autoimmune-driven tissue damage, post-infection recovery, or injuries with significant swelling and cytokine involvement. BPC-157 handles growth factor signaling and gut lining repair; TB-500 drives systemic cell migration and angiogenesis; KPV suppresses the inflammatory cascade that slows healing. Compare to <b>KLOW</b> (adds GHK-Cu for collagen/skin remodeling on top of Wolverine 2). Cycle: 90 days on / 30 days off (Greenwich Rx standard). <i>Research compound blend — compounded by Greenwich Rx. Not FDA approved.</i>',doses:[['Standard dose','Follow provider titration protocol (Greenwich Rx 5 mL vial)'],['Week 1–2','Low titration dose — typically 10 units SubQ 1x/day'],['Week 3–4','Mid titration — 20 units SubQ 1x/day'],['Week 5+','Maintenance — 30 units SubQ 1x/day (or per provider)'],['Cycle','90 days on / 30 days off'],['Route','SubQ injection'],['Contains','BPC-157 + KPV + TB-500 (Thymosin Beta-4)'],['Upgrade from Wolverine 1','Adds KPV for NF-κB anti-inflammatory action']]},
   {name:'TB-500 / Thymosin Beta-4',cats:['heal','longev','immune'],overview:'TB-500 is the active fragment (Frag 17-23) of Thymosin Beta-4. Systemic healing — actin regulation, angiogenesis, tissue regeneration. Complement to BPC-157: BPC=local/targeted, TB-500=systemic. The gold standard recovery stack is BPC-157 + TB-500.<br><br>⚠️ <b>WEEKLY-TOTAL FLAG (Oct 2026):</b> JCS/2025 women\'s sheet 3.5 mg/week (500 mcg daily); BGP 4–5 mg; TPR chapter 5–7.5 mg; 2024 women\'s sheet 7 mg (2 mg every other day); Veller 2–10 mg; YPT loading 10–20 mg. TPR\'s stack tables (2.5/5/7.5 mg \'2x/week\') would be 5–15 mg/week if read per injection, against its own chapter\'s 5–7.5 mg weekly total. Compare sources by milligrams per WEEK, not per shot.',doses:[['Route','SubQ or IM injection'],['Loading','5–10 mg twice weekly for 4–6 weeks (YPT)'],['Maintenance','2–5 mg 1–2x/week'],['Daily protocol','500 mcg daily (Ultimate CS) — 10 mg/2 ml BAC = 10 units'],['Veller','<span style="display:block;text-align:left">Injury/rehab: 2–2.5 mg/week to start, 5 mg/week common, max 10 mg/week, split 2–3x weekly. Maintenance: 1 mg/week, 2–3 mg/week common, max 5. (Corrected Oct 2026 — the 500 mcg daily figure is the cheat sheet\'s, not Veller\'s.)</span>'],['Scendere','750 mcg–1 mg daily up to 3 months'],['Jay Campbell','2.0–2.5 mg every other day'],['BAC water','2 ml per 10 mg vial → 500 mcg = 10 units'],['Cycle','4–6 week loading → taper to maintenance'],['Stacks with','BPC-157 (gold standard combo), GHK-Cu, KPV (KLOW blend)'],['Peptide Report','<span style="display:block;text-align:left">5–7.5 mg weekly for larger users (2.5–5 mg for smaller), divided into 2 or 3 injections; loading 4–6 weeks at full dose; maintenance 2.5–5 mg weekly. Its stack tables list 2.5, 5 and 7.5 mg \'2x/week.\'</span>'],['Beginner\'s Guide','<span style="display:block;text-align:left">Loading: 2.0–2.5 mg 2x/week for 4 weeks. Maintenance: 2.0 mg once a week. 6–8 weeks. Avoid with active cancer (promotes cell migration).</span>'],['Women\'s sheet \'24','<span style="display:block;text-align:left">Women\'s sheet: 10 mg vial, 3 mL BAC, 2 mg dose (60 units), AM, every other day, 8 weeks on/8 off.</span>']]},
   {name:'Telmisartan',cats:['cardio','hormone','vasc'],aka:'Micardis; ARB; angiotensin receptor blocker',overview:'<b>Telmisartan</b> is an angiotensin II receptor blocker (ARB) used clinically for hypertension, heart failure, and cardiorenal protection. Mechanism: blocks AT1 receptor → prevents angiotensin II-induced vasoconstriction → arterial dilation, reduced cardiac workload. Also mildly blocks aldosterone → less sodium/water retention. Performance use: counteracts steroid/peptide-induced blood pressure elevation, reduces water retention, may modestly increase muscle blood flow and exercise recovery. Anti-aging interest: PPAR-γ partial agonism (mild insulin sensitization, anti-inflammatory). Clinical dose: 20–80 mg oral once daily. Side effects: hypotension (especially first dose), hyperkalemia, rare angioedema. <b>Avoid with ACE inhibitors</b> (dual RAAS blockade increases adverse risk). Contraindicated in pregnancy (teratogenic), bilateral renal artery stenosis. <i>FDA approved for hypertension and cardiovascular risk reduction. Prescription required.</i>',doses:[['Hypertension (starting)','20–40 mg oral once daily'],['Maintenance/max','40–80 mg oral once daily'],['Performance use','20–40 mg/day to manage anabolic-agent BP elevation'],['Half-life','~24 hours (once-daily dosing)'],['Monitor','Blood pressure, potassium, renal function'],['Route','Oral tablet']]},
   {name:'Tesamorelin',cats:['fat','muscle','gh','cog'],overview:'FDA-approved GHRH 1-44 analog (Egrifta). Selectively targets visceral adipose tissue. Preserves lean mass. Neuroprotective via IGF-1 pathways — cognitive clarity documented especially 50+. Do not stack with other GH compounds without monitoring IGF-1.<br><br>⚠️ <b>PROTOCOL CONFLICT (Oct 2026):</b> monthly load differs 4x. RM pulse (2 mg x 5 nights, one week a month) = 10 mg/month. Continuous 1 mg 5-on/2-off (TPR, JCS) = ~22 mg/month. Continuous 2 mg 5 days/week (BGP, clinical dose) = ~43 mg/month. RM\'s reasoning is that continuous dosing downregulates the receptor and raises insulin resistance; TPR\'s answer to the same worry is 10–12 weeks on/8 off. TIMING: TPR says bedtime only and calls morning dosing a mistake; Veller says morning; Jay Campbell uses both.<br><br>⚠️ <b>PUSHBACK ON TPR:</b> it says to \'inject directly into the visceral fat zone\' for \'true spot reduction.\' An insulin needle reaches subcutaneous fat only. Visceral fat sits behind the abdominal wall, and Tesamorelin works systemically through the pituitary — injection site does not aim it. UNITS: 1 mg is 20 units from a 10 mg/2 mL vial but 40 units from a 5 mg/2 mL vial (both women\'s sheets are internally correct; they use different vials). Tesamorelin is on the BAC guide\'s may-precipitate list — see the handling page in the reference PDF.',doses:[['Route','SubQ abdomen'],['Standard','1 mg/day 6 of 7 days (Tailor Made) | 1 mg/day (Dr. Seeds, Veller)'],['Advanced','1 mg AM + 1 mg PM (Jay Campbell)'],['Studies','2 mg/day'],['BAC water','2 ml per 10 mg vial → 1 mg = 20 units'],['Timing','Before bed; empty stomach 2–3 hrs after last meal'],['Cycle','60 days max / equal time off (Scendere) | 8–12 weeks (Protide)'],['FLAG','Do NOT stack with other potent GH secretagogues without monitoring IGF-1. Monitor IGF-1 at 4–8 weeks.'],['Stacks with','Ipamorelin (1 mg Tes bedtime + 200 mcg Ipa AM — Jay Campbell classic stack)'],['Peptide Report','<span style="display:block;text-align:left">1 mg SC daily, before bed and at least 90 minutes after the last meal, 5 days on/2 off; 10–12 weeks on, 8 weeks off (\'mandatory\'). Can share a syringe with 100 mcg Ipamorelin. Its fat-loss stacks list 2 mg daily.</span>'],['Beginner\'s Guide','<span style="display:block;text-align:left">2 mg/day, 5 days/week, SC before bed, 8–12 weeks. Do not combine with synthetic GH.</span>'],['Veller Reta Guide','<span style="display:block;text-align:left">In Veller\'s Retatrutide stack: 1 mg daily, PM before bed or AM fasted, no food 1–2 hours before; cycle every 12–16 weeks.</span>'],['Pulse (Radiant Med.)','<span style="display:block;text-align:left">2 mg at bedtime Monday-Friday during week 1 of the month ONLY, then 3 weeks off; run 2 months, then re-check IGF-1 before repeating. 10 mg vial + 2.0 mL BAC = 5 mg/mL, so 2 mg = 40 units; one vial = one pulse week. Inject 2–3 hours after the last meal; on a GLP-1, eat a light low-carb dinner on pulse days.</span>'],['Women\'s sheet \'24','<span style="display:block;text-align:left">Women\'s sheet: 5 mg vial, 2 mL BAC, 1 mg dose (40 units), AM/PM, 5 days on/2 off, 8 weeks on/8 off.</span>'],['Diluent note','<span style="display:block;text-align:left">On the BAC guide\'s list of peptides that may precipitate in benzyl alcohol (it suggests sterile water with an acetic-acid buffer). Every dosing source here still mixes it with BAC water. Unresolved — go by the vendor\'s instructions.</span>'],['Caution (Radiant Med.)','<span style="display:block;text-align:left">Contraindicated with active malignancy, diabetic retinopathy, carpal tunnel syndrome, pregnancy. Hold if IGF-1 exceeds the upper limit of normal. Expect hand/ankle edema by day 4–5 at 2 mg; cut to 1 mg if it limits activity.</span>']]},
@@ -4900,6 +4994,7 @@ function renderUpcoming() {
 checkMidnightRollover();
 renderDashboard();
 renderReference();
+initLumarixDropdown();
 // Restore wake lock preference
 if(localStorage.getItem('prx_wakelock')==='1'){
   toggleWakeLock();
@@ -5100,6 +5195,7 @@ function renderInvWish(){
       <div class="inv-row-body">
         <div class="inv-row-name">${w.name} <span class="wish-priority ${cls[w.priority]||'wish-p-mid'}">${labels[w.priority]||w.priority}</span></div>
         ${w.notes?`<div class="inv-row-sub">${w.notes}</div>`:''}
+        ${w.price?`<div class="inv-row-sub"><span style="text-decoration:line-through;color:var(--text-soft)">$${w.price.toFixed(2)}</span> <strong style="color:#2e7d32">$${(w.price*0.7).toFixed(2)} fire service</strong> <span style="color:var(--text-soft)">(save $${(w.price*0.3).toFixed(2)})</span></div>`:''}
       </div>
       <div class="inv-row-actions">
         <button class="inv-btn inv-btn-red" onclick="deleteInvItem('wish','${w.id}')">✕</button>
@@ -5109,6 +5205,27 @@ function renderInvWish(){
 }
 
 // ── Modal open/save helpers ────────────────────────────
+function wishNameHint(val){
+  const v=(val||'').trim().toLowerCase();
+  const pe=document.getElementById('wish-price');
+  if(!v||!pe||pe.value)return;
+  const m=LUMARIX_CATALOG.find(e=>e.mg>0&&e.name.toLowerCase().split(' (')[0].replace(' blend','')===v);
+  if(m){pe.value=m.price;previewWishPrice();}
+}
+
+function previewWishPrice(){
+  const v = parseFloat(document.getElementById('wish-price').value);
+  const pp = document.getElementById('wish-price-preview');
+  if(!pp) return;
+  if(!v || v <= 0){pp.style.display='none';return;}
+  const fire = v * 0.70;
+  const save = v - fire;
+  pp.style.display='block';
+  pp.innerHTML = `Retail: <span style="text-decoration:line-through;color:var(--text-soft)">$${v.toFixed(2)}</span>
+    &nbsp;&nbsp;<strong style="color:#2e7d32">Fire Service: $${fire.toFixed(2)}</strong>
+    &nbsp;&nbsp;<span style="color:var(--text-soft)">Save $${save.toFixed(2)}</span>`;
+}
+
 function invNameHint(val){
   // When the typed value exactly matches a stack peptide, auto-fill vial size
   const match=(peptides||[]).find(p=>p.name.toLowerCase()===val.toLowerCase());
@@ -5135,11 +5252,12 @@ function openInvModal(mode, editId=''){
     dl.innerHTML=names.map(n=>`<option value="${n.replace(/"/g,'&quot;')}">`).join('');
   }
   // Clear fields
-  ['inv-name','inv-qty','inv-vial-mg','inv-bac-used','inv-notes','wish-name','wish-notes'].forEach(id=>{
+  ['inv-name','inv-qty','inv-vial-mg','inv-bac-used','inv-notes','wish-name','wish-notes','wish-price'].forEach(id=>{
     const el=document.getElementById(id);if(el)el.value=id==='inv-qty'?'1':'';
   });
   document.getElementById('inv-mixed-date').value=new Date().toISOString().split('T')[0];
   document.getElementById('wish-priority').value='mid';
+  const pp=document.getElementById('wish-price-preview');if(pp)pp.style.display='none';
   document.getElementById('inv-add-modal').classList.add('open');
 }
 
@@ -5189,9 +5307,11 @@ function saveInvItem(){
   } else if(mode==='wish'){
     const name=document.getElementById('wish-name').value.trim();
     if(!name){toast('Name required');return;}
+    const wishPrice = parseFloat(document.getElementById('wish-price').value)||null;
     inv.wishlist.push({id:'w_'+Date.now(),name,
       priority:document.getElementById('wish-priority').value,
-      notes:document.getElementById('wish-notes').value.trim()});
+      notes:document.getElementById('wish-notes').value.trim(),
+      price:wishPrice});
     svInv(inv);
     closeModal('inv-add-modal');
     renderInvWish();
@@ -5300,6 +5420,38 @@ const BLEND_PROTOCOLS = {
   }
 };
 
+// ── Lumarix Research Catalog ─────────────────────────────────────────────────
+// price = retail; 30% fire service discount applied in UI
+const LUMARIX_CATALOG = [
+  {name:'5-Amino-1MQ',                  mg:50,   bac:2.0,  price:159.99},
+  {name:'BPC-157',                      mg:10,   bac:1.0,  price:39.99},
+  {name:'Cagrilintide',                 mg:10,   bac:1.0,  price:96.99},
+  {name:'Cartalax',                     mg:20,   bac:1.0,  price:54.99},
+  {name:'GHK-Cu',                       mg:100,  bac:2.0,  price:49.99},
+  {name:'GLOW Blend',                   mg:70,   bac:3.0,  price:94.99},
+  {name:'Kisspeptin',                   mg:10,   bac:1.0,  price:69.99},
+  {name:'KLOW Blend',                   mg:80,   bac:3.0,  price:104.99},
+  {name:'KPV (10mg)',                   mg:10,   bac:1.0,  price:64.99},
+  {name:'KPV (30mg)',                   mg:30,   bac:2.0,  price:149.99},
+  {name:'LMX-R3 / Retatrutide (10mg)', mg:10,   bac:1.0,  price:79.99},
+  {name:'LMX-R3 / Retatrutide (20mg)', mg:20,   bac:1.0,  price:135.99},
+  {name:'LMX-T2 / Tirzepatide (30mg)', mg:30,   bac:2.0,  price:129.99},
+  {name:'MOTS-C',                       mg:10,   bac:1.0,  price:45.99},
+  {name:'MT-1',                         mg:10,   bac:1.0,  price:39.99},
+  {name:'MT-2',                         mg:10,   bac:1.0,  price:39.99},
+  {name:'NAD+ (500mg)',                 mg:500,  bac:5.0,  price:59.99},
+  {name:'NAD+ (1000mg)',                mg:1000, bac:10.0, price:79.99},
+  {name:'PE-22-28',                     mg:10,   bac:1.0,  price:56.99},
+  {name:'Selank',                       mg:10,   bac:1.0,  price:29.99},
+  {name:'Semax',                        mg:10,   bac:1.0,  price:29.99},
+  {name:'SS-31',                        mg:10,   bac:1.0,  price:75.99},
+  {name:'TB-500',                       mg:10,   bac:1.0,  price:65.99},
+  {name:'Tesamorelin',                  mg:10,   bac:1.0,  price:69.99},
+  {name:'VIP',                          mg:10,   bac:1.0,  price:84.99},
+  {name:'Wolverine 1 Blend',            mg:20,   bac:2.0,  price:89.99},
+  {name:'BAC Water 30mL',               mg:0,    bac:30.0, price:32.99}
+];
+
 function calcBlend(){
   const sel = document.getElementById('blend-select').value;
   const daysEl = document.querySelector('input[name="blend-days"]:checked');
@@ -5356,6 +5508,98 @@ function calcBlend(){
   document.getElementById('blend-compounds').innerHTML = compHtml;
 
   resultEl.style.display = 'block';
+}
+
+
+function initLumarixDropdown(){
+  const sel = document.getElementById('proto-lumarix');
+  if(!sel) return;
+  sel.innerHTML = '<option value="">— Select compound to auto-fill vial mg + BAC water —</option>' +
+    LUMARIX_CATALOG.map((e,i) => `<option value="${i}">${e.name}  (${e.mg > 0 ? e.mg+'mg' : 'n/a'}  · $${e.price.toFixed(2)})</option>`).join('');
+}
+
+function lumarixFill(idxStr){
+  const priceEl = document.getElementById('proto-lumarix-price');
+  if(idxStr === ''){priceEl.style.display='none';return;}
+  const e = LUMARIX_CATALOG[parseInt(idxStr)];
+  if(!e) return;
+  if(e.mg > 0){
+    document.getElementById('proto-vial-mg').value = e.mg;
+    document.getElementById('proto-name').value = e.name;
+  }
+  if(e.bac > 0) document.getElementById('proto-bac').value = e.bac;
+  const fire = e.price * 0.70;
+  const save = e.price - fire;
+  priceEl.style.display = 'block';
+  priceEl.innerHTML = `<strong>${e.name}</strong><br>
+    Retail: <span style="text-decoration:line-through;color:var(--text-soft)">$${e.price.toFixed(2)}</span>
+    &nbsp;&nbsp;<strong style="color:#2e7d32">Fire Service (30% off): $${fire.toFixed(2)}</strong>
+    &nbsp;&nbsp;<span style="color:var(--text-soft)">You save $${save.toFixed(2)}</span>`;
+  calcProto();
+}
+
+function calcProto(){
+  const vialMg  = parseFloat(document.getElementById('proto-vial-mg').value);
+  const bacMl   = parseFloat(document.getElementById('proto-bac').value);
+  const doseVal = parseFloat(document.getElementById('proto-dose').value);
+  const unit    = document.querySelector('input[name="proto-unit"]:checked')?.value||'mg';
+  const sched   = document.querySelector('input[name="proto-sched"]:checked')?.value||'daily';
+  const weeks   = parseFloat(document.getElementById('proto-weeks').value);
+  const name    = document.getElementById('proto-name').value.trim();
+  const result  = document.getElementById('proto-result');
+  const customRow = document.getElementById('proto-custom-row');
+
+  customRow.style.display = sched==='custom' ? 'block' : 'none';
+
+  if(!vialMg||!bacMl||!doseVal||!weeks){result.style.display='none';return;}
+
+  // Convert dose to mg
+  const doseMg = unit==='mcg' ? doseVal/1000 : doseVal;
+
+  // Days per week based on schedule
+  let daysPerWeek;
+  if(sched==='daily')       daysPerWeek=7;
+  else if(sched==='5on2off')daysPerWeek=5;
+  else if(sched==='eod')    daysPerWeek=3.5;
+  else if(sched==='3week')  daysPerWeek=3;
+  else {
+    const on  = parseFloat(document.getElementById('proto-days-on').value)||0;
+    daysPerWeek = on;
+    if(!on){result.style.display='none';return;}
+  }
+
+  const concMgPerMl  = vialMg / bacMl;              // mg per mL
+  const mlPerDose    = doseMg / concMgPerMl;         // mL per injection
+  const unitsPerDose = Math.round(mlPerDose * 100);  // U-100 syringe units
+
+  const totalDays        = daysPerWeek * weeks;
+  const totalInjections  = Math.round(totalDays);
+  const totalMlNeeded    = mlPerDose * totalInjections;
+  const mlPerVial        = bacMl;
+  const vialsNeeded      = Math.ceil(totalMlNeeded / mlPerVial);
+  const mlLastVial       = totalMlNeeded - (vialsNeeded-1)*mlPerVial;
+  const dosesPerVial     = Math.floor(mlPerVial / mlPerDose);
+
+  document.getElementById('proto-vials-out').textContent = vialsNeeded;
+  document.getElementById('proto-vials-sub').textContent =
+    `${dosesPerVial} doses/vial · ${mlLastVial.toFixed(1)} mL used in last vial`;
+  document.getElementById('proto-injections-out').textContent = totalInjections;
+  document.getElementById('proto-inj-sub').textContent =
+    `${daysPerWeek%1===0?daysPerWeek:daysPerWeek.toFixed(1)} inj/week × ${weeks} weeks`;
+
+  const schedLabel = sched==='daily'?'Daily':sched==='5on2off'?'5 on / 2 off':sched==='eod'?'Every other day':sched==='3week'?'3×/week':`${daysPerWeek} days/week`;
+
+  document.getElementById('proto-name-display').textContent =
+    name ? name + ' — Protocol Summary' : 'Protocol Summary';
+
+  document.getElementById('proto-breakdown').innerHTML =
+    `<b>Concentration:</b> ${concMgPerMl.toFixed(2)} mg/mL (${vialMg}mg ÷ ${bacMl}mL)<br>` +
+    `<b>Dose:</b> ${doseVal} ${unit} = ${mlPerDose.toFixed(3)} mL = <b>${unitsPerDose} units</b> on a U-100 syringe<br>` +
+    `<b>Schedule:</b> ${schedLabel}<br>` +
+    `<b>Cycle:</b> ${weeks} weeks → ${totalInjections} injections · ${totalMlNeeded.toFixed(1)} mL total<br>` +
+    `<b>Vial math:</b> ${mlPerVial} mL/vial → ${dosesPerVial} doses/vial → <b>${vialsNeeded} vial${vialsNeeded!==1?'s':''} needed</b>`;
+
+  result.style.display='block';
 }
 
 </script>
